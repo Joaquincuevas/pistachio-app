@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { RedirectIfAuthed, RequireAuth, RequireSpecialty } from '@/components/ProtectedRoute';
@@ -9,8 +10,16 @@ import { Profile } from '@/pages/Profile';
 import { Register } from '@/pages/Register';
 import { Search } from '@/pages/Search';
 import { SpecialtySelect } from '@/pages/SpecialtySelect';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useCatalogStore } from '@/stores/useCatalogStore';
 
 export default function App() {
+  // Al cargar: valida la cookie de sesión y trae el catálogo de planes.
+  useEffect(() => {
+    void useAuthStore.getState().hydrate();
+    void useCatalogStore.getState().load();
+  }, []);
+
   return (
     <>
       <Routes>

@@ -14,12 +14,11 @@ const links = [
 /** Navegación lateral minimal, solo desktop. */
 export function Sidebar() {
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await useAuthStore.getState().logout();
     show('Sesión cerrada. ¡Hasta pronto!', 'info');
     navigate('/');
   };

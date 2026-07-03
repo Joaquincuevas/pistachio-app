@@ -2,68 +2,75 @@
 
 **Tu malla curricular, al alcance.**
 
-Plataforma para estudiantes de Ingeniería Civil de la Universidad de los Andes (Chile): regístrate con tu correo institucional, elige tu especialidad y explora tu malla completa de forma interactiva — como grid por semestre o como grafo de dependencias.
+Plataforma para estudiantes de Ingeniería de la Universidad de los Andes (Chile): crea tu cuenta con correo institucional, elige tu especialidad y explora tu **Plan de Estudios 2022 oficial** de forma interactiva — como grid por semestre o como grafo de dependencias. Tu progreso se guarda en tu cuenta (base de datos real), no solo en el navegador.
 
 ## Instalación
 
 ```bash
 npm install
-npm run dev
+npm run dev        # levanta web (5173) + API (3001) juntos
 ```
 
-La app queda disponible en `http://localhost:5173`.
+La app queda disponible en `http://localhost:5173`. La base de datos SQLite se crea y siembra sola al iniciar la API.
 
 Otros comandos:
 
 ```bash
-npm run build      # build de producción (incluye typecheck)
-npm run preview    # sirve el build localmente
+npm run dev:web    # solo frontend
+npm run dev:api    # solo API
+npm run build      # build de producción del frontend (incluye typecheck)
+npm start          # producción: la API sirve también el build de dist/
+npm run typecheck  # typecheck de frontend y servidor
 ```
 
-## Cómo usarla
+## Datos reales
 
-1. **Crea una cuenta** con un correo `@uandes.cl` o `@miuandes.cl` (auth simulada, sin backend).
-2. **Elige tu especialidad**: Obras Civiles, Computación, Industrial, Eléctrica o Química.
-3. **Explora tu malla** en `/malla`:
-   - **Vista Grid**: scroll por semestre con headers sticky. Tap en un ramo abre su detalle.
-   - **Vista Grafo**: nodos por semestre y aristas de prerrequisitos. Al tocar un ramo se resaltan en verde sus prerrequisitos y en azul lo que desbloquea. Segundo tap abre el detalle.
-   - **Long-press** (mobile) o **click derecho** (desktop) sobre un ramo → marcar como Cursado / En progreso / Pendiente.
-4. Tu progreso persiste en `localStorage` y se conserva por especialidad.
-5. Bonus: toca 3 veces el 🥜 del footer de la landing. 🌰
+El catálogo se genera desde las planillas oficiales de la Facultad:
 
-## Stack
+- **`scripts/parse-catalog.py`** lee `Catálogo PE 2022 Versión 2023.xlsx` (hojas `Cursos` y `<ESP> Malla`) y produce `server/data/catalog.json`.
+- Las 5 especialidades reales: **Industrial (ICI), Obras Civiles (IOC), Eléctrica (ICE), Computación (ICC) y Ambiental (ICA)** — 60 ramos y ~330 SCT en 11 semestres cada una, incluyendo slots de Teología, Minor, Optativos, Concentración Tecnológica y Electivos.
+- Computación tiene **dos versiones de plan**: PE 2022 (rev. 2023) y **PE 2022 · Ajuste 2025** (según la presentación de la Facultad de oct. 2024: entran Fundamentos de Ciberseguridad e Inteligencia Artificial Aplicada; salen Autómatas y Computabilidad y Diseño de Software Verificable; se adelantan BD, Web Technologies, AI, Almacenamiento y Sistemas Embebidos).
+- Los códigos `ICC-FCS` e `ICC-IAA` son provisorios: la presentación aún no publica códigos Banner.
 
-| Área | Tecnología |
+## Backend y seguridad
+
+| Área | Implementación |
 | --- | --- |
-| Framework | React 18 + Vite + TypeScript (strict) |
-| Routing | React Router v6 con rutas protegidas |
-| Estilos | Tailwind CSS v3 con design tokens propios |
-| Animaciones | Framer Motion |
-| Estado | Zustand (+ persist en localStorage) |
-| Formularios | React Hook Form + Zod |
-| Grafo | React Flow (`@xyflow/react`) |
-| Iconos | Lucide React |
-| Fuentes | Instrument Serif (display) + Inter (body) |
+| Servidor | Express + TypeScript (`server/`), corre con tsx |
+| Base de datos | SQLite (better-sqlite3), WAL, se siembra desde `catalog.json` |
+| Contraseñas | scrypt (`node:crypto`) con salt aleatorio — nunca texto plano |
+| Sesiones | Token aleatorio en cookie **httpOnly** (30 días); en la DB solo se guarda su SHA-256 |
+| Protección extra | Límite de intentos de login, validación Zod en el servidor, dominio de correo verificado server-side |
+| Progreso | `progress(user, plan, ramo)` con updates optimistas desde el cliente |
+
+Endpoints: `POST /api/auth/{register,login,logout}`, `GET /api/auth/me`, `GET /api/catalog`, `PUT /api/me/plan`, `GET|PUT /api/progress/:planId[/:courseId]`.
+
+En producción (`npm start`) el mismo proceso sirve la API y el frontend compilado — listo para deploy en Railway/Fly/Render con un volumen para el archivo `.db`.
+
+## Stack frontend
+
+React 18 + Vite + TypeScript estricto · React Router v6 · Tailwind CSS v3 con design tokens · Framer Motion · Zustand (persist como cache, el servidor es la verdad) · React Hook Form + Zod · React Flow · Lucide · Instrument Serif + Inter.
 
 ## Estructura
 
 ```
+server/
+├── index.ts           API Express (auth, catálogo, progreso)
+├── db.ts              esquema SQLite + seed automático del catálogo
+├── auth.ts            scrypt, sesiones, rate limit
+└── data/catalog.json  catálogo generado desde el Excel oficial
+scripts/
+└── parse-catalog.py   Excel de la Facultad → catalog.json
 src/
-├── components/
-│   ├── ui/            Button, Card, Input, Badge, Modal, BottomSheet, Toast…
-│   ├── layout/        AppShell, Header, TabBar (mobile), Sidebar (desktop)
-│   └── malla/         MallaGraph, MallaGrid, CourseCard, CourseDetail…
+├── components/        ui/ · layout/ · malla/
 ├── pages/             Landing, Login, Register, SpecialtySelect, Dashboard…
-├── stores/            useAuthStore, useCurriculumStore, useToastStore
-├── hooks/             useLocalStorage, useMediaQuery, useLongPress
-├── services/          auth.ts (mock async, listo para conectar API real)
-├── data/              curriculum.ts (5 especialidades, 32 ramos c/u)
+├── stores/            useAuthStore, useCatalogStore, useCurriculumStore, useToastStore
+├── hooks/             useActivePlan, useLongPress, useMediaQuery, useLocalStorage
+├── services/          api.ts (cliente HTTP)
 ├── lib/               utils.ts, validators.ts
 └── types/             index.ts
 ```
 
-## Notas de arquitectura
+## Bonus
 
-- **Auth simulada**: `src/services/auth.ts` expone `login`/`register` async que hoy resuelven contra localStorage. Para conectar un backend real basta reemplazar el cuerpo de esas funciones.
-- **Progreso por especialidad**: el store guarda `progress[especialidad][ramo]`, así cambiar de especialidad no borra el avance anterior.
-- **Plan común compartido**: los semestres 1–4 son los mismos objetos en las 5 especialidades, definidos una sola vez en `curriculum.ts`.
+Toca 3 veces el 🥜 del footer de la landing. 🌰

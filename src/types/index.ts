@@ -1,32 +1,73 @@
-/** Estado de avance de un ramo dentro de la malla del estudiante. */
+/** Estado de avance de un ramo dentro del plan del estudiante. */
 export type CourseStatus = 'completed' | 'in-progress' | 'pending';
 
+export interface Prerequisite {
+  /** Código del ramo requerido, ej: "ING1202". */
+  id: string;
+  /** true si el catálogo permite cursarlo en paralelo ("(p)"). */
+  concurrent: boolean;
+}
+
+/** Desglose de horas semanales según el catálogo oficial. */
+export interface CourseHours {
+  clases: number;
+  ayudantias: number;
+  laboratorio: number;
+  trabajos: number;
+  presentaciones: number;
+  lecturas: number;
+  estudio: number;
+  total: number;
+}
+
 export interface Course {
-  /** Código institucional del ramo, ej: "MAT1101". */
+  /** Código institucional (ej: "ICC3204") o id de slot (ej: "ELE1"). */
   id: string;
   name: string;
-  /** Semestre sugerido en la malla (1-10). */
-  semester: number;
+  /** Créditos SCT-Chile. */
   credits: number;
-  /** Ids de los ramos que deben estar aprobados antes de tomar este. */
-  prerequisites: string[];
-  description: string;
-  objectives: string[];
+  /** Semestre sugerido en la malla (1-11). */
+  semester: number;
+  prerequisites: Prerequisite[];
+  /** Requisito de créditos aprobados (ej: 276 para Proyecto de Título 1). */
+  creditReq: number | null;
+  hours: CourseHours | null;
+  /** Texto de requisitos tal como aparece en el catálogo. */
+  reqText: string | null;
+  /** Habilidades transversales del catálogo (ej: "Ic(Oa)"). */
+  skills: string | null;
+  /** Semestres del año en que se dicta: 1 y/o 2. */
+  offered: number[];
+  /** true para cupos genéricos: Teología, Minor, Electivos, Concentración. */
+  isSlot: boolean;
+  slotCategory: string | null;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  courses: Course[];
 }
 
 export interface Specialty {
   id: string;
   name: string;
+  fullName: string;
   emoji: string;
   tagline: string;
-  courses: Course[];
+  plans: Plan[];
 }
 
 export interface User {
+  id: number;
   name: string;
   email: string;
-  /** ISO date de creación de la cuenta. */
   createdAt: string;
+}
+
+export interface UserSettings {
+  specialtyId: string | null;
+  planId: string | null;
 }
 
 export interface ProgressStats {

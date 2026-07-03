@@ -1,11 +1,9 @@
 import { Logo } from '@/components/ui/Logo';
-import { useCurriculumStore } from '@/stores/useCurriculumStore';
-import { getSpecialty } from '@/data/curriculum';
+import { useActivePlan } from '@/hooks/useActivePlan';
 
 /** Header superior, solo visible en mobile. Respeta el notch de iOS. */
 export function Header() {
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
-  const specialty = getSpecialty(specialtyId);
+  const { specialty } = useActivePlan();
 
   return (
     <header className="border-b border-border bg-white pt-safe md:hidden">

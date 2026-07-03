@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { Search as SearchIcon, SearchX, X } from 'lucide-react';
 import { CourseCard } from '@/components/malla/CourseCard';
 import { PageTransition } from '@/components/ui/PageTransition';
-import { getSpecialty } from '@/data/curriculum';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { useActivePlan } from '@/hooks/useActivePlan';
 import { cn, STATUS_LABELS } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import type { CourseStatus } from '@/types';
@@ -44,13 +45,12 @@ function toggle<T>(set: Set<T>, value: T): Set<T> {
 
 /** Búsqueda con filtrado en tiempo real por nombre/código, semestre, créditos y estado. */
 export function Search() {
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
+  const { plan, loading } = useActivePlan();
   const progressMap = useCurriculumStore((s) => s.progress);
   const selectCourse = useCurriculumStore((s) => s.selectCourse);
   const openStatusMenu = useCurriculumStore((s) => s.openStatusMenu);
 
-  const specialty = getSpecialty(specialtyId);
-  const statuses = specialty ? (progressMap[specialty.id] ?? EMPTY_PROGRESS) : EMPTY_PROGRESS;
+  const statuses = plan ? (progressMap[plan.id] ?? EMPTY_PROGRESS) : EMPTY_PROGRESS;
 
   const [query, setQuery] = useState('');
   const [semesterFilter, setSemesterFilter] = useState<Set<number>>(new Set());
@@ -58,18 +58,18 @@ export function Search() {
   const [statusFilter, setStatusFilter] = useState<Set<CourseStatus>>(new Set());
 
   const creditOptions = useMemo(
-    () => [...new Set(specialty?.courses.map((c) => c.credits) ?? [])].sort((a, b) => a - b),
-    [specialty],
+    () => [...new Set(plan?.courses.map((c) => c.credits) ?? [])].sort((a, b) => a - b),
+    [plan],
   );
   const semesterOptions = useMemo(
-    () => [...new Set(specialty?.courses.map((c) => c.semester) ?? [])].sort((a, b) => a - b),
-    [specialty],
+    () => [...new Set(plan?.courses.map((c) => c.semester) ?? [])].sort((a, b) => a - b),
+    [plan],
   );
 
   const results = useMemo(() => {
-    if (!specialty) return [];
+    if (!plan) return [];
     const q = query.trim().toLowerCase();
-    return specialty.courses.filter((course) => {
+    return plan.courses.filter((course) => {
       if (q && !course.name.toLowerCase().includes(q) && !course.id.toLowerCase().includes(q)) {
         return false;
       }
@@ -80,9 +80,19 @@ export function Search() {
       }
       return true;
     });
-  }, [specialty, query, semesterFilter, creditsFilter, statusFilter, statuses]);
+  }, [plan, query, semesterFilter, creditsFilter, statusFilter, statuses]);
 
-  if (!specialty) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-4 md:px-8 md:py-8">
+        <Skeleton className="h-8 w-44" />
+        <Skeleton className="mt-4 h-12 rounded-input" />
+        <Skeleton className="mt-3 h-9 w-2/3 rounded-full" />
+      </div>
+    );
+  }
+
+  if (!plan) return null;
 
   const hasFilters =
     query !== '' || semesterFilter.size > 0 || creditsFilter.size > 0 || statusFilter.size > 0;
@@ -101,7 +111,7 @@ export function Search() {
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Nombre o código, ej: Cálculo o MAT1101"
+          placeholder="Nombre o código, ej: Cálculo o ING1202"
           aria-label="Buscar ramos por nombre o código"
           className="h-12 w-full rounded-input border border-border bg-white pl-10 pr-10 text-base text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
@@ -117,7 +127,7 @@ export function Search() {
         )}
       </div>
 
-      {/* Filtros por estado */}
+      {/* Filtros por estado y créditos */}
       <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
         {(Object.keys(STATUS_LABELS) as CourseStatus[]).map((status) => (
           <FilterChip
@@ -135,7 +145,7 @@ export function Search() {
             active={creditsFilter.has(credits)}
             onClick={() => setCreditsFilter((prev) => toggle(prev, credits))}
           >
-            {credits} cr
+            {credits} SCT
           </FilterChip>
         ))}
       </div>
@@ -156,7 +166,7 @@ export function Search() {
       {/* Resultados */}
       <p className="mt-5 text-xs text-text-secondary" aria-live="polite">
         {results.length} {results.length === 1 ? 'ramo' : 'ramos'}
-        {hasFilters ? ' encontrados' : ' en tu malla'}
+        {hasFilters ? ' encontrados' : ' en tu plan'}
       </p>
 
       {results.length === 0 ? (

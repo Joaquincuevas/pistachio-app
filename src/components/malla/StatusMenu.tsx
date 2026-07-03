@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
-import { getCourse } from '@/data/curriculum';
+import { useActivePlan } from '@/hooks/useActivePlan';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
 import { cn, STATUS_LABELS } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
@@ -23,12 +23,12 @@ export function StatusMenu() {
   const menu = useCurriculumStore((s) => s.statusMenu);
   const close = useCurriculumStore((s) => s.closeStatusMenu);
   const setCourseStatus = useCurriculumStore((s) => s.setCourseStatus);
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
   const getStatus = useCurriculumStore((s) => s.getCourseStatus);
   const show = useToastStore((s) => s.show);
   const isDesktop = useIsDesktop();
+  const { plan } = useActivePlan();
 
-  const course = menu ? getCourse(specialtyId, menu.courseId) : undefined;
+  const course = menu ? plan?.courses.find((c) => c.id === menu.courseId) : undefined;
 
   const choose = (status: CourseStatus) => {
     if (!course) return;

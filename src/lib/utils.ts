@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { Course, CourseStatus, ProgressStats, Specialty } from '@/types';
+import type { Course, CourseStatus, Plan, ProgressStats } from '@/types';
 
 /** Combina clases de Tailwind resolviendo conflictos (helper estándar). */
 export function cn(...inputs: ClassValue[]) {
@@ -20,7 +20,7 @@ export const STATUS_COLORS: Record<CourseStatus, string> = {
 };
 
 export function computeProgress(
-  specialty: Specialty,
+  plan: Plan,
   progress: Record<string, CourseStatus>,
 ): ProgressStats {
   let completedCourses = 0;
@@ -28,7 +28,7 @@ export function computeProgress(
   let completedCredits = 0;
   let totalCredits = 0;
 
-  for (const course of specialty.courses) {
+  for (const course of plan.courses) {
     totalCredits += course.credits;
     const status = progress[course.id] ?? 'pending';
     if (status === 'completed') {
@@ -39,7 +39,7 @@ export function computeProgress(
     }
   }
 
-  const totalCourses = specialty.courses.length;
+  const totalCourses = plan.courses.length;
   return {
     totalCourses,
     completedCourses,
@@ -50,10 +50,15 @@ export function computeProgress(
   };
 }
 
-/** Agrupa los ramos de una especialidad por semestre, ordenados. */
+/** Agrupa los ramos por semestre; dentro de cada semestre, ramos antes que slots. */
 export function groupBySemester(courses: Course[]): Map<number, Course[]> {
   const map = new Map<number, Course[]>();
-  const sorted = [...courses].sort((a, b) => a.semester - b.semester || a.id.localeCompare(b.id));
+  const sorted = [...courses].sort(
+    (a, b) =>
+      a.semester - b.semester ||
+      Number(a.isSlot) - Number(b.isSlot) ||
+      a.id.localeCompare(b.id),
+  );
   for (const course of sorted) {
     const list = map.get(course.semester) ?? [];
     list.push(course);
@@ -62,7 +67,7 @@ export function groupBySemester(courses: Course[]): Map<number, Course[]> {
   return map;
 }
 
-/** Conjunto de prerrequisitos (directos y transitivos) de un ramo. */
+/** Conjunto de prerrequisitos (directos y transitivos) de un ramo dentro del plan. */
 export function collectPrerequisites(courseId: string, courses: Course[]): Set<string> {
   const byId = new Map(courses.map((c) => [c.id, c]));
   const result = new Set<string>();
@@ -70,9 +75,9 @@ export function collectPrerequisites(courseId: string, courses: Course[]): Set<s
     const course = byId.get(id);
     if (!course) return;
     for (const prereq of course.prerequisites) {
-      if (!result.has(prereq)) {
-        result.add(prereq);
-        visit(prereq);
+      if (!result.has(prereq.id)) {
+        result.add(prereq.id);
+        visit(prereq.id);
       }
     }
   };
@@ -85,7 +90,7 @@ export function collectUnlocks(courseId: string, courses: Course[]): Set<string>
   const result = new Set<string>();
   const visit = (id: string) => {
     for (const course of courses) {
-      if (course.prerequisites.includes(id) && !result.has(course.id)) {
+      if (course.prerequisites.some((p) => p.id === id) && !result.has(course.id)) {
         result.add(course.id);
         visit(course.id);
       }

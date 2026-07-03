@@ -25,7 +25,7 @@ import {
 } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
-import type { Course, CourseStatus, Specialty } from '@/types';
+import type { Course, CourseStatus, Plan } from '@/types';
 
 type Highlight = 'none' | 'selected' | 'prereq' | 'unlocks' | 'dimmed';
 
@@ -58,6 +58,7 @@ const CourseNode = memo(function CourseNode(props: NodeProps) {
       className={cn(
         'rounded-xl border border-l-4 bg-white p-3 shadow-subtle transition-all duration-200',
         highlightClasses[highlight],
+        course.isSlot && 'border-dashed bg-surface',
       )}
       style={{ width: NODE_WIDTH, borderLeftColor: STATUS_COLORS[status] }}
     >
@@ -66,7 +67,7 @@ const CourseNode = memo(function CourseNode(props: NodeProps) {
         {course.name}
       </p>
       <p className="mt-1 text-[10px] text-text-secondary">
-        {course.id} · {course.credits} cr
+        {course.isSlot ? course.slotCategory : course.id} · {course.credits} SCT
       </p>
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} isConnectable={false} />
     </div>
@@ -93,26 +94,27 @@ const nodeTypes: NodeTypes = {
  * - Tap en un nodo: resalta prerrequisitos (verde) y ramos que desbloquea (azul).
  * - Segundo tap / doble click: abre el detalle del ramo.
  * - Click derecho: menú de cambio de estado.
+ * - Aristas punteadas: el requisito se puede cursar en paralelo.
  */
-export function MallaGraph({ specialty }: { specialty: Specialty }) {
+export function MallaGraph({ plan }: { plan: Plan }) {
   const progressMap = useCurriculumStore((s) => s.progress);
   const selectCourse = useCurriculumStore((s) => s.selectCourse);
   const openStatusMenu = useCurriculumStore((s) => s.openStatusMenu);
   const isDesktop = useIsDesktop();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const statuses = progressMap[specialty.id] ?? EMPTY_PROGRESS;
+  const statuses = progressMap[plan.id] ?? EMPTY_PROGRESS;
 
   const { prereqSet, unlockSet } = useMemo(() => {
     if (!selectedId) return { prereqSet: new Set<string>(), unlockSet: new Set<string>() };
     return {
-      prereqSet: collectPrerequisites(selectedId, specialty.courses),
-      unlockSet: collectUnlocks(selectedId, specialty.courses),
+      prereqSet: collectPrerequisites(selectedId, plan.courses),
+      unlockSet: collectUnlocks(selectedId, plan.courses),
     };
-  }, [selectedId, specialty]);
+  }, [selectedId, plan]);
 
   const nodes = useMemo<Node[]>(() => {
-    const semesters = [...groupBySemester(specialty.courses)];
+    const semesters = [...groupBySemester(plan.courses)];
     const maxRows = Math.max(...semesters.map(([, list]) => list.length));
     const result: Node[] = [];
 
@@ -153,11 +155,11 @@ export function MallaGraph({ specialty }: { specialty: Specialty }) {
     });
 
     return result;
-  }, [specialty, statuses, selectedId, prereqSet, unlockSet]);
+  }, [plan, statuses, selectedId, prereqSet, unlockSet]);
 
   const edges = useMemo<Edge[]>(() => {
     const result: Edge[] = [];
-    for (const course of specialty.courses) {
+    for (const course of plan.courses) {
       for (const prereq of course.prerequisites) {
         let stroke = '#C9C9C6';
         let opacity = 0.85;
@@ -166,9 +168,9 @@ export function MallaGraph({ specialty }: { specialty: Specialty }) {
 
         if (selectedId) {
           const targetInChain = course.id === selectedId || prereqSet.has(course.id);
-          const backward = targetInChain && prereqSet.has(prereq);
+          const backward = targetInChain && prereqSet.has(prereq.id);
           const forward =
-            (prereq === selectedId || unlockSet.has(prereq)) && unlockSet.has(course.id);
+            (prereq.id === selectedId || unlockSet.has(prereq.id)) && unlockSet.has(course.id);
 
           if (backward) {
             stroke = '#6BA876';
@@ -184,16 +186,22 @@ export function MallaGraph({ specialty }: { specialty: Specialty }) {
         }
 
         result.push({
-          id: `${prereq}->${course.id}`,
-          source: prereq,
+          id: `${prereq.id}->${course.id}`,
+          source: prereq.id,
           target: course.id,
           animated,
-          style: { stroke, opacity, strokeWidth: width },
+          style: {
+            stroke,
+            opacity,
+            strokeWidth: width,
+            // Requisito concurrente ("en paralelo"): línea punteada.
+            strokeDasharray: prereq.concurrent ? '6 4' : undefined,
+          },
         });
       }
     }
     return result;
-  }, [specialty, selectedId, prereqSet, unlockSet]);
+  }, [plan, selectedId, prereqSet, unlockSet]);
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -218,13 +226,13 @@ export function MallaGraph({ specialty }: { specialty: Specialty }) {
   );
 
   const selectedCourse = selectedId
-    ? specialty.courses.find((c) => c.id === selectedId)
+    ? plan.courses.find((c) => c.id === selectedId)
     : undefined;
 
   return (
     <div className="h-full w-full" role="application" aria-label="Grafo de la malla curricular">
       <ReactFlow
-        key={specialty.id}
+        key={plan.id}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}

@@ -8,14 +8,12 @@ import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { loginSchema, type LoginValues } from '@/lib/validators';
-import * as authService from '@/services/auth';
+import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import { useToastStore } from '@/stores/useToastStore';
 
 export function Login() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
+  const setAuth = useAuthStore((s) => s.setAuth);
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,11 +28,11 @@ export function Login() {
   const onSubmit = async (values: LoginValues) => {
     setServerError(null);
     try {
-      const user = await authService.login(values.email, values.password);
-      setUser(user);
+      const { user, settings } = await api.login(values.email, values.password);
+      setAuth(user, settings);
       show(`¡Hola de nuevo, ${user.name.split(' ')[0]}!`);
       const from = (location.state as { from?: string } | null)?.from;
-      navigate(from ?? (specialtyId ? '/malla' : '/specialty'), { replace: true });
+      navigate(from ?? (settings.planId ? '/malla' : '/specialty'), { replace: true });
     } catch (error) {
       setServerError(error instanceof Error ? error.message : 'Algo salió mal. Intenta de nuevo.');
     }

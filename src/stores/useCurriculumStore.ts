@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CourseStatus } from '@/types';
+import { api } from '@/services/api';
+import { useToastStore } from './useToastStore';
+import type { CourseStatus, UserSettings } from '@/types';
 
 interface StatusMenuState {
   courseId: string;
@@ -11,57 +13,103 @@ interface StatusMenuState {
 
 interface CurriculumState {
   specialtyId: string | null;
-  /** Progreso por especialidad → por ramo. Cambiar de especialidad no borra avances. */
+  planId: string | null;
+  /** Progreso por plan → por ramo. Cache local; el servidor es la verdad. */
   progress: Record<string, Record<string, CourseStatus>>;
+  /** Planes cuyo progreso ya se sincronizó en esta sesión. No se persiste. */
+  syncedPlans: string[];
   /** Ramo abierto en el detalle (BottomSheet/Modal). No se persiste. */
   selectedCourseId: string | null;
-  /** Menú contextual de cambio de estado. No se persiste. */
   statusMenu: StatusMenuState | null;
 
-  setSpecialty: (specialtyId: string) => void;
+  applySettings: (settings: UserSettings) => void;
+  choosePlan: (specialtyId: string, planId: string) => Promise<void>;
+  loadProgress: (planId: string) => Promise<void>;
   setCourseStatus: (courseId: string, status: CourseStatus) => void;
   getCourseStatus: (courseId: string) => CourseStatus;
   selectCourse: (courseId: string | null) => void;
   openStatusMenu: (menu: StatusMenuState) => void;
   closeStatusMenu: () => void;
+  reset: () => void;
 }
 
 export const useCurriculumStore = create<CurriculumState>()(
   persist(
     (set, get) => ({
       specialtyId: null,
+      planId: null,
       progress: {},
+      syncedPlans: [],
       selectedCourseId: null,
       statusMenu: null,
 
-      setSpecialty: (specialtyId) => set({ specialtyId }),
+      applySettings: ({ specialtyId, planId }) => set({ specialtyId, planId }),
+
+      choosePlan: async (specialtyId, planId) => {
+        const { settings } = await api.setPlan(specialtyId, planId);
+        set({ specialtyId: settings.specialtyId, planId: settings.planId });
+      },
+
+      loadProgress: async (planId) => {
+        if (get().syncedPlans.includes(planId)) return;
+        try {
+          const { statuses } = await api.getProgress(planId);
+          set((state) => ({
+            progress: { ...state.progress, [planId]: statuses },
+            syncedPlans: [...state.syncedPlans, planId],
+          }));
+        } catch {
+          // Sin conexión se sigue mostrando el cache persistido.
+        }
+      },
 
       setCourseStatus: (courseId, status) => {
-        const { specialtyId, progress } = get();
-        if (!specialtyId) return;
-        set({
-          progress: {
-            ...progress,
-            [specialtyId]: { ...progress[specialtyId], [courseId]: status },
-          },
+        const { planId, progress } = get();
+        if (!planId) return;
+        const previous = progress[planId]?.[courseId] ?? 'pending';
+
+        // Actualización optimista; si la API falla se revierte.
+        const apply = (value: CourseStatus) =>
+          set((state) => ({
+            progress: {
+              ...state.progress,
+              [planId]: { ...state.progress[planId], [courseId]: value },
+            },
+          }));
+
+        apply(status);
+        api.setStatus(planId, courseId, status).catch(() => {
+          apply(previous);
+          useToastStore.getState().show('No se pudo guardar el cambio. Revisa tu conexión.', 'error');
         });
       },
 
       getCourseStatus: (courseId) => {
-        const { specialtyId, progress } = get();
-        if (!specialtyId) return 'pending';
-        return progress[specialtyId]?.[courseId] ?? 'pending';
+        const { planId, progress } = get();
+        if (!planId) return 'pending';
+        return progress[planId]?.[courseId] ?? 'pending';
       },
 
       selectCourse: (courseId) => set({ selectedCourseId: courseId }),
       openStatusMenu: (menu) => set({ statusMenu: menu }),
       closeStatusMenu: () => set({ statusMenu: null }),
+
+      reset: () =>
+        set({
+          specialtyId: null,
+          planId: null,
+          progress: {},
+          syncedPlans: [],
+          selectedCourseId: null,
+          statusMenu: null,
+        }),
     }),
     {
       name: 'pistachio:curriculum',
-      // Solo persistimos lo que debe sobrevivir a un refresh.
+      // Cache para pintar al instante; el servidor reconcilia al hidratar.
       partialize: (state) => ({
         specialtyId: state.specialtyId,
+        planId: state.planId,
         progress: state.progress,
       }),
     },

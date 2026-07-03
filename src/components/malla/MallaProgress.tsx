@@ -2,15 +2,15 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { computeProgress } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
-import type { Specialty } from '@/types';
+import type { Plan } from '@/types';
 
-/** Barra de progreso global: ramos completados, porcentaje y créditos. */
-export function MallaProgress({ specialty }: { specialty: Specialty }) {
+/** Barra de progreso global: ramos completados, porcentaje y créditos SCT. */
+export function MallaProgress({ plan }: { plan: Plan }) {
   const progressMap = useCurriculumStore((s) => s.progress);
 
   const stats = useMemo(
-    () => computeProgress(specialty, progressMap[specialty.id] ?? {}),
-    [specialty, progressMap],
+    () => computeProgress(plan, progressMap[plan.id] ?? {}),
+    [plan, progressMap],
   );
 
   return (
@@ -24,7 +24,7 @@ export function MallaProgress({ specialty }: { specialty: Specialty }) {
           ramos <span className="text-text-secondary">({stats.percent}%)</span>
         </p>
         <p className="text-xs text-text-secondary">
-          {stats.completedCredits} / {stats.totalCredits} créditos aprobados
+          {stats.completedCredits} / {stats.totalCredits} SCT aprobados
         </p>
       </div>
       <div

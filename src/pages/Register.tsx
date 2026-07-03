@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { registerSchema, type RegisterValues } from '@/lib/validators';
-import * as authService from '@/services/auth';
+import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useToastStore } from '@/stores/useToastStore';
 
 export function Register() {
-  const setUser = useAuthStore((s) => s.setUser);
+  const setAuth = useAuthStore((s) => s.setAuth);
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -27,8 +27,8 @@ export function Register() {
   const onSubmit = async (values: RegisterValues) => {
     setServerError(null);
     try {
-      const user = await authService.register(values.name, values.email, values.password);
-      setUser(user);
+      const { user, settings } = await api.register(values.name, values.email, values.password);
+      setAuth(user, settings);
       show(`¡Bienvenido/a, ${user.name.split(' ')[0]}! Cuenta creada.`);
       navigate('/specialty', { replace: true });
     } catch (error) {

@@ -23,6 +23,11 @@ export const CourseCard = memo(function CourseCard({
     onLongPress: (x, y) => onStatusMenu(course.id, x, y),
   });
 
+  // Los slots (Teología, Minor, Electivos...) no tienen código institucional.
+  const subtitle = course.isSlot
+    ? `${course.credits} créditos · ${course.slotCategory ?? 'Formación General'}`
+    : `${course.id} · ${course.credits} créditos`;
+
   return (
     <div
       role="button"
@@ -42,9 +47,7 @@ export const CourseCard = memo(function CourseCard({
         <h3 className="text-sm font-medium leading-snug text-text-primary">{course.name}</h3>
         <StatusBadge status={status} />
       </div>
-      <p className="mt-1.5 text-xs text-text-secondary">
-        {course.id} · {course.credits} créditos
-      </p>
+      <p className="mt-1.5 text-xs text-text-secondary">{subtitle}</p>
     </div>
   );
 });

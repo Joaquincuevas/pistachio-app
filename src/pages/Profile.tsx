@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { ProgressRing } from '@/components/ui/ProgressRing';
-import { getSpecialty } from '@/data/curriculum';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { useActivePlan } from '@/hooks/useActivePlan';
 import { computeProgress } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
@@ -13,27 +14,36 @@ import { useToastStore } from '@/stores/useToastStore';
 
 export function Profile() {
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
+  const { specialty, plan, loading } = useActivePlan();
   const progressMap = useCurriculumStore((s) => s.progress);
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
 
-  const specialty = getSpecialty(specialtyId);
   const stats = useMemo(
-    () => (specialty ? computeProgress(specialty, progressMap[specialty.id] ?? {}) : null),
-    [specialty, progressMap],
+    () => (plan ? computeProgress(plan, progressMap[plan.id] ?? {}) : null),
+    [plan, progressMap],
   );
 
-  if (!user || !specialty || !stats) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-4 md:px-8 md:py-8">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="mt-4 h-24 rounded-card" />
+        <Skeleton className="mt-3 h-24 rounded-card" />
+        <Skeleton className="mt-3 h-56 rounded-card" />
+      </div>
+    );
+  }
 
-  const memberSince = new Date(user.createdAt).toLocaleDateString('es-CL', {
+  if (!user || !specialty || !plan || !stats) return null;
+
+  const memberSince = new Date(user.createdAt.replace(' ', 'T')).toLocaleDateString('es-CL', {
     month: 'long',
     year: 'numeric',
   });
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await useAuthStore.getState().logout();
     show('Sesión cerrada. ¡Hasta pronto!', 'info');
     navigate('/');
   };
@@ -54,7 +64,7 @@ export function Profile() {
         </div>
       </Card>
 
-      {/* Especialidad */}
+      {/* Especialidad y plan */}
       <Card className="mt-3 flex items-center gap-4 p-5">
         <span
           aria-hidden
@@ -65,6 +75,7 @@ export function Profile() {
         <div className="min-w-0 flex-1">
           <p className="text-xs text-text-secondary">Especialidad</p>
           <h2 className="truncate text-base font-semibold text-text-primary">{specialty.name}</h2>
+          <p className="truncate text-xs text-text-secondary">{plan.name}</p>
         </div>
         <Button variant="secondary" size="sm" onClick={() => navigate('/specialty')}>
           <RefreshCw className="h-3.5 w-3.5" aria-hidden />
@@ -105,7 +116,7 @@ export function Profile() {
                 <BookOpen className="h-4 w-4 text-accent" aria-hidden />
               </div>
               <div className="flex-1">
-                <dt className="text-xs text-text-secondary">Créditos aprobados</dt>
+                <dt className="text-xs text-text-secondary">Créditos SCT aprobados</dt>
                 <dd className="text-sm font-semibold text-text-primary">
                   {stats.completedCredits} de {stats.totalCredits}
                 </dd>

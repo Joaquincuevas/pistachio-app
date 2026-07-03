@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
 import { PageTransition } from '@/components/ui/PageTransition';
-import { specialties } from '@/data/curriculum';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { PISTACHIO_FACT } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useCatalogStore } from '@/stores/useCatalogStore';
 import { useToastStore } from '@/stores/useToastStore';
 
 const features = [
@@ -15,24 +16,25 @@ const features = [
     icon: Network,
     title: 'Malla interactiva',
     description:
-      'Explora tu malla completa como grid por semestre o como grafo de dependencias con zoom y pan.',
+      'Explora el Plan de Estudios 2022 completo como grid por semestre o como grafo de dependencias con zoom y pan.',
   },
   {
     icon: GitBranch,
     title: 'Prerrequisitos claros',
     description:
-      'Selecciona cualquier ramo y ve al instante qué necesitas antes y qué desbloqueas después.',
+      'Selecciona cualquier ramo y ve al instante qué necesitas antes y qué desbloqueas después, según el catálogo oficial.',
   },
   {
     icon: TrendingUp,
     title: 'Progreso personal',
     description:
-      'Marca tus ramos cursados y en progreso. Tu avance y créditos se guardan automáticamente.',
+      'Marca tus ramos cursados y en progreso. Tu avance y créditos SCT se guardan en tu cuenta.',
   },
 ];
 
 export function Landing() {
   const user = useAuthStore((s) => s.user);
+  const specialties = useCatalogStore((s) => s.specialties);
   const show = useToastStore((s) => s.show);
 
   // Easter egg: 3 taps seguidos en el 🥜 del footer muestran el dato botánico.
@@ -110,8 +112,8 @@ export function Landing() {
             ¿Qué es Pistachio?
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-text-secondary">
-            Una plataforma para estudiantes de Ingeniería Civil U. Andes que convierte el PDF de tu
-            malla en una experiencia interactiva.
+            Una plataforma para estudiantes de Ingeniería U. Andes que convierte el PDF de tu
+            malla en una experiencia interactiva, con los planes de estudio oficiales.
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {features.map(({ icon: Icon, title, description }) => (
@@ -132,18 +134,23 @@ export function Landing() {
         <div className="mx-auto max-w-5xl px-5 text-center">
           <h2 className="font-display text-3xl text-text-primary">Cinco especialidades</h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary">
-            Plan común de 4 semestres y luego tu mención, con más de 30 ramos cada una.
+            Plan común de 4 semestres y luego tu especialidad: 60 ramos y 11 semestres según el
+            Plan de Estudios 2022.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-2.5">
-            {specialties.map((specialty) => (
-              <span
-                key={specialty.id}
-                className="flex items-center gap-2 rounded-full border border-border bg-beige-light px-4 py-2 text-sm font-medium text-text-primary"
-              >
-                <span aria-hidden>{specialty.emoji}</span>
-                {specialty.name}
-              </span>
-            ))}
+            {specialties.length === 0
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-32 rounded-full" />
+                ))
+              : specialties.map((specialty) => (
+                  <span
+                    key={specialty.id}
+                    className="flex items-center gap-2 rounded-full border border-border bg-beige-light px-4 py-2 text-sm font-medium text-text-primary"
+                  >
+                    <span aria-hidden>{specialty.emoji}</span>
+                    {specialty.name}
+                  </span>
+                ))}
           </div>
         </div>
       </section>

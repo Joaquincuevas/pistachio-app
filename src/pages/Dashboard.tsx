@@ -4,9 +4,9 @@ import { MallaGraph } from '@/components/malla/MallaGraph';
 import { MallaGrid } from '@/components/malla/MallaGrid';
 import { MallaProgress } from '@/components/malla/MallaProgress';
 import { PageTransition } from '@/components/ui/PageTransition';
-import { getSpecialty } from '@/data/curriculum';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { useActivePlan } from '@/hooks/useActivePlan';
 import { cn } from '@/lib/utils';
-import { useCurriculumStore } from '@/stores/useCurriculumStore';
 
 type ViewMode = 'grid' | 'graph';
 
@@ -15,17 +15,31 @@ const modes: { value: ViewMode; label: string; icon: typeof LayoutGrid }[] = [
   { value: 'graph', label: 'Grafo', icon: GitBranch },
 ];
 
-/** Pantalla estrella: la malla, en vista grid o grafo de dependencias. */
+/** Pantalla estrella: la malla del plan de estudios, en grid o grafo. */
 export function Dashboard() {
-  const specialtyId = useCurriculumStore((s) => s.specialtyId);
-  const specialty = getSpecialty(specialtyId);
+  const { specialty, plan, loading } = useActivePlan();
 
   // El grafo brilla en pantallas grandes; en mobile parte en grid.
   const [mode, setMode] = useState<ViewMode>(() =>
     window.matchMedia('(min-width: 768px)').matches ? 'graph' : 'grid',
   );
 
-  if (!specialty) return null;
+  if (loading) {
+    return (
+      <div className="px-4 pt-4 md:px-8 md:pt-8">
+        <Skeleton className="h-8 w-44" />
+        <Skeleton className="mt-2 h-4 w-64" />
+        <Skeleton className="mt-5 h-20 rounded-card" />
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-card" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!specialty || !plan) return null;
 
   const header = (
     <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-8">
@@ -33,7 +47,7 @@ export function Dashboard() {
         <div className="min-w-0">
           <h1 className="font-display text-2xl text-text-primary md:text-3xl">Mi malla</h1>
           <p className="mt-0.5 truncate text-sm text-text-secondary">
-            {specialty.emoji} Ingeniería Civil {specialty.name}
+            {specialty.emoji} {specialty.fullName} · {plan.name}
           </p>
         </div>
 
@@ -64,7 +78,7 @@ export function Dashboard() {
       </div>
 
       <div className="mt-4">
-        <MallaProgress specialty={specialty} />
+        <MallaProgress plan={plan} />
       </div>
     </div>
   );
@@ -74,7 +88,7 @@ export function Dashboard() {
       <PageTransition className="flex h-full flex-col">
         {header}
         <div className="mt-4 min-h-0 flex-1">
-          <MallaGraph specialty={specialty} />
+          <MallaGraph plan={plan} />
         </div>
       </PageTransition>
     );
@@ -84,7 +98,7 @@ export function Dashboard() {
     <PageTransition>
       {header}
       <div className="px-4 pt-4 md:px-8">
-        <MallaGrid specialty={specialty} />
+        <MallaGrid plan={plan} />
       </div>
     </PageTransition>
   );
