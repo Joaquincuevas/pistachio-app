@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background font-sans text-text-primary;
+    overscroll-behavior-y: none;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  /* Focus visible consistente y accesible en toda la app */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+
+  ::selection {
+    @apply bg-accent-light text-accent-hover;
+  }
+}
+
+@layer utilities {
+  /* Safe areas iOS (notch / home indicator) */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Evita el callout/selección de iOS en elementos con long-press */
+  .press-target {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
