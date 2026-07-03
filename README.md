@@ -45,7 +45,20 @@ El catálogo se genera desde las planillas oficiales de la Facultad:
 
 Endpoints: `POST /api/auth/{register,login,logout}`, `GET /api/auth/me`, `GET /api/catalog`, `PUT /api/me/plan`, `GET|PUT /api/progress/:planId[/:courseId]`.
 
-En producción (`npm start`) el mismo proceso sirve la API y el frontend compilado — listo para deploy en Railway/Fly/Render con un volumen para el archivo `.db`.
+En producción (`npm start`) el mismo proceso sirve la API y el frontend compilado.
+
+## Deploy
+
+La app corre como **un solo proceso Node con un archivo SQLite**, por lo que necesita un hosting con **disco persistente**:
+
+| Plataforma | Compatible | Notas |
+| --- | --- | --- |
+| **Railway** | ✅ tal cual | Conectar el repo de GitHub, agregar un volumen montado en `/app/server`, comando `npm start`. |
+| **Render** | ✅ tal cual | Web Service + disk (requiere plan Starter); build `npm install && npm run build`, start `npm start`. |
+| **Fly.io** | ✅ tal cual | `fly launch` + volumen para `server/pistachio.db`. |
+| **Vercel** | ⚠️ no directo | Vercel es serverless sin disco persistente: el `.db` se borraría en cada arranque. Requiere migrar SQLite a **Turso** (SQLite hosteado) o Postgres, y la API a funciones serverless. |
+
+Variables en producción: `NODE_ENV=production` y `PORT` (lo inyecta la plataforma).
 
 ## Stack frontend
 
