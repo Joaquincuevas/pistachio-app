@@ -9,6 +9,12 @@ dist-ssr
 *.local
 .DS_Store
 
+# base de datos local (se crea y siembra sola al iniciar el server)
+server/*.db
+server/*.db-journal
+server/*.db-wal
+server/*.db-shm
+
 # logs
 npm-debug.log*
 *.log

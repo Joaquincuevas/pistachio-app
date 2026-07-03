@@ -9,4 +9,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      // La API corre en un proceso aparte (npm run dev:api).
+      '/api': 'http://localhost:3001',
+    },
+  },
 });
