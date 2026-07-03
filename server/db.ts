@@ -18,6 +18,8 @@ db.exec(`
     password_hash TEXT NOT NULL,
     specialty_id  TEXT,
     plan_id       TEXT,
+    totp_secret   TEXT,
+    totp_enabled  INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -32,7 +34,7 @@ db.exec(`
     id        TEXT PRIMARY KEY,
     name      TEXT NOT NULL,
     full_name TEXT NOT NULL,
-    emoji     TEXT NOT NULL,
+    icon      TEXT NOT NULL,
     tagline   TEXT NOT NULL,
     sort      INTEGER NOT NULL
   );
@@ -87,6 +89,19 @@ db.exec(`
   );
 `);
 
+// Migraciones para bases creadas con esquemas anteriores (no-op en DBs nuevas).
+for (const migration of [
+  `ALTER TABLE specialties RENAME COLUMN emoji TO icon`,
+  `ALTER TABLE users ADD COLUMN totp_secret TEXT`,
+  `ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0`,
+]) {
+  try {
+    db.exec(migration);
+  } catch {
+    // La columna ya existe / ya fue renombrada.
+  }
+}
+
 interface CatalogCourse {
   id: string;
   name: string;
@@ -108,7 +123,7 @@ interface Catalog {
     id: string;
     name: string;
     fullName: string;
-    emoji: string;
+    icon: string;
     tagline: string;
     plans: { id: string; name: string; courses: CatalogCourse[] }[];
   }[];
@@ -139,7 +154,7 @@ function seedCatalog() {
     `);
 
     const insSpec = db.prepare(
-      `INSERT INTO specialties (id, name, full_name, emoji, tagline, sort) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO specialties (id, name, full_name, icon, tagline, sort) VALUES (?, ?, ?, ?, ?, ?)`,
     );
     const insPlan = db.prepare(
       `INSERT INTO plans (id, specialty_id, name, sort) VALUES (?, ?, ?, ?)`,
@@ -159,7 +174,7 @@ function seedCatalog() {
     );
 
     catalog.specialties.forEach((spec, si) => {
-      insSpec.run(spec.id, spec.name, spec.fullName, spec.emoji, spec.tagline, si);
+      insSpec.run(spec.id, spec.name, spec.fullName, spec.icon, spec.tagline, si);
       spec.plans.forEach((plan, pi) => {
         insPlan.run(plan.id, spec.id, plan.name, pi);
         for (const course of plan.courses) {

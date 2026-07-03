@@ -29,19 +29,19 @@ OUT = Path(__file__).resolve().parent.parent / "server" / "data" / "catalog.json
 
 SPECIALTIES = [
     {"id": "ici", "sheet": "ICI Malla", "name": "Industrial",
-     "fullName": "Ingeniería Civil Industrial", "emoji": "⚙️",
+     "fullName": "Ingeniería Civil Industrial", "icon": "factory",
      "tagline": "Optimiza procesos, gestiona recursos y lidera organizaciones."},
     {"id": "ioc", "sheet": "IOC Malla", "name": "Obras Civiles",
-     "fullName": "Ingeniería Civil en Obras Civiles", "emoji": "🏗️",
+     "fullName": "Ingeniería Civil en Obras Civiles", "icon": "building",
      "tagline": "Diseña y construye la infraestructura que sostiene al país."},
     {"id": "ice", "sheet": "ICE Malla", "name": "Eléctrica",
-     "fullName": "Ingeniería Civil Eléctrica", "emoji": "⚡",
+     "fullName": "Ingeniería Civil Eléctrica", "icon": "zap",
      "tagline": "Energía, electrónica y automatización para un mundo conectado."},
     {"id": "icc", "sheet": "ICC Malla", "name": "Computación",
-     "fullName": "Ingeniería Civil en Ciencias de la Computación", "emoji": "💻",
+     "fullName": "Ingeniería Civil en Ciencias de la Computación", "icon": "cpu",
      "tagline": "Software, datos e inteligencia artificial para resolver problemas reales."},
     {"id": "ica", "sheet": "ICA Malla", "name": "Ambiental",
-     "fullName": "Ingeniería Civil en Medio Ambiente", "emoji": "🌱",
+     "fullName": "Ingeniería Civil en Medio Ambiente", "icon": "leaf",
      "tagline": "Procesos sustentables para el cuidado del medio ambiente."},
 ]
 
@@ -287,7 +287,7 @@ def main():
             plans.append(build_icc_ajuste(plan, cursos))
         out["specialties"].append({
             "id": spec["id"], "name": spec["name"], "fullName": spec["fullName"],
-            "emoji": spec["emoji"], "tagline": spec["tagline"], "plans": plans,
+            "icon": spec["icon"], "tagline": spec["tagline"], "plans": plans,
         })
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

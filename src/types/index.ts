@@ -53,7 +53,8 @@ export interface Specialty {
   id: string;
   name: string;
   fullName: string;
-  emoji: string;
+  /** Identificador del icono de línea (ver SpecialtyIcon). */
+  icon: string;
   tagline: string;
   plans: Plan[];
 }
@@ -63,6 +64,7 @@ export interface User {
   name: string;
   email: string;
   createdAt: string;
+  twoFactorEnabled: boolean;
 }
 
 export interface UserSettings {

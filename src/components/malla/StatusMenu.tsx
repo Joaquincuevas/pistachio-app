@@ -32,8 +32,12 @@ export function StatusMenu() {
 
   const choose = (status: CourseStatus) => {
     if (!course) return;
-    setCourseStatus(course.id, status);
-    show(`${course.name} marcado como ${STATUS_LABELS[status].toLowerCase()}`);
+    const cascaded = setCourseStatus(course.id, status);
+    show(
+      cascaded > 0
+        ? `${course.name} y ${cascaded} ${cascaded === 1 ? 'ramo previo marcado' : 'ramos previos marcados'} como cursados`
+        : `${course.name} marcado como ${STATUS_LABELS[status].toLowerCase()}`,
+    );
     close();
   };
 

@@ -63,8 +63,12 @@ function CourseDetailContent({ course, plan }: { course: Course; plan: Plan }) {
   const hours = course.hours && course.hours.total > 0 ? course.hours : null;
 
   const handleStatus = (next: CourseStatus) => {
-    setCourseStatus(course.id, next);
-    show(`${course.name} marcado como ${STATUS_LABELS[next].toLowerCase()}`);
+    const cascaded = setCourseStatus(course.id, next);
+    show(
+      cascaded > 0
+        ? `${course.name} y ${cascaded} ${cascaded === 1 ? 'ramo previo marcado' : 'ramos previos marcados'} como cursados`
+        : `${course.name} marcado como ${STATUS_LABELS[next].toLowerCase()}`,
+    );
   };
 
   return (

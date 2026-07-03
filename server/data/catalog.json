@@ -5,7 +5,7 @@
       "id": "ici",
       "name": "Industrial",
       "fullName": "Ingeniería Civil Industrial",
-      "emoji": "⚙️",
+      "icon": "factory",
       "tagline": "Optimiza procesos, gestiona recursos y lidera organizaciones.",
       "plans": [
         {
@@ -1669,7 +1669,7 @@
       "id": "ioc",
       "name": "Obras Civiles",
       "fullName": "Ingeniería Civil en Obras Civiles",
-      "emoji": "🏗️",
+      "icon": "building",
       "tagline": "Diseña y construye la infraestructura que sostiene al país.",
       "plans": [
         {
@@ -3310,7 +3310,7 @@
       "id": "ice",
       "name": "Eléctrica",
       "fullName": "Ingeniería Civil Eléctrica",
-      "emoji": "⚡",
+      "icon": "zap",
       "tagline": "Energía, electrónica y automatización para un mundo conectado.",
       "plans": [
         {
@@ -4984,7 +4984,7 @@
       "id": "icc",
       "name": "Computación",
       "fullName": "Ingeniería Civil en Ciencias de la Computación",
-      "emoji": "💻",
+      "icon": "cpu",
       "tagline": "Software, datos e inteligencia artificial para resolver problemas reales.",
       "plans": [
         {
@@ -8336,7 +8336,7 @@
       "id": "ica",
       "name": "Ambiental",
       "fullName": "Ingeniería Civil en Medio Ambiente",
-      "emoji": "🌱",
+      "icon": "leaf",
       "tagline": "Procesos sustentables para el cuidado del medio ambiente.",
       "plans": [
         {

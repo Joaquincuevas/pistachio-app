@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Clock, GraduationCap, LogOut, RefreshCw } from 'lucide-react';
+import { BookOpen, ChevronRight, Clock, GraduationCap, LogOut, RefreshCw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
 import { useActivePlan } from '@/hooks/useActivePlan';
 import { computeProgress } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -68,9 +69,9 @@ export function Profile() {
       <Card className="mt-3 flex items-center gap-4 p-5">
         <span
           aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-beige-light text-2xl"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-accent-light"
         >
-          {specialty.emoji}
+          <SpecialtyIcon icon={specialty.icon} className="h-6 w-6 text-accent" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-text-secondary">Especialidad</p>
@@ -124,6 +125,30 @@ export function Profile() {
             </div>
           </dl>
         </div>
+      </Card>
+
+      {/* Configuración de la cuenta */}
+      <Card
+        interactive
+        className="mt-3 flex items-center gap-4 p-5"
+        role="button"
+        tabIndex={0}
+        aria-label="Abrir configuración"
+        onClick={() => navigate('/settings')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') navigate('/settings');
+        }}
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-surface">
+          <Settings className="h-5 w-5 text-text-secondary" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold text-text-primary">Configuración</h2>
+          <p className="text-xs text-text-secondary">
+            Contraseña, verificación en dos pasos y cuenta
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
       </Card>
 
       <Button variant="danger" fullWidth className="mb-10 mt-6" onClick={handleLogout}>

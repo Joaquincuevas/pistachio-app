@@ -47,7 +47,7 @@ export function Dashboard() {
         <div className="min-w-0">
           <h1 className="font-display text-2xl text-text-primary md:text-3xl">Mi malla</h1>
           <p className="mt-0.5 truncate text-sm text-text-secondary">
-            {specialty.emoji} {specialty.fullName} · {plan.name}
+            {specialty.fullName} · {plan.name}
           </p>
         </div>
 

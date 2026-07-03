@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
 import { cn } from '@/lib/utils';
 import { useCatalogStore } from '@/stores/useCatalogStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
@@ -47,7 +48,7 @@ export function SpecialtySelect() {
     setSaving(true);
     try {
       await choosePlan(specialty.id, effectivePlanId);
-      show(`Especialidad seleccionada: ${specialty.name} ${specialty.emoji}`);
+      show(`Especialidad seleccionada: ${specialty.name}`);
       navigate('/malla');
     } catch (error) {
       show(error instanceof Error ? error.message : 'No se pudo guardar', 'error');
@@ -95,9 +96,9 @@ export function SpecialtySelect() {
                 >
                   <span
                     aria-hidden
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-beige-light text-2xl"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-accent-light"
                   >
-                    {spec.emoji}
+                    <SpecialtyIcon icon={spec.icon} className="h-6 w-6 text-accent" />
                   </span>
                   <span className="min-w-0 pr-6">
                     <span className="block text-base font-semibold text-text-primary">

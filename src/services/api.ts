@@ -45,6 +45,16 @@ export interface AuthResponse {
   settings: UserSettings;
 }
 
+/** El login puede pedir un segundo paso cuando la cuenta tiene 2FA activo. */
+export type LoginResponse = AuthResponse | { twoFactorRequired: true; challengeId: string };
+
+export interface TwoFaSetup {
+  secret: string;
+  uri: string;
+  /** Data URL del QR para escanear con la app de autenticación. */
+  qr: string;
+}
+
 export const api = {
   register: (name: string, email: string, password: string) =>
     request<AuthResponse>('/api/auth/register', {
@@ -53,14 +63,46 @@ export const api = {
     }),
 
   login: (email: string, password: string) =>
-    request<AuthResponse>('/api/auth/login', {
+    request<LoginResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
+    }),
+
+  login2fa: (challengeId: string, code: string) =>
+    request<AuthResponse>('/api/auth/2fa', {
+      method: 'POST',
+      body: JSON.stringify({ challengeId, code }),
     }),
 
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
   me: () => request<AuthResponse>('/api/auth/me'),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ ok: boolean }>('/api/me/password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  twoFaSetup: () => request<TwoFaSetup>('/api/me/2fa/setup', { method: 'POST' }),
+
+  twoFaEnable: (code: string) =>
+    request<{ ok: boolean }>('/api/me/2fa/enable', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
+  twoFaDisable: (password: string) =>
+    request<{ ok: boolean }>('/api/me/2fa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    }),
+
+  deleteAccount: (password: string) =>
+    request<void>('/api/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    }),
 
   catalog: () => request<{ specialties: Specialty[] }>('/api/catalog'),
 
@@ -74,8 +116,11 @@ export const api = {
     request<{ statuses: Record<string, CourseStatus> }>(`/api/progress/${planId}`),
 
   setStatus: (planId: string, courseId: string, status: CourseStatus) =>
-    request<{ ok: boolean }>(`/api/progress/${planId}/${courseId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    }),
+    request<{ ok: boolean; statuses: Record<string, CourseStatus> }>(
+      `/api/progress/${planId}/${courseId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      },
+    ),
 };

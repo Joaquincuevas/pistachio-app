@@ -41,6 +41,7 @@ export interface SessionUser {
   created_at: string;
   specialty_id: string | null;
   plan_id: string | null;
+  totp_enabled: number;
 }
 
 export function getSessionUser(token: string | undefined): SessionUser | null {
@@ -49,7 +50,7 @@ export function getSessionUser(token: string | undefined): SessionUser | null {
   db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
   const row = db
     .prepare(
-      `SELECT u.id, u.name, u.email, u.created_at, u.specialty_id, u.plan_id
+      `SELECT u.id, u.name, u.email, u.created_at, u.specialty_id, u.plan_id, u.totp_enabled
        FROM sessions s JOIN users u ON u.id = s.user_id
        WHERE s.token_hash = ? AND s.expires_at >= datetime('now')`,
     )
@@ -60,6 +61,15 @@ export function getSessionUser(token: string | undefined): SessionUser | null {
 export function destroySession(token: string | undefined): void {
   if (!token) return;
   db.prepare(`DELETE FROM sessions WHERE token_hash = ?`).run(hashToken(token));
+}
+
+/** Cierra todas las sesiones del usuario menos la actual (tras cambiar clave). */
+export function destroyOtherSessions(userId: number, currentToken: string | undefined): void {
+  if (!currentToken) return;
+  db.prepare(`DELETE FROM sessions WHERE user_id = ? AND token_hash != ?`).run(
+    userId,
+    hashToken(currentToken),
+  );
 }
 
 /** Límite de intentos de login por email (mitiga fuerza bruta básica). */

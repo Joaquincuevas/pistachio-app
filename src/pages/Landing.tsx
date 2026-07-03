@@ -1,11 +1,12 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { GitBranch, Network, TrendingUp } from 'lucide-react';
+import { GitBranch, Network, Nut, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
 import { PISTACHIO_FACT } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCatalogStore } from '@/stores/useCatalogStore';
@@ -45,7 +46,7 @@ export function Landing() {
     if (resetTimer.current !== null) window.clearTimeout(resetTimer.current);
     if (taps.current >= 3) {
       taps.current = 0;
-      show(`🥜 ${PISTACHIO_FACT}`, 'info');
+      show(PISTACHIO_FACT, 'info');
       return;
     }
     resetTimer.current = window.setTimeout(() => {
@@ -145,9 +146,9 @@ export function Landing() {
               : specialties.map((specialty) => (
                   <span
                     key={specialty.id}
-                    className="flex items-center gap-2 rounded-full border border-border bg-beige-light px-4 py-2 text-sm font-medium text-text-primary"
+                    className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-subtle"
                   >
-                    <span aria-hidden>{specialty.emoji}</span>
+                    <SpecialtyIcon icon={specialty.icon} className="h-4 w-4 text-accent" />
                     {specialty.name}
                   </span>
                 ))}
@@ -162,9 +163,9 @@ export function Landing() {
             type="button"
             onClick={handleNutTap}
             aria-label="Un pistacho misterioso"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-xl transition-transform hover:scale-110 active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-all hover:scale-110 hover:text-accent active:scale-95"
           >
-            🥜
+            <Nut className="h-5 w-5" aria-hidden />
           </button>
           <p className="text-xs text-text-secondary">
             Pistachio · Hecho para estudiantes de Ingeniería U. Andes

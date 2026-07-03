@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, LogOut, Search, User } from 'lucide-react';
+import { LayoutGrid, LogOut, Search, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -9,6 +9,7 @@ const links = [
   { to: '/malla', label: 'Mi malla', icon: LayoutGrid },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/profile', label: 'Perfil', icon: User },
+  { to: '/settings', label: 'Configuración', icon: Settings },
 ];
 
 /** Navegación lateral minimal, solo desktop. */
