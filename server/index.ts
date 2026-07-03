@@ -132,6 +132,12 @@ function getPasswordHash(userId: number): string {
   return row.password_hash;
 }
 
+// ─── Salud (healthcheck del hosting) ────────────────────────────
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true });
+});
+
 // ─── Auth ───────────────────────────────────────────────────────
 
 app.post('/api/auth/register', (req, res) => {

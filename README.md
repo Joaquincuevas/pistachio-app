@@ -49,16 +49,20 @@ En producción (`npm start`) el mismo proceso sirve la API y el frontend compila
 
 ## Deploy
 
-La app corre como **un solo proceso Node con un archivo SQLite**, por lo que necesita un hosting con **disco persistente**:
+La app corre como **un solo proceso Node con un archivo SQLite**, por lo que necesita un hosting con **disco persistente** (Vercel es serverless sin disco: el `.db` se borraría en cada arranque; usarlo exigiría migrar a Turso/Postgres).
 
-| Plataforma | Compatible | Notas |
-| --- | --- | --- |
-| **Railway** | ✅ tal cual | Conectar el repo de GitHub, agregar un volumen montado en `/app/server`, comando `npm start`. |
-| **Render** | ✅ tal cual | Web Service + disk (requiere plan Starter); build `npm install && npm run build`, start `npm start`. |
-| **Fly.io** | ✅ tal cual | `fly launch` + volumen para `server/pistachio.db`. |
-| **Vercel** | ⚠️ no directo | Vercel es serverless sin disco persistente: el `.db` se borraría en cada arranque. Requiere migrar SQLite a **Turso** (SQLite hosteado) o Postgres, y la API a funciones serverless. |
+### Railway (recomendado — el repo ya trae `railway.json`)
 
-Variables en producción: `NODE_ENV=production` y `PORT` (lo inyecta la plataforma).
+1. Entra a [railway.app](https://railway.app) e inicia sesión con GitHub.
+2. **New Project → Deploy from GitHub repo** → selecciona `Joaquincuevas/pistachio-app`. Railway detecta build (`npm run build`) y start (`npm start`) desde `railway.json`.
+3. En el servicio: **Settings → Volumes → Add Volume**, mount path `/data`.
+4. En **Variables** agrega:
+   - `NODE_ENV` = `production`
+   - `DATABASE_PATH` = `/data/pistachio.db`
+   (`PORT` lo inyecta Railway solo.)
+5. **Settings → Networking → Generate Domain** para obtener la URL pública.
+
+Cada push a `main` redespliega automáticamente. El healthcheck usa `/api/health`.
 
 ## Stack frontend
 

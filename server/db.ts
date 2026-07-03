@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-export const db = new Database(path.join(here, 'pistachio.db'));
+// En producción la base vive en el volumen persistente (DATABASE_PATH,
+// ej: /data/pistachio.db en Railway); en dev, junto al código del server.
+const dbPath = process.env.DATABASE_PATH ?? path.join(here, 'pistachio.db');
+
+export const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
