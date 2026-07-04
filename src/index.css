@@ -20,11 +20,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Fraunces (display) luce mejor con óptica de titular a tamaños grandes. */
-  .font-display {
-    font-optical-sizing: auto;
-  }
-
   #root {
     min-height: 100dvh;
   }

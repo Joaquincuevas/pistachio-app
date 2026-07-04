@@ -61,7 +61,7 @@ export function Landing() {
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
             <Logo size="sm" />
-            <span className="font-display text-2xl">Pistachio</span>
+            <span className="font-display text-2xl font-semibold tracking-tight">Pistachio</span>
           </div>
           <Link
             to={user ? '/malla' : '/login'}
@@ -74,12 +74,12 @@ export function Landing() {
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-5 pb-16 pt-14 text-center md:pt-24">
-        <h1 className="mx-auto max-w-2xl font-display text-[42px] leading-[1.08] text-text-primary md:text-6xl">
+        <h1 className="mx-auto max-w-2xl font-display text-[42px] font-semibold leading-[1.08] tracking-tighter text-text-primary md:text-6xl">
           Tu malla curricular,
           <br />
           <span className="text-accent">al alcance.</span>
         </h1>
-        <p className="mx-auto mt-6 max-w-xl font-display text-lg italic leading-relaxed text-text-secondary md:text-xl">
+        <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-secondary md:text-lg">
           “{PISTACHIO_FACT}”
         </p>
         <div className="mx-auto mt-9 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
@@ -109,7 +109,7 @@ export function Landing() {
       {/* ¿Qué es Pistachio? */}
       <section className="bg-surface py-16">
         <div className="mx-auto max-w-5xl px-5">
-          <h2 className="text-center font-display text-3xl text-text-primary">
+          <h2 className="text-center font-display text-3xl font-semibold tracking-tight text-text-primary">
             ¿Qué es Pistachio?
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-text-secondary">
@@ -133,7 +133,9 @@ export function Landing() {
       {/* Especialidades */}
       <section className="py-16">
         <div className="mx-auto max-w-5xl px-5 text-center">
-          <h2 className="font-display text-3xl text-text-primary">Cinco especialidades</h2>
+          <h2 className="font-display text-3xl font-semibold tracking-tight text-text-primary">
+            Cinco especialidades
+          </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary">
             Plan común de 4 semestres y luego tu especialidad: 60 ramos y 11 semestres según el
             Plan de Estudios 2022.

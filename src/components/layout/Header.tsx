@@ -11,7 +11,7 @@ export function Header() {
       <div className="flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
           <Logo size="sm" />
-          <span className="font-display text-xl">Pistachio</span>
+          <span className="font-display text-xl font-semibold tracking-tight">Pistachio</span>
         </div>
         {specialty && (
           <span className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-xs font-medium text-text-secondary">

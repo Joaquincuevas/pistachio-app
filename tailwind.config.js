@@ -35,7 +35,8 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Fraunces', 'Georgia', 'serif'],
+        // Marca (wordmark, logo, hero). Geométrica, minimalista y elegante.
+        display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       letterSpacing: {

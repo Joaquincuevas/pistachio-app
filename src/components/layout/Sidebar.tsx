@@ -28,7 +28,7 @@ export function Sidebar() {
     <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-white md:flex">
       <div className="flex items-center gap-2.5 px-5 py-6">
         <Logo size="sm" />
-        <span className="font-display text-2xl">Pistachio</span>
+        <span className="font-display text-2xl font-semibold tracking-tight">Pistachio</span>
       </div>
 
       <nav aria-label="Navegación principal" className="flex flex-1 flex-col gap-1 px-3">
