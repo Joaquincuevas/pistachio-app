@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import { PageTransition } from '@/components/ui/PageTransition';
 import { api, type TwoFaSetup } from '@/services/api';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useToastStore } from '@/stores/useToastStore';
@@ -52,7 +51,7 @@ function PasswordSection() {
           <KeyRound className="h-4 w-4 text-accent" aria-hidden />
         </span>
         <div>
-          <h2 className="text-sm font-semibold text-text-primary">Cambiar contraseña</h2>
+          <h3 className="text-sm font-semibold text-text-primary">Cambiar contraseña</h3>
           <p className="text-xs text-text-secondary">
             Al cambiarla se cierran tus demás sesiones abiertas.
           </p>
@@ -161,9 +160,9 @@ function TwoFactorSection() {
             <ShieldCheck className="h-4 w-4 text-accent" aria-hidden />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-text-primary">
+            <h3 className="text-sm font-semibold text-text-primary">
               Verificación en dos pasos
-            </h2>
+            </h3>
             <p className="text-xs text-text-secondary">
               Un código de tu app de autenticación al iniciar sesión.
             </p>
@@ -285,7 +284,7 @@ function DangerSection() {
             <Trash2 className="h-4 w-4 text-danger" aria-hidden />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-text-primary">Eliminar cuenta</h2>
+            <h3 className="text-sm font-semibold text-text-primary">Eliminar cuenta</h3>
             <p className="text-xs text-text-secondary">
               Borra definitivamente tu cuenta y todo tu progreso.
             </p>
@@ -338,20 +337,13 @@ function DangerSection() {
   );
 }
 
-/** Configuración de la cuenta: contraseña, 2FA y eliminación. */
-export function Settings() {
+/** Bloque de seguridad y administración de cuenta: contraseña, 2FA y eliminación. */
+export function AccountSecurity() {
   return (
-    <PageTransition className="mx-auto max-w-2xl px-4 py-4 md:px-8 md:py-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
-        Configuración
-      </h1>
-      <p className="mt-1 text-sm text-text-secondary">Seguridad y administración de tu cuenta.</p>
-
-      <div className="mt-5 flex flex-col gap-3 pb-10">
-        <PasswordSection />
-        <TwoFactorSection />
-        <DangerSection />
-      </div>
-    </PageTransition>
+    <div className="flex flex-col gap-3">
+      <PasswordSection />
+      <TwoFactorSection />
+      <DangerSection />
+    </div>
   );
 }

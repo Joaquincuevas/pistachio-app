@@ -9,7 +9,6 @@ import { Login } from '@/pages/Login';
 import { Profile } from '@/pages/Profile';
 import { Register } from '@/pages/Register';
 import { Search } from '@/pages/Search';
-import { Settings } from '@/pages/Settings';
 import { SpecialtySelect } from '@/pages/SpecialtySelect';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCatalogStore } from '@/stores/useCatalogStore';
@@ -39,7 +38,8 @@ export default function App() {
               <Route path="/malla" element={<Dashboard />} />
               <Route path="/search" element={<Search />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
+              {/* Perfil y Configuración quedaron unificados en /profile. */}
+              <Route path="/settings" element={<Navigate to="/profile" replace />} />
             </Route>
           </Route>
         </Route>
