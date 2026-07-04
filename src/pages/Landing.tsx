@@ -79,7 +79,7 @@ export function Landing() {
           <br />
           <span className="text-accent">al alcance.</span>
         </h1>
-        <p className="mx-auto mt-6 max-w-xl text-sm italic leading-relaxed text-text-secondary md:text-base">
+        <p className="mx-auto mt-6 max-w-xl font-display text-lg italic leading-relaxed text-text-secondary md:text-xl">
           “{PISTACHIO_FACT}”
         </p>
         <div className="mx-auto mt-9 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">

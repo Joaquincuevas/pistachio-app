@@ -79,7 +79,9 @@ export function Login() {
         {challengeId ? (
           /* ─── Paso 2: código de la app de autenticación ─── */
           <>
-            <h1 className="mt-5 font-display text-3xl text-text-primary">Verificación</h1>
+            <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary">
+              Verificación
+            </h1>
             <p className="mt-1.5 text-sm text-text-secondary">
               Ingresa el código de 6 dígitos de tu app de autenticación.
             </p>
@@ -132,7 +134,9 @@ export function Login() {
         ) : (
           /* ─── Paso 1: correo y contraseña ─── */
           <>
-            <h1 className="mt-5 font-display text-3xl text-text-primary">Inicia sesión</h1>
+            <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary">
+              Inicia sesión
+            </h1>
             <p className="mt-1.5 text-sm text-text-secondary">
               Con tu correo institucional U. Andes.
             </p>

@@ -47,7 +47,7 @@ export const CourseCard = memo(function CourseCard({
         <h3 className="text-sm font-medium leading-snug text-text-primary">{course.name}</h3>
         <StatusBadge status={status} />
       </div>
-      <p className="mt-1.5 text-xs text-text-secondary">{subtitle}</p>
+      <p className="mt-1.5 text-xs tabular-nums text-text-secondary">{subtitle}</p>
     </div>
   );
 });

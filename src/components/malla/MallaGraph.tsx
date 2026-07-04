@@ -78,7 +78,7 @@ const CourseNode = memo(function CourseNode(props: NodeProps) {
 const SemesterLabelNode = memo(function SemesterLabelNode(props: NodeProps) {
   const { label } = props.data as { label: string };
   return (
-    <div className="pointer-events-none select-none font-display text-lg text-text-secondary">
+    <div className="pointer-events-none select-none text-sm font-semibold tracking-tight text-text-secondary">
       {label}
     </div>
   );

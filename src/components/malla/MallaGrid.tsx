@@ -26,7 +26,7 @@ export function MallaGrid({ plan }: { plan: Plan }) {
           <section key={semester} aria-label={`Semestre ${semester}`}>
             <div className="sticky top-0 z-10 -mx-4 border-b border-border/70 bg-surface/95 px-8 py-2.5 backdrop-blur-sm md:-mx-8 md:px-16">
               <div className="flex items-baseline justify-between">
-                <h2 className="font-display text-xl text-text-primary">
+                <h2 className="text-base font-semibold tracking-tight text-text-primary">
                   Semestre {semester}
                 </h2>
                 <span className="text-xs text-text-secondary">

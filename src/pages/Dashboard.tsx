@@ -45,7 +45,9 @@ export function Dashboard() {
     <div className="shrink-0 px-4 pt-4 md:px-8 md:pt-8">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl text-text-primary md:text-3xl">Mi malla</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
+            Mi malla
+          </h1>
           <p className="mt-0.5 truncate text-sm text-text-secondary">
             {specialty.fullName} · {plan.name}
           </p>

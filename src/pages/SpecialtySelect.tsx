@@ -61,7 +61,7 @@ export function SpecialtySelect() {
     <PageTransition className="flex min-h-dvh flex-col bg-surface pt-safe">
       <div className="mx-auto w-full max-w-3xl flex-1 px-5 pb-40 pt-10">
         <Logo size="lg" />
-        <h1 className="mt-5 font-display text-3xl text-text-primary md:text-4xl">
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary md:text-4xl">
           Elige tu especialidad
         </h1>
         <p className="mt-2 max-w-md text-sm text-text-secondary">

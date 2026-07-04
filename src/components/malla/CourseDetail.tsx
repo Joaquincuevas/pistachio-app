@@ -89,7 +89,7 @@ function CourseDetailContent({ course, plan }: { course: Course; plan: Plan }) {
           )}
           <StatusBadge status={status} />
         </div>
-        <h2 className="mt-3 font-display text-3xl leading-tight text-text-primary">
+        <h2 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-text-primary">
           {course.name}
         </h2>
       </div>

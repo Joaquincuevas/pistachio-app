@@ -99,7 +99,9 @@ export function Search() {
 
   return (
     <PageTransition className="mx-auto max-w-4xl px-4 py-4 md:px-8 md:py-8">
-      <h1 className="font-display text-2xl text-text-primary md:text-3xl">Buscar ramos</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
+        Buscar ramos
+      </h1>
 
       {/* Input de búsqueda */}
       <div className="relative mt-4">

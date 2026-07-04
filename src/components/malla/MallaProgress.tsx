@@ -14,18 +14,30 @@ export function MallaProgress({ plan }: { plan: Plan }) {
   );
 
   return (
-    <div className="rounded-card border border-border bg-white p-4 shadow-subtle">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-sm text-text-primary">
-          Has completado{' '}
-          <span className="font-semibold">
-            {stats.completedCourses} de {stats.totalCourses}
-          </span>{' '}
-          ramos <span className="text-text-secondary">({stats.percent}%)</span>
-        </p>
-        <p className="text-xs text-text-secondary">
-          {stats.completedCredits} / {stats.totalCredits} SCT aprobados
-        </p>
+    <div className="rounded-card border border-border bg-white p-5 shadow-subtle">
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-tertiary">
+            Avance de la malla
+          </p>
+          <p className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-3xl font-semibold tracking-tight tabular-nums text-text-primary">
+              {stats.completedCourses}
+            </span>
+            <span className="text-lg font-medium tabular-nums text-text-tertiary">
+              / {stats.totalCourses}
+            </span>
+            <span className="ml-0.5 text-sm text-text-secondary">ramos</span>
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-2xl font-semibold tracking-tight tabular-nums text-accent">
+            {stats.percent}%
+          </p>
+          <p className="mt-0.5 text-xs tabular-nums text-text-secondary">
+            {stats.completedCredits} / {stats.totalCredits} SCT
+          </p>
+        </div>
       </div>
       <div
         role="progressbar"
@@ -33,7 +45,7 @@ export function MallaProgress({ plan }: { plan: Plan }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Avance de la malla"
-        className="mt-3 h-2 overflow-hidden rounded-full bg-border/70"
+        className="mt-4 h-2 overflow-hidden rounded-full bg-surface"
       >
         <motion.div
           className="h-full rounded-full bg-accent"

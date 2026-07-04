@@ -298,7 +298,9 @@ function DangerSection() {
 
       <Modal open={open} onClose={() => !busy && setOpen(false)} title="Eliminar cuenta">
         <div className="px-6 pb-6 pt-6">
-          <h2 className="pr-8 font-display text-2xl text-text-primary">¿Eliminar tu cuenta?</h2>
+          <h2 className="pr-8 text-2xl font-semibold tracking-tight text-text-primary">
+            ¿Eliminar tu cuenta?
+          </h2>
           <p className="mt-3 text-sm leading-relaxed text-text-secondary">
             Esta acción es definitiva: se borra tu cuenta, tu progreso en todos los planes y tus
             sesiones. No se puede deshacer.
@@ -340,7 +342,9 @@ function DangerSection() {
 export function Settings() {
   return (
     <PageTransition className="mx-auto max-w-2xl px-4 py-4 md:px-8 md:py-8">
-      <h1 className="font-display text-2xl text-text-primary md:text-3xl">Configuración</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
+        Configuración
+      </h1>
       <p className="mt-1 text-sm text-text-secondary">Seguridad y administración de tu cuenta.</p>
 
       <div className="mt-5 flex flex-col gap-3 pb-10">

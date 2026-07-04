@@ -44,7 +44,9 @@ export function ProgressRing({ value, size = 148, strokeWidth = 11 }: ProgressRi
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="font-display text-4xl text-text-primary">{clamped}%</span>
+        <span className="text-4xl font-semibold tracking-tight tabular-nums text-text-primary">
+          {clamped}%
+        </span>
         <span className="text-xs text-text-secondary">avance</span>
       </div>
     </div>

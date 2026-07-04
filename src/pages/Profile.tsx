@@ -51,11 +51,13 @@ export function Profile() {
 
   return (
     <PageTransition className="mx-auto max-w-2xl px-4 py-4 md:px-8 md:py-8">
-      <h1 className="font-display text-2xl text-text-primary md:text-3xl">Perfil</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-text-primary md:text-3xl">
+        Perfil
+      </h1>
 
       {/* Usuario */}
       <Card className="mt-4 flex items-center gap-4 p-5">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-beige-light font-display text-2xl text-text-primary">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent-light text-xl font-semibold text-accent-hover">
           {user.name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
@@ -96,7 +98,7 @@ export function Profile() {
               </div>
               <div className="flex-1">
                 <dt className="text-xs text-text-secondary">Ramos completados</dt>
-                <dd className="text-sm font-semibold text-text-primary">
+                <dd className="text-sm font-semibold tabular-nums text-text-primary">
                   {stats.completedCourses} de {stats.totalCourses}
                 </dd>
               </div>
@@ -107,7 +109,7 @@ export function Profile() {
               </div>
               <div className="flex-1">
                 <dt className="text-xs text-text-secondary">En progreso</dt>
-                <dd className="text-sm font-semibold text-text-primary">
+                <dd className="text-sm font-semibold tabular-nums text-text-primary">
                   {stats.inProgressCourses} {stats.inProgressCourses === 1 ? 'ramo' : 'ramos'}
                 </dd>
               </div>
@@ -118,7 +120,7 @@ export function Profile() {
               </div>
               <div className="flex-1">
                 <dt className="text-xs text-text-secondary">Créditos SCT aprobados</dt>
-                <dd className="text-sm font-semibold text-text-primary">
+                <dd className="text-sm font-semibold tabular-nums text-text-primary">
                   {stats.completedCredits} de {stats.totalCredits}
                 </dd>
               </div>

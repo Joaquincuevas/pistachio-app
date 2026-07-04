@@ -48,7 +48,9 @@ export function Register() {
         </Link>
 
         <Logo size="lg" />
-        <h1 className="mt-5 font-display text-3xl text-text-primary">Crea tu cuenta</h1>
+        <h1 className="mt-5 text-3xl font-semibold tracking-tight text-text-primary">
+          Crea tu cuenta
+        </h1>
         <p className="mt-1.5 text-sm text-text-secondary">
           Solo necesitas tu correo @uandes.cl o @miuandes.cl.
         </p>
