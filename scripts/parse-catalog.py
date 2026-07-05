@@ -179,6 +179,47 @@ def concurrent_flag(course_meta, prereq_name: str) -> bool:
     return "(p)" in tail or "concurrente" in tail or "paralelo" in tail
 
 
+# Slots que forman una secuencia (I → II → III): se encadenan como prerrequisitos.
+SLOT_CHAINS = [["MINOR1", "MINOR2", "MINOR3"], ["TEO1", "TEO2", "TEO3"]]
+
+# Prácticas del plan común (existen en la hoja Cursos pero fuera de la grilla).
+PRACTICES = [
+    {"code": "ING4106", "semester": 7, "creditReq": 170},   # Pre-Professional Practice
+    {"code": "ING6104", "semester": 11, "creditReq": 282},  # Professional Practice
+]
+
+
+def enrich_plan(plan_courses: list, cursos: dict) -> list:
+    """Encadena los slots secuenciales y agrega las prácticas a un plan."""
+    by_id = {c["id"]: c for c in plan_courses}
+
+    # Encadena minors y teologías: cada uno requiere el anterior.
+    for chain in SLOT_CHAINS:
+        present = [cid for cid in chain if cid in by_id]
+        for prev, cur in zip(present, present[1:]):
+            reqs = by_id[cur]["prerequisites"]
+            if not any(p["id"] == prev for p in reqs):
+                reqs.append({"id": prev, "concurrent": False})
+
+    # Agrega Práctica Pre-Profesional y Profesional (gatilladas por créditos).
+    cursos_by_code = {c["id"]: c for c in cursos.values()}
+    for prac in PRACTICES:
+        if prac["code"] in by_id:
+            continue
+        meta = cursos_by_code.get(prac["code"])
+        if not meta:
+            continue
+        plan_courses.append({
+            **meta,
+            "isSlot": False,
+            "slotCategory": None,
+            "semester": prac["semester"],
+            "prerequisites": [],
+            "creditReq": prac["creditReq"],
+        })
+    return plan_courses
+
+
 def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnings: list):
     by_num = {}
     courses = []
@@ -220,6 +261,7 @@ def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnin
             "prerequisites": prereqs,
             "creditReq": e["creditReq"],
         })
+    enrich_plan(plan_courses, cursos)
     return {"id": plan_id, "name": plan_name, "courses": plan_courses}
 
 

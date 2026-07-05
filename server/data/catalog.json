@@ -1507,7 +1507,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -1658,8 +1663,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             }
           ]
         }
@@ -3148,7 +3210,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -3299,8 +3366,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             }
           ]
         }
@@ -4822,7 +4946,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -4973,8 +5102,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             }
           ]
         }
@@ -6492,7 +6678,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -6643,8 +6834,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             }
           ]
         },
@@ -8109,7 +8357,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -8260,8 +8513,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             },
             {
               "id": "ICC-FCS",
@@ -9895,7 +10205,12 @@
                 2
               ],
               "semester": 4,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR1",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -10046,8 +10361,65 @@
                 2
               ],
               "semester": 5,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "MINOR2",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
+            },
+            {
+              "id": "ING4106",
+              "name": "Pre-Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "170 sct aprobados",
+              "skills": "Ic(Ea)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 7,
+              "prerequisites": [],
+              "creditReq": 170
+            },
+            {
+              "id": "ING6104",
+              "name": "Professional Practice",
+              "credits": 12,
+              "hours": {
+                "clases": 0,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 0,
+                "presentaciones": 0,
+                "lecturas": 0,
+                "estudio": 0,
+                "total": 0
+              },
+              "reqText": "282 SCT",
+              "skills": "Ic(Eb,Ob)",
+              "offered": [
+                1,
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 11,
+              "prerequisites": [],
+              "creditReq": 282
             }
           ]
         }
