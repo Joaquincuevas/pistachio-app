@@ -11,7 +11,7 @@ npm install
 npm run dev        # levanta web (5173) + API (3001) juntos
 ```
 
-La app queda disponible en `http://localhost:5173`. La base de datos SQLite se crea y siembra sola al iniciar la API.
+La app queda disponible en `http://localhost:5173`. En dev la base es un **Postgres embebido** (pglite) que se crea y siembra sola en `server/pgdata` — no hay que instalar nada.
 
 Otros comandos:
 
@@ -37,7 +37,7 @@ El catálogo se genera desde las planillas oficiales de la Facultad:
 | Área | Implementación |
 | --- | --- |
 | Servidor | Express + TypeScript (`server/`), corre con tsx |
-| Base de datos | SQLite (better-sqlite3), WAL, se siembra desde `catalog.json` |
+| Base de datos | Postgres: Supabase en prod, pglite embebido en dev; se siembra desde `catalog.json` |
 | Contraseñas | scrypt (`node:crypto`) con salt aleatorio — nunca texto plano |
 | Sesiones | Token aleatorio en cookie **httpOnly** (30 días); en la DB solo se guarda su SHA-256 |
 | Protección extra | Límite de intentos de login, validación Zod en el servidor, dominio de correo verificado server-side |
@@ -49,33 +49,26 @@ En producción (`npm start`) el mismo proceso sirve la API y el frontend compila
 
 ## Deploy
 
-La base de datos usa **libSQL**: en local es un archivo SQLite; en producción es **Turso** (SQLite en la nube). Gracias a eso la app corre en Vercel (serverless) o en cualquier host con proceso propio.
+La base es **Postgres**: en producción, **Supabase**; en dev, un Postgres embebido (pglite). El mismo SQL corre en ambos. El repo trae `vercel.json` (frontend estático + `api/index.ts` como función serverless).
 
-### Vercel + Turso (gratis) — recomendado
+### Vercel + Supabase (gratis)
 
-El repo trae `vercel.json` (frontend estático + `api/index.ts` como función serverless).
-
-1. **Crea la base en Turso** (plan gratis): instala el CLI y ejecuta
-   ```bash
-   curl -sSfL https://get.tur.so/install.sh | bash
-   turso auth signup
-   turso db create pistachio
-   turso db show pistachio --url          # → TURSO_DATABASE_URL
-   turso db tokens create pistachio       # → TURSO_AUTH_TOKEN
+1. En **Supabase** → tu proyecto → botón **Connect** (arriba) → **Connection string → Transaction pooler** (puerto `6543`). Copia esa URL y reemplaza `[YOUR-PASSWORD]` por la contraseña de la base. Queda así:
    ```
-   (También se puede desde la web de Turso, sin CLI.)
+   postgresql://postgres.xxxx:TU_PASSWORD@aws-0-us-west-2.pooler.supabase.com:6543/postgres
+   ```
+   > Usa el **pooler de transacciones** (6543), no la conexión directa (5432): es la que funciona en serverless.
 2. **Importa el repo en Vercel** ([vercel.com/new](https://vercel.com/new) → GitHub → `pistachio-app`).
 3. En **Settings → Environment Variables** agrega:
-   - `TURSO_DATABASE_URL` = la URL del paso 1 (`libsql://...`)
-   - `TURSO_AUTH_TOKEN` = el token del paso 1
+   - `DATABASE_URL` = la URL del paso 1
    - `NODE_ENV` = `production`
 4. **Deploy**. En el primer request la API crea las tablas y siembra el catálogo automáticamente.
 
-Cada push a `main` redespliega solo. El progreso de tus amigos vive en Turso (persistente).
+Cada push a `main` redespliega solo. Los datos de tus amigos viven en Supabase (persistente, con backups).
 
 ### Alternativa: Railway / Render / Fly (un solo proceso)
 
-Sin Turso: la app usa un archivo SQLite en un disco persistente. Requiere `railway.json` (incluido), un **volumen** montado en `/data` y las variables `NODE_ENV=production` y `DATABASE_PATH=/data/pistachio.db`. Healthcheck en `/api/health`.
+También corre como proceso Node con `npm start` (Express sirve API + estáticos). Usa `railway.json` (incluido) y la misma `DATABASE_URL` de Supabase, o cualquier Postgres. Healthcheck en `/api/health`.
 
 ## Stack frontend
 
@@ -86,7 +79,7 @@ React 18 + Vite + TypeScript estricto · React Router v6 · Tailwind CSS v3 con 
 ```
 server/
 ├── index.ts           API Express (auth, catálogo, progreso)
-├── db.ts              esquema SQLite + seed automático del catálogo
+├── db.ts              esquema Postgres + seed automático (pg / pglite)
 ├── auth.ts            scrypt, sesiones, rate limit
 └── data/catalog.json  catálogo generado desde el Excel oficial
 scripts/

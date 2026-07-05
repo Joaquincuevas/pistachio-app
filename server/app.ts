@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import QRCode from 'qrcode';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import { all, batch, ensureReady, get, run } from './db.js';
+import { all, ensureReady, get, run } from './db.js';
 import {
   clearFailedLogins,
   createSession,
@@ -159,13 +159,12 @@ app.post('/api/auth/register', async (req, res) => {
     return;
   }
 
-  const info = await run(`INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)`, [
-    name,
-    normalized,
-    hashPassword(password),
-  ]);
+  const info = await run(
+    `INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?) RETURNING id`,
+    [name, normalized, hashPassword(password)],
+  );
 
-  const user = await getUserById(Number(info.lastInsertRowid));
+  const user = await getUserById(Number((info.rows[0] as { id: number }).id));
   setSessionCookie(res, await createSession(user.id));
   res.status(201).json(publicUser(user));
 });
@@ -201,10 +200,10 @@ app.post('/api/auth/login', async (req, res) => {
   // se guarda en la base (no en memoria) para funcionar en serverless.
   if (row.totp_enabled === 1) {
     const challengeId = randomBytes(16).toString('base64url');
-    await run(`DELETE FROM two_fa_challenges WHERE expires_at < datetime('now')`);
+    await run(`DELETE FROM two_fa_challenges WHERE expires_at < now()`);
     await run(
       `INSERT INTO two_fa_challenges (id, user_id, expires_at)
-       VALUES (?, ?, datetime('now', '+5 minutes'))`,
+       VALUES (?, ?, now() + interval '5 minutes')`,
       [challengeId, row.id],
     );
     res.json({ twoFactorRequired: true, challengeId });
@@ -223,7 +222,7 @@ app.post('/api/auth/2fa', async (req, res) => {
   }
   const challenge = await get<{ user_id: number; attempts: number }>(
     `SELECT user_id, attempts FROM two_fa_challenges
-     WHERE id = ? AND expires_at >= datetime('now')`,
+     WHERE id = ? AND expires_at >= now()`,
     [parsed.data.challengeId],
   );
   if (!challenge) {
@@ -501,9 +500,9 @@ app.put('/api/progress/:planId/:courseId', requireAuth, async (req: AuthedReques
   }
 
   const upsertSql = `INSERT INTO progress (user_id, plan_id, course_id, status, updated_at)
-     VALUES (?, ?, ?, ?, datetime('now'))
+     VALUES (?, ?, ?, ?, now())
      ON CONFLICT (user_id, plan_id, course_id)
-     DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`;
+     DO UPDATE SET status = EXCLUDED.status, updated_at = EXCLUDED.updated_at`;
 
   const changed: Record<string, string> = {};
 
@@ -513,13 +512,12 @@ app.put('/api/progress/:planId/:courseId', requireAuth, async (req: AuthedReques
     ]);
     changed[courseId] = 'pending';
   } else if (parsed.data.status === 'completed') {
-    // Marcar cursado arrastra en cascada todos sus prerrequisitos (un batch atómico).
+    // Marcar cursado arrastra en cascada todos sus prerrequisitos.
     const ids = [courseId, ...(await transitivePrereqs(planId, courseId))];
-    await batch(
-      ids.map((id) => ({ sql: upsertSql, args: [userId, planId, id, 'completed'] })),
-      'write',
-    );
-    for (const id of ids) changed[id] = 'completed';
+    for (const id of ids) {
+      await run(upsertSql, [userId, planId, id, 'completed']);
+      changed[id] = 'completed';
+    }
   } else {
     await run(upsertSql, [userId, planId, courseId, parsed.data.status]);
     changed[courseId] = parsed.data.status;

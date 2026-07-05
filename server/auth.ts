@@ -29,7 +29,7 @@ export async function createSession(userId: number): Promise<string> {
   const token = randomBytes(32).toString('base64url');
   await run(
     `INSERT INTO sessions (token_hash, user_id, expires_at)
-     VALUES (?, ?, datetime('now', '+${SESSION_DAYS} days'))`,
+     VALUES (?, ?, now() + interval '${SESSION_DAYS} days')`,
     [hashToken(token), userId],
   );
   return token;
@@ -50,7 +50,7 @@ export async function getSessionUser(token: string | undefined): Promise<Session
   const row = await get<SessionUser>(
     `SELECT u.id, u.name, u.email, u.created_at, u.specialty_id, u.plan_id, u.totp_enabled
      FROM sessions s JOIN users u ON u.id = s.user_id
-     WHERE s.token_hash = ? AND s.expires_at >= datetime('now')`,
+     WHERE s.token_hash = ? AND s.expires_at >= now()`,
     [hashToken(token)],
   );
   return row ?? null;
