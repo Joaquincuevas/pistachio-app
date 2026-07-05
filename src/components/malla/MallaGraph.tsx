@@ -21,6 +21,7 @@ import {
   collectPrerequisites,
   collectUnlocks,
   groupBySemester,
+  isPractice,
   STATUS_COLORS,
 } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
@@ -114,11 +115,27 @@ export function MallaGraph({ plan }: { plan: Plan }) {
   }, [selectedId, plan]);
 
   const nodes = useMemo<Node[]>(() => {
-    const semesters = [...groupBySemester(plan.courses)];
-    const maxRows = Math.max(...semesters.map(([, list]) => list.length));
+    // Las prácticas no van en la grilla: se ubican en una fila al pie.
+    const regular = plan.courses.filter((c) => !isPractice(c));
+    const practices = plan.courses.filter(isPractice);
+    const semesters = [...groupBySemester(regular)];
+    const maxRows = Math.max(...semesters.map(([, list]) => list.length), 1);
     const result: Node[] = [];
+    const semesterToCol = new Map<number, number>();
+
+    const highlightFor = (id: string): Highlight =>
+      !selectedId
+        ? 'none'
+        : id === selectedId
+          ? 'selected'
+          : prereqSet.has(id)
+            ? 'prereq'
+            : unlockSet.has(id)
+              ? 'unlocks'
+              : 'dimmed';
 
     semesters.forEach(([semester, courses], col) => {
+      semesterToCol.set(semester, col);
       const x = col * COL_WIDTH;
       // Centra verticalmente las columnas con menos ramos.
       const yOffset = ((maxRows - courses.length) * ROW_HEIGHT) / 2;
@@ -133,26 +150,46 @@ export function MallaGraph({ plan }: { plan: Plan }) {
       });
 
       courses.forEach((course, row) => {
-        const status = statuses[course.id] ?? 'pending';
-        const highlight: Highlight = !selectedId
-          ? 'none'
-          : course.id === selectedId
-            ? 'selected'
-            : prereqSet.has(course.id)
-              ? 'prereq'
-              : unlockSet.has(course.id)
-                ? 'unlocks'
-                : 'dimmed';
-
         result.push({
           id: course.id,
           type: 'course',
           position: { x, y: yOffset + row * ROW_HEIGHT },
-          data: { course, status, highlight } satisfies CourseNodeData,
+          data: {
+            course,
+            status: statuses[course.id] ?? 'pending',
+            highlight: highlightFor(course.id),
+          } satisfies CourseNodeData,
           draggable: false,
         });
       });
     });
+
+    // Prácticas: fila propia bajo la grilla, alineadas a su semestre.
+    if (practices.length > 0) {
+      const bottomY = maxRows * ROW_HEIGHT + 48;
+      result.push({
+        id: 'practices-label',
+        type: 'semesterLabel',
+        position: { x: 24, y: bottomY - 30 },
+        data: { label: 'Prácticas' },
+        draggable: false,
+        selectable: false,
+      });
+      for (const course of practices) {
+        const col = semesterToCol.get(course.semester) ?? semesters.length - 1;
+        result.push({
+          id: course.id,
+          type: 'course',
+          position: { x: col * COL_WIDTH, y: bottomY },
+          data: {
+            course,
+            status: statuses[course.id] ?? 'pending',
+            highlight: highlightFor(course.id),
+          } satisfies CourseNodeData,
+          draggable: false,
+        });
+      }
+    }
 
     return result;
   }, [plan, statuses, selectedId, prereqSet, unlockSet]);

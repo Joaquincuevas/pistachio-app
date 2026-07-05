@@ -50,6 +50,11 @@ export function computeProgress(
   };
 }
 
+/** Prácticas (pre-profesional / profesional): se muestran al pie de la malla. */
+export function isPractice(course: Course): boolean {
+  return course.slotCategory === 'Práctica';
+}
+
 /** Agrupa los ramos por semestre; dentro de cada semestre, ramos antes que slots. */
 export function groupBySemester(courses: Course[]): Map<number, Course[]> {
   const map = new Map<number, Course[]>();

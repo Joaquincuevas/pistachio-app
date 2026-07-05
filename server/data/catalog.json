@@ -1692,7 +1692,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -1718,7 +1718,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282
@@ -3395,7 +3395,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -3421,7 +3421,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282
@@ -5131,7 +5131,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -5157,7 +5157,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282
@@ -6863,7 +6863,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -6889,7 +6889,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282
@@ -8542,7 +8542,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -8568,7 +8568,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282
@@ -10390,7 +10390,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 7,
               "prerequisites": [],
               "creditReq": 170
@@ -10416,7 +10416,7 @@
                 2
               ],
               "isSlot": false,
-              "slotCategory": null,
+              "slotCategory": "Práctica",
               "semester": 11,
               "prerequisites": [],
               "creditReq": 282

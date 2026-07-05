@@ -212,7 +212,8 @@ def enrich_plan(plan_courses: list, cursos: dict) -> list:
         plan_courses.append({
             **meta,
             "isSlot": False,
-            "slotCategory": None,
+            # Marca (oculta en la UI salvo para el layout) que va al pie de la malla.
+            "slotCategory": "Práctica",
             "semester": prac["semester"],
             "prerequisites": [],
             "creditReq": prac["creditReq"],
