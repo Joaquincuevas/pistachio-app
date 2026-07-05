@@ -1,5 +1,5 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-import { db } from './db.js';
+import { get, run } from './db.js';
 
 /**
  * Hashing de contraseñas con scrypt (node:crypto): sin dependencias externas,
@@ -25,12 +25,13 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-export function createSession(userId: number): string {
+export async function createSession(userId: number): Promise<string> {
   const token = randomBytes(32).toString('base64url');
-  db.prepare(
+  await run(
     `INSERT INTO sessions (token_hash, user_id, expires_at)
      VALUES (?, ?, datetime('now', '+${SESSION_DAYS} days'))`,
-  ).run(hashToken(token), userId);
+    [hashToken(token), userId],
+  );
   return token;
 }
 
@@ -44,35 +45,39 @@ export interface SessionUser {
   totp_enabled: number;
 }
 
-export function getSessionUser(token: string | undefined): SessionUser | null {
+export async function getSessionUser(token: string | undefined): Promise<SessionUser | null> {
   if (!token) return null;
-  // Limpieza oportunista de sesiones vencidas.
-  db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
-  const row = db
-    .prepare(
-      `SELECT u.id, u.name, u.email, u.created_at, u.specialty_id, u.plan_id, u.totp_enabled
-       FROM sessions s JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = ? AND s.expires_at >= datetime('now')`,
-    )
-    .get(hashToken(token)) as SessionUser | undefined;
+  const row = await get<SessionUser>(
+    `SELECT u.id, u.name, u.email, u.created_at, u.specialty_id, u.plan_id, u.totp_enabled
+     FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.token_hash = ? AND s.expires_at >= datetime('now')`,
+    [hashToken(token)],
+  );
   return row ?? null;
 }
 
-export function destroySession(token: string | undefined): void {
+export async function destroySession(token: string | undefined): Promise<void> {
   if (!token) return;
-  db.prepare(`DELETE FROM sessions WHERE token_hash = ?`).run(hashToken(token));
+  await run(`DELETE FROM sessions WHERE token_hash = ?`, [hashToken(token)]);
 }
 
 /** Cierra todas las sesiones del usuario menos la actual (tras cambiar clave). */
-export function destroyOtherSessions(userId: number, currentToken: string | undefined): void {
+export async function destroyOtherSessions(
+  userId: number,
+  currentToken: string | undefined,
+): Promise<void> {
   if (!currentToken) return;
-  db.prepare(`DELETE FROM sessions WHERE user_id = ? AND token_hash != ?`).run(
+  await run(`DELETE FROM sessions WHERE user_id = ? AND token_hash != ?`, [
     userId,
     hashToken(currentToken),
-  );
+  ]);
 }
 
-/** Límite de intentos de login por email (mitiga fuerza bruta básica). */
+/**
+ * Límite de intentos de login por email (mitiga fuerza bruta básica).
+ * En memoria: es best-effort en serverless (se reinicia con cada instancia),
+ * pero suficiente como primera barrera; la protección real es scrypt + 2FA.
+ */
 const attempts = new Map<string, { count: number; resetAt: number }>();
 const MAX_ATTEMPTS = 8;
 const WINDOW_MS = 10 * 60 * 1000;

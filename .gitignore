@@ -23,3 +23,9 @@ npm-debug.log*
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# variables de entorno (Turso, etc.)
+.env
+.env.*
+!.env.example
+.vercel

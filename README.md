@@ -49,20 +49,33 @@ En producción (`npm start`) el mismo proceso sirve la API y el frontend compila
 
 ## Deploy
 
-La app corre como **un solo proceso Node con un archivo SQLite**, por lo que necesita un hosting con **disco persistente** (Vercel es serverless sin disco: el `.db` se borraría en cada arranque; usarlo exigiría migrar a Turso/Postgres).
+La base de datos usa **libSQL**: en local es un archivo SQLite; en producción es **Turso** (SQLite en la nube). Gracias a eso la app corre en Vercel (serverless) o en cualquier host con proceso propio.
 
-### Railway (recomendado — el repo ya trae `railway.json`)
+### Vercel + Turso (gratis) — recomendado
 
-1. Entra a [railway.app](https://railway.app) e inicia sesión con GitHub.
-2. **New Project → Deploy from GitHub repo** → selecciona `Joaquincuevas/pistachio-app`. Railway detecta build (`npm run build`) y start (`npm start`) desde `railway.json`.
-3. En el servicio: **Settings → Volumes → Add Volume**, mount path `/data`.
-4. En **Variables** agrega:
+El repo trae `vercel.json` (frontend estático + `api/index.ts` como función serverless).
+
+1. **Crea la base en Turso** (plan gratis): instala el CLI y ejecuta
+   ```bash
+   curl -sSfL https://get.tur.so/install.sh | bash
+   turso auth signup
+   turso db create pistachio
+   turso db show pistachio --url          # → TURSO_DATABASE_URL
+   turso db tokens create pistachio       # → TURSO_AUTH_TOKEN
+   ```
+   (También se puede desde la web de Turso, sin CLI.)
+2. **Importa el repo en Vercel** ([vercel.com/new](https://vercel.com/new) → GitHub → `pistachio-app`).
+3. En **Settings → Environment Variables** agrega:
+   - `TURSO_DATABASE_URL` = la URL del paso 1 (`libsql://...`)
+   - `TURSO_AUTH_TOKEN` = el token del paso 1
    - `NODE_ENV` = `production`
-   - `DATABASE_PATH` = `/data/pistachio.db`
-   (`PORT` lo inyecta Railway solo.)
-5. **Settings → Networking → Generate Domain** para obtener la URL pública.
+4. **Deploy**. En el primer request la API crea las tablas y siembra el catálogo automáticamente.
 
-Cada push a `main` redespliega automáticamente. El healthcheck usa `/api/health`.
+Cada push a `main` redespliega solo. El progreso de tus amigos vive en Turso (persistente).
+
+### Alternativa: Railway / Render / Fly (un solo proceso)
+
+Sin Turso: la app usa un archivo SQLite en un disco persistente. Requiere `railway.json` (incluido), un **volumen** montado en `/data` y las variables `NODE_ENV=production` y `DATABASE_PATH=/data/pistachio.db`. Healthcheck en `/api/health`.
 
 ## Stack frontend
 

@@ -1,21 +1,48 @@
-import Database from 'better-sqlite3';
+import { createClient, type InArgs, type InStatement } from '@libsql/client';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import catalog from './data/catalog.json' with { type: 'json' };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-// En producción la base vive en el volumen persistente (DATABASE_PATH,
-// ej: /data/pistachio.db en Railway); en dev, junto al código del server.
-const dbPath = process.env.DATABASE_PATH ?? path.join(here, 'pistachio.db');
+/**
+ * Cliente libSQL. En producción (Vercel) usa Turso (TURSO_DATABASE_URL +
+ * TURSO_AUTH_TOKEN); en dev / hosts con disco cae a un archivo SQLite local.
+ * El mismo código y las mismas queries SQLite funcionan en ambos lados.
+ */
+export const db = process.env.TURSO_DATABASE_URL
+  ? createClient({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    })
+  : createClient({ url: `file:${path.join(here, 'pistachio.db')}` });
 
-export const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+// ─── Helpers de acceso (mimetizan prepare().get / all / run) ─────
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
+export async function get<T>(sql: string, args: InArgs = []): Promise<T | undefined> {
+  const rs = await db.execute({ sql, args });
+  return rs.rows[0] as T | undefined;
+}
+
+export async function all<T>(sql: string, args: InArgs = []): Promise<T[]> {
+  const rs = await db.execute({ sql, args });
+  return rs.rows as unknown as T[];
+}
+
+export async function run(sql: string, args: InArgs = []) {
+  return db.execute({ sql, args });
+}
+
+/** Statements atómicos en una sola ida y vuelta (transacción implícita). */
+export async function batch(stmts: InStatement[], mode: 'write' | 'read' = 'write') {
+  return db.batch(stmts, mode);
+}
+
+// ─── Esquema ─────────────────────────────────────────────────────
+
+const SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     name          TEXT NOT NULL,
     email         TEXT NOT NULL UNIQUE,
@@ -25,32 +52,34 @@ db.exec(`
     totp_secret   TEXT,
     totp_enabled  INTEGER NOT NULL DEFAULT 0,
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS sessions (
+  )`,
+  `CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS specialties (
+  )`,
+  `CREATE TABLE IF NOT EXISTS two_fa_challenges (
+    id         TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    attempts   INTEGER NOT NULL DEFAULT 0,
+    expires_at TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS specialties (
     id        TEXT PRIMARY KEY,
     name      TEXT NOT NULL,
     full_name TEXT NOT NULL,
     icon      TEXT NOT NULL,
     tagline   TEXT NOT NULL,
     sort      INTEGER NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS plans (
+  )`,
+  `CREATE TABLE IF NOT EXISTS plans (
     id           TEXT PRIMARY KEY,
     specialty_id TEXT NOT NULL REFERENCES specialties(id) ON DELETE CASCADE,
     name         TEXT NOT NULL,
     sort         INTEGER NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS courses (
+  )`,
+  `CREATE TABLE IF NOT EXISTS courses (
     id            TEXT PRIMARY KEY,
     name          TEXT NOT NULL,
     is_slot       INTEGER NOT NULL DEFAULT 0,
@@ -59,52 +88,37 @@ db.exec(`
     req_text      TEXT,
     skills        TEXT,
     offered       TEXT NOT NULL DEFAULT '[]'
-  );
-
-  CREATE TABLE IF NOT EXISTS plan_courses (
+  )`,
+  `CREATE TABLE IF NOT EXISTS plan_courses (
     plan_id    TEXT NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
     course_id  TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     semester   INTEGER NOT NULL,
     credits    INTEGER NOT NULL,
     credit_req INTEGER,
     PRIMARY KEY (plan_id, course_id)
-  );
-
-  CREATE TABLE IF NOT EXISTS prerequisites (
+  )`,
+  `CREATE TABLE IF NOT EXISTS prerequisites (
     plan_id    TEXT NOT NULL,
     course_id  TEXT NOT NULL,
     prereq_id  TEXT NOT NULL,
     concurrent INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (plan_id, course_id, prereq_id)
-  );
-
-  CREATE TABLE IF NOT EXISTS progress (
+  )`,
+  `CREATE TABLE IF NOT EXISTS progress (
     user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     plan_id    TEXT NOT NULL,
     course_id  TEXT NOT NULL,
     status     TEXT NOT NULL CHECK (status IN ('completed', 'in-progress', 'pending')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (user_id, plan_id, course_id)
-  );
-
-  CREATE TABLE IF NOT EXISTS meta (
+  )`,
+  `CREATE TABLE IF NOT EXISTS meta (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
-  );
-`);
+  )`,
+];
 
-// Migraciones para bases creadas con esquemas anteriores (no-op en DBs nuevas).
-for (const migration of [
-  `ALTER TABLE specialties RENAME COLUMN emoji TO icon`,
-  `ALTER TABLE users ADD COLUMN totp_secret TEXT`,
-  `ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0`,
-]) {
-  try {
-    db.exec(migration);
-  } catch {
-    // La columna ya existe / ya fue renombrada.
-  }
-}
+// ─── Seed del catálogo ───────────────────────────────────────────
 
 interface CatalogCourse {
   id: string;
@@ -133,56 +147,44 @@ interface Catalog {
   }[];
 }
 
-/**
- * Siembra el catálogo desde catalog.json (generado por scripts/parse-catalog.py).
- * Se re-siembra automáticamente cuando el JSON cambia (hash distinto), sin tocar
- * usuarios ni progreso.
- */
-function seedCatalog() {
-  const raw = readFileSync(path.join(here, 'data', 'catalog.json'), 'utf-8');
-  const hash = createHash('sha256').update(raw).digest('hex');
-  const current = db.prepare(`SELECT value FROM meta WHERE key = 'catalog_hash'`).get() as
-    | { value: string }
-    | undefined;
+/** Ejecuta statements en tandas atómicas (evita batches gigantes). */
+async function batchInChunks(statements: InStatement[], size = 400) {
+  for (let i = 0; i < statements.length; i += size) {
+    await db.batch(statements.slice(i, i + size), 'write');
+  }
+}
+
+async function seedCatalog(): Promise<void> {
+  const data = catalog as Catalog;
+  const hash = createHash('sha256').update(JSON.stringify(data)).digest('hex');
+  const current = await get<{ value: string }>(`SELECT value FROM meta WHERE key = 'catalog_hash'`);
   if (current?.value === hash) return;
 
-  const catalog = JSON.parse(raw) as Catalog;
+  // Limpia el catálogo previo (no toca usuarios ni progreso).
+  await batchInChunks([
+    { sql: 'DELETE FROM prerequisites', args: [] },
+    { sql: 'DELETE FROM plan_courses', args: [] },
+    { sql: 'DELETE FROM courses', args: [] },
+    { sql: 'DELETE FROM plans', args: [] },
+    { sql: 'DELETE FROM specialties', args: [] },
+  ]);
 
-  const seed = db.transaction(() => {
-    db.exec(`
-      DELETE FROM prerequisites;
-      DELETE FROM plan_courses;
-      DELETE FROM courses;
-      DELETE FROM plans;
-      DELETE FROM specialties;
-    `);
-
-    const insSpec = db.prepare(
-      `INSERT INTO specialties (id, name, full_name, icon, tagline, sort) VALUES (?, ?, ?, ?, ?, ?)`,
-    );
-    const insPlan = db.prepare(
-      `INSERT INTO plans (id, specialty_id, name, sort) VALUES (?, ?, ?, ?)`,
-    );
-    // Upsert sin DELETE: los ramos del plan común se repiten entre planes y un
-    // OR REPLACE dispararía el ON DELETE CASCADE de plan_courses.
-    const insCourse = db.prepare(
-      `INSERT INTO courses (id, name, is_slot, slot_category, hours_json, req_text, skills, offered)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT (id) DO NOTHING`,
-    );
-    const insPlanCourse = db.prepare(
-      `INSERT INTO plan_courses (plan_id, course_id, semester, credits, credit_req) VALUES (?, ?, ?, ?, ?)`,
-    );
-    const insPrereq = db.prepare(
-      `INSERT OR IGNORE INTO prerequisites (plan_id, course_id, prereq_id, concurrent) VALUES (?, ?, ?, ?)`,
-    );
-
-    catalog.specialties.forEach((spec, si) => {
-      insSpec.run(spec.id, spec.name, spec.fullName, spec.icon, spec.tagline, si);
-      spec.plans.forEach((plan, pi) => {
-        insPlan.run(plan.id, spec.id, plan.name, pi);
-        for (const course of plan.courses) {
-          insCourse.run(
+  const stmts: InStatement[] = [];
+  data.specialties.forEach((spec, si) => {
+    stmts.push({
+      sql: `INSERT INTO specialties (id, name, full_name, icon, tagline, sort) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [spec.id, spec.name, spec.fullName, spec.icon, spec.tagline, si],
+    });
+    spec.plans.forEach((plan, pi) => {
+      stmts.push({
+        sql: `INSERT INTO plans (id, specialty_id, name, sort) VALUES (?, ?, ?, ?)`,
+        args: [plan.id, spec.id, plan.name, pi],
+      });
+      for (const course of plan.courses) {
+        stmts.push({
+          sql: `INSERT OR IGNORE INTO courses (id, name, is_slot, slot_category, hours_json, req_text, skills, offered)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
             course.id,
             course.name,
             course.isSlot ? 1 : 0,
@@ -191,20 +193,41 @@ function seedCatalog() {
             course.reqText,
             course.skills,
             JSON.stringify(course.offered),
-          );
-          insPlanCourse.run(plan.id, course.id, course.semester, course.credits, course.creditReq);
-          for (const prereq of course.prerequisites) {
-            insPrereq.run(plan.id, course.id, prereq.id, prereq.concurrent ? 1 : 0);
-          }
+          ],
+        });
+        stmts.push({
+          sql: `INSERT INTO plan_courses (plan_id, course_id, semester, credits, credit_req) VALUES (?, ?, ?, ?, ?)`,
+          args: [plan.id, course.id, course.semester, course.credits, course.creditReq],
+        });
+        for (const prereq of course.prerequisites) {
+          stmts.push({
+            sql: `INSERT OR IGNORE INTO prerequisites (plan_id, course_id, prereq_id, concurrent) VALUES (?, ?, ?, ?)`,
+            args: [plan.id, course.id, prereq.id, prereq.concurrent ? 1 : 0],
+          });
         }
-      });
+      }
     });
-
-    db.prepare(`INSERT OR REPLACE INTO meta (key, value) VALUES ('catalog_hash', ?)`).run(hash);
   });
 
-  seed();
-  console.log(`[db] catálogo sembrado desde ${catalog.source}`);
+  await batchInChunks(stmts);
+  await run(`INSERT OR REPLACE INTO meta (key, value) VALUES ('catalog_hash', ?)`, [hash]);
+  console.log(`[db] catálogo sembrado desde ${data.source}`);
 }
 
-seedCatalog();
+// ─── Inicialización perezosa y memoizada ─────────────────────────
+
+let readyPromise: Promise<void> | null = null;
+
+/** Crea el esquema y siembra el catálogo una sola vez por instancia. */
+export function ensureReady(): Promise<void> {
+  if (!readyPromise) {
+    readyPromise = (async () => {
+      for (const sql of SCHEMA_STATEMENTS) await db.execute(sql);
+      await seedCatalog();
+    })().catch((err) => {
+      readyPromise = null; // permite reintentar en la próxima request
+      throw err;
+    });
+  }
+  return readyPromise;
+}
