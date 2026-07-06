@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GitBranch, Network, Nut, TrendingUp } from 'lucide-react';
+import { CountdownTimer } from '@/components/landing/CountdownTimer';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
@@ -72,37 +73,48 @@ export function Landing() {
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-5xl px-5 pb-16 pt-14 text-center md:pt-24">
-        <h1 className="mx-auto max-w-2xl font-display text-[42px] font-semibold leading-[1.08] tracking-tighter text-text-primary md:text-6xl">
-          Tu malla curricular,
-          <br />
-          <span className="text-accent">al alcance.</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-text-secondary md:text-lg">
-          “{PISTACHIO_FACT}”
-        </p>
-        <div className="mx-auto mt-9 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-          {user ? (
-            <Link to="/malla">
-              <Button size="lg" fullWidth>
-                Ir a mi malla
-              </Button>
-            </Link>
-          ) : (
-            <>
-              <Link to="/register" className="sm:w-auto">
-                <Button size="lg" fullWidth>
-                  Crear cuenta
-                </Button>
-              </Link>
-              <Link to="/login" className="sm:w-auto">
-                <Button size="lg" variant="secondary" fullWidth>
-                  Ya tengo cuenta
-                </Button>
-              </Link>
-            </>
-          )}
+      {/* Hero: mensaje + CTA a la izquierda, cuenta regresiva a la derecha */}
+      <section className="mx-auto max-w-5xl px-5 pb-16 pt-12 md:pt-20">
+        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-12">
+          {/* Columna de mensaje */}
+          <div className="text-center md:text-left">
+            <h1 className="font-display text-[40px] font-semibold leading-[1.06] tracking-tighter text-text-primary md:text-[56px]">
+              Tu malla curricular,
+              <br />
+              <span className="text-accent">al alcance.</span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-text-secondary md:mx-0">
+              Planifica tu segundo semestre antes de la toma de ramos: revisa tu malla, tus
+              prerrequisitos y tu avance, todo en un lugar.
+            </p>
+            <div className="mx-auto mt-8 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
+              {user ? (
+                <Link to="/malla">
+                  <Button size="lg" fullWidth>
+                    Ir a mi malla
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="sm:w-auto">
+                    <Button size="lg" fullWidth>
+                      Crear cuenta
+                    </Button>
+                  </Link>
+                  <Link to="/login" className="sm:w-auto">
+                    <Button size="lg" variant="secondary" fullWidth>
+                      Ya tengo cuenta
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Columna de la cuenta regresiva */}
+          <div className="rounded-card border border-border bg-white p-6 shadow-subtle sm:p-7">
+            <CountdownTimer />
+          </div>
         </div>
       </section>
 
