@@ -74,6 +74,18 @@ export const api = {
       body: JSON.stringify({ challengeId, code }),
     }),
 
+  forgotPassword: (email: string) =>
+    request<{ ok: boolean }>('/api/auth/forgot', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    request<{ ok: boolean }>('/api/auth/reset', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
+
   logout: () => request<void>('/api/auth/logout', { method: 'POST' }),
 
   me: () => request<AuthResponse>('/api/auth/me'),

@@ -108,6 +108,13 @@ const SCHEMA_STATEMENTS = [
     attempts   INTEGER NOT NULL DEFAULT 0,
     expires_at TIMESTAMPTZ NOT NULL
   )`,
+  // Recuperación de contraseña: el token viaja en el link; en la base va su SHA-256.
+  `CREATE TABLE IF NOT EXISTS password_resets (
+    token_hash TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )`,
   `CREATE TABLE IF NOT EXISTS specialties (
     id        TEXT PRIMARY KEY,
     name      TEXT NOT NULL,

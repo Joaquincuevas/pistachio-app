@@ -73,6 +73,40 @@ export async function destroyOtherSessions(
   ]);
 }
 
+/** Cierra TODAS las sesiones del usuario (tras resetear la clave por olvido). */
+export async function destroyAllSessions(userId: number): Promise<void> {
+  await run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+}
+
+const RESET_MINUTES = 60;
+
+/**
+ * Crea un token de recuperación de contraseña (single-use, expira en 1 hora).
+ * Devuelve el token crudo (va en el link del correo); en la base solo su SHA-256.
+ * Se invalidan los tokens previos del usuario para que solo el último valga.
+ */
+export async function createPasswordReset(userId: number): Promise<string> {
+  const token = randomBytes(32).toString('base64url');
+  await run(`DELETE FROM password_resets WHERE user_id = ? OR expires_at < now()`, [userId]);
+  await run(
+    `INSERT INTO password_resets (token_hash, user_id, expires_at)
+     VALUES (?, ?, now() + interval '${RESET_MINUTES} minutes')`,
+    [hashToken(token), userId],
+  );
+  return token;
+}
+
+/** Valida y consume un token de recuperación. Devuelve el userId o null. */
+export async function consumePasswordReset(token: string): Promise<number | null> {
+  const row = await get<{ user_id: number }>(
+    `SELECT user_id FROM password_resets WHERE token_hash = ? AND expires_at >= now()`,
+    [hashToken(token)],
+  );
+  if (!row) return null;
+  await run(`DELETE FROM password_resets WHERE token_hash = ?`, [hashToken(token)]);
+  return row.user_id;
+}
+
 /**
  * Límite de intentos de login por email (mitiga fuerza bruta básica).
  * En memoria: es best-effort en serverless (se reinicia con cada instancia),

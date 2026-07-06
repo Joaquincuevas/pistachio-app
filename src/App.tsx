@@ -4,10 +4,12 @@ import { AppShell } from '@/components/layout/AppShell';
 import { RedirectIfAuthed, RequireAuth, RequireSpecialty } from '@/components/ProtectedRoute';
 import { Toaster } from '@/components/ui/Toast';
 import { Dashboard } from '@/pages/Dashboard';
+import { ForgotPassword } from '@/pages/ForgotPassword';
 import { Landing } from '@/pages/Landing';
 import { Login } from '@/pages/Login';
 import { Profile } from '@/pages/Profile';
 import { Register } from '@/pages/Register';
+import { ResetPassword } from '@/pages/ResetPassword';
 import { Search } from '@/pages/Search';
 import { SpecialtySelect } from '@/pages/SpecialtySelect';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -28,7 +30,11 @@ export default function App() {
         <Route element={<RedirectIfAuthed />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
         </Route>
+
+        {/* Reset por link de correo: accesible con o sin sesión. */}
+        <Route path="/reset" element={<ResetPassword />} />
 
         <Route element={<RequireAuth />}>
           <Route path="/specialty" element={<SpecialtySelect />} />

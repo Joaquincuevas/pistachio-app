@@ -66,6 +66,22 @@ La base es **Postgres**: en producción, **Supabase**; en dev, un Postgres embeb
 
 Cada push a `main` redespliega solo. Los datos de tus amigos viven en Supabase (persistente, con backups).
 
+### Correo (recuperación de contraseña)
+
+El "¿Olvidaste tu contraseña?" envía un enlace de recuperación por SMTP. No requiere
+ningún servicio de pago: basta una casilla existente. Con **Gmail**:
+
+1. Activa la verificación en dos pasos de tu cuenta Google.
+2. Genera una **contraseña de aplicación** en [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) (16 caracteres).
+3. En Vercel agrega:
+   - `SMTP_USER` = tu correo Gmail (remitente)
+   - `SMTP_PASS` = la contraseña de aplicación
+   - (opcional) `SMTP_HOST` (def. `smtp.gmail.com`), `SMTP_PORT` (def. `465`), `SMTP_FROM`, `APP_URL`
+
+Sin estas variables el flujo sigue funcionando, pero en vez de enviar el correo el
+servidor **imprime el enlace de recuperación en la consola** (útil en desarrollo).
+El token es de un solo uso y expira en 1 hora.
+
 ### Alternativa: Railway / Render / Fly (un solo proceso)
 
 También corre como proceso Node con `npm start` (Express sirve API + estáticos). Usa `railway.json` (incluido) y la misma `DATABASE_URL` de Supabase, o cualquier Postgres. Healthcheck en `/api/health`.

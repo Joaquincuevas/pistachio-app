@@ -6,7 +6,10 @@ import { z } from 'zod';
 import { all, ensureReady, get, run } from './db.js';
 import {
   clearFailedLogins,
+  consumePasswordReset,
+  createPasswordReset,
   createSession,
+  destroyAllSessions,
   destroyOtherSessions,
   destroySession,
   getSessionUser,
@@ -16,6 +19,7 @@ import {
   verifyPassword,
   type SessionUser,
 } from './auth.js';
+import { sendPasswordResetEmail } from './mailer.js';
 import { generateTotpSecret, otpauthUri, verifyTotp } from './totp.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
@@ -71,6 +75,15 @@ const planSchema = z.object({
 const passwordChangeSchema = z.object({
   currentPassword: z.string().min(1, 'Ingresa tu contraseña actual'),
   newPassword: z.string().min(8, 'Mínimo 8 caracteres').max(128),
+});
+
+const forgotSchema = z.object({
+  email: emailSchema,
+});
+
+const resetSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8, 'Mínimo 8 caracteres').max(128),
 });
 
 const passwordConfirmSchema = z.object({
@@ -250,6 +263,64 @@ app.post('/api/auth/2fa', async (req, res) => {
   await run(`DELETE FROM two_fa_challenges WHERE id = ?`, [parsed.data.challengeId]);
   setSessionCookie(res, await createSession(challenge.user_id));
   res.json(publicUser(await getUserById(challenge.user_id)));
+});
+
+/** Base pública del sitio para armar el link de recuperación. */
+function siteBaseUrl(req: Request): string {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, '');
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && origin) return origin.replace(/\/$/, '');
+  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol;
+  return `${proto}://${req.get('host')}`;
+}
+
+// Solicitar recuperación: siempre responde 200 (no revela si el correo existe).
+app.post('/api/auth/forgot', async (req, res) => {
+  const parsed = forgotSchema.safeParse(req.body);
+  // Aunque el correo sea inválido, respondemos genérico para no filtrar cuentas.
+  if (!parsed.success) {
+    res.json({ ok: true });
+    return;
+  }
+  const email = parsed.data.email.trim().toLowerCase();
+
+  // Freno básico de abuso (mismo limitador en memoria que el login).
+  if (loginAllowed(`forgot:${email}`)) {
+    registerFailedLogin(`forgot:${email}`);
+    const user = await get<{ id: number }>(`SELECT id FROM users WHERE email = ?`, [email]);
+    if (user) {
+      const token = await createPasswordReset(user.id);
+      const link = `${siteBaseUrl(req)}/reset?token=${token}`;
+      try {
+        await sendPasswordResetEmail(email, link);
+      } catch (err) {
+        console.error('[mailer] no se pudo enviar el correo de recuperación', err);
+      }
+    }
+  }
+
+  res.json({ ok: true });
+});
+
+// Confirmar recuperación: valida el token y fija la nueva contraseña.
+app.post('/api/auth/reset', async (req, res) => {
+  const parsed = resetSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+    return;
+  }
+  const userId = await consumePasswordReset(parsed.data.token);
+  if (userId === null) {
+    res.status(400).json({ error: 'El enlace no es válido o ya expiró. Solicita uno nuevo.' });
+    return;
+  }
+  await run(`UPDATE users SET password_hash = ? WHERE id = ?`, [
+    hashPassword(parsed.data.password),
+    userId,
+  ]);
+  // Por seguridad, se cierran todas las sesiones abiertas del usuario.
+  await destroyAllSessions(userId);
+  res.json({ ok: true });
 });
 
 app.post('/api/auth/logout', async (req, res) => {
