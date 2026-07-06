@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, LogOut, Search, User } from 'lucide-react';
+import { LayoutGrid, LogOut, Search, Sparkles, User } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -7,6 +7,7 @@ import { useToastStore } from '@/stores/useToastStore';
 
 const links = [
   { to: '/malla', label: 'Mi malla', icon: LayoutGrid },
+  { to: '/asistente', label: 'Asistente', icon: Sparkles },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/profile', label: 'Perfil', icon: User },
 ];
