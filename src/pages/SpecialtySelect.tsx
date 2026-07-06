@@ -21,26 +21,40 @@ export function SpecialtySelect() {
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
 
+  // Estado inicial: si el usuario ya tenía una mención, se preselecciona.
+  const initialPlan = specialties.flatMap((s) => s.plans).find((p) => p.id === currentPlanId);
   const [selected, setSelected] = useState<string | null>(currentSpecialtyId);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(currentPlanId);
+  const [selectedBasePlanId, setSelectedBasePlanId] = useState<string | null>(
+    initialPlan?.mentionOf ?? currentPlanId,
+  );
+  const [selectedMencionId, setSelectedMencionId] = useState<string | null>(
+    initialPlan?.mentionOf ? currentPlanId : null,
+  );
   const [saving, setSaving] = useState(false);
 
   const specialty = specialties.find((s) => s.id === selected);
-  // Si la especialidad tiene un solo plan, se selecciona solo.
-  const effectivePlanId =
-    specialty?.plans.length === 1
-      ? specialty.plans[0].id
-      : specialty?.plans.some((p) => p.id === selectedPlanId)
-        ? selectedPlanId
+  // Planes base = versiones del plan de estudios (ICC tiene 2); las menciones cuelgan de uno.
+  const basePlans = specialty?.plans.filter((p) => !p.mentionOf) ?? [];
+  const effectiveBasePlanId =
+    basePlans.length === 1
+      ? basePlans[0].id
+      : basePlans.some((p) => p.id === selectedBasePlanId)
+        ? selectedBasePlanId
         : null;
+  const menciones = specialty?.plans.filter((p) => p.mentionOf === effectiveBasePlanId) ?? [];
+  const effectiveMencionId = menciones.some((m) => m.id === selectedMencionId)
+    ? selectedMencionId
+    : null;
+  // El plan efectivo es la mención elegida o, si no hay, el plan base.
+  const effectivePlanId = effectiveMencionId ?? effectiveBasePlanId;
 
   const pick = (id: string) => {
     setSelected(id);
     const spec = specialties.find((s) => s.id === id);
-    if (spec && spec.plans.length > 1) {
-      // Por defecto la versión más reciente del plan (la última publicada).
-      setSelectedPlanId(spec.plans[spec.plans.length - 1].id);
-    }
+    const specBasePlans = spec?.plans.filter((p) => !p.mentionOf) ?? [];
+    // Por defecto la versión más reciente del plan (la última publicada).
+    setSelectedBasePlanId(specBasePlans.length ? specBasePlans[specBasePlans.length - 1].id : null);
+    setSelectedMencionId(null);
   };
 
   const confirm = async () => {
@@ -108,8 +122,14 @@ export function SpecialtySelect() {
                       {spec.tagline}
                     </span>
                     <span className="mt-2 block text-xs text-text-secondary">
-                      {spec.plans[0]?.courses.length ?? 0} ramos · {spec.plans.length}{' '}
-                      {spec.plans.length === 1 ? 'plan' : 'planes'}
+                      {spec.plans[0]?.courses.length ?? 0} ramos
+                      {(() => {
+                        const men = spec.plans.filter((p) => p.mentionOf).length;
+                        const versions = spec.plans.filter((p) => !p.mentionOf).length;
+                        if (men > 0) return ` · ${men} menciones`;
+                        if (versions > 1) return ` · ${versions} versiones`;
+                        return '';
+                      })()}
                     </span>
                   </span>
                   <AnimatePresence>
@@ -133,7 +153,7 @@ export function SpecialtySelect() {
 
         {/* Versión del plan de estudios (solo si hay más de una) */}
         <AnimatePresence>
-          {specialty && specialty.plans.length > 1 && (
+          {specialty && basePlans.length > 1 && (
             <motion.section
               aria-label="Versión del plan de estudios"
               initial={{ opacity: 0, y: 8 }}
@@ -146,16 +166,19 @@ export function SpecialtySelect() {
                 Versión del plan de estudios
               </h2>
               <div role="radiogroup" aria-label="Planes disponibles" className="mt-3 grid gap-2">
-                {specialty.plans.map((plan, index) => {
-                  const isActive = effectivePlanId === plan.id;
-                  const isLatest = index === specialty.plans.length - 1;
+                {basePlans.map((plan, index) => {
+                  const isActive = effectiveBasePlanId === plan.id;
+                  const isLatest = index === basePlans.length - 1;
                   return (
                     <button
                       key={plan.id}
                       type="button"
                       role="radio"
                       aria-checked={isActive}
-                      onClick={() => setSelectedPlanId(plan.id)}
+                      onClick={() => {
+                        setSelectedBasePlanId(plan.id);
+                        setSelectedMencionId(null);
+                      }}
                       className={cn(
                         'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-white px-4 py-3 text-left transition-colors',
                         isActive
@@ -172,6 +195,52 @@ export function SpecialtySelect() {
                         )}
                         {isActive && <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden />}
                       </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+        {/* Mención / concentración (solo especialidades que la ofrecen: ICI, IOC) */}
+        <AnimatePresence>
+          {specialty && menciones.length > 0 && (
+            <motion.section
+              aria-label="Mención"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2 }}
+              className="mt-6"
+            >
+              <h2 className="text-sm font-semibold text-text-primary">Mención</h2>
+              <p className="mt-1 text-xs text-text-secondary">
+                Elige tu concentración para ver los ramos de especialización y sus requisitos.
+                Puedes cambiarla después sin perder tu progreso.
+              </p>
+              <div role="radiogroup" aria-label="Menciones disponibles" className="mt-3 grid gap-2">
+                {[{ id: null as string | null, label: 'Por definir' }, ...menciones.map((m) => ({
+                  id: m.id,
+                  label: m.name.replace(/^Mención\s+/i, ''),
+                }))].map((opt) => {
+                  const isActive = effectiveMencionId === opt.id;
+                  return (
+                    <button
+                      key={opt.id ?? 'none'}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => setSelectedMencionId(opt.id)}
+                      className={cn(
+                        'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-white px-4 py-3 text-left transition-colors',
+                        isActive
+                          ? 'border-accent ring-2 ring-accent'
+                          : 'border-border hover:border-accent/40',
+                      )}
+                    >
+                      <span className="text-sm font-medium text-text-primary">{opt.label}</span>
+                      {isActive && <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" aria-hidden />}
                     </button>
                   );
                 })}

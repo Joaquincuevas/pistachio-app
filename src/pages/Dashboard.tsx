@@ -3,6 +3,7 @@ import { GitBranch, LayoutGrid } from 'lucide-react';
 import { MallaGraph } from '@/components/malla/MallaGraph';
 import { MallaGrid } from '@/components/malla/MallaGrid';
 import { MallaProgress } from '@/components/malla/MallaProgress';
+import { MencionSwitcher } from '@/components/malla/MencionSwitcher';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
@@ -77,6 +78,10 @@ export function Dashboard() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mt-3">
+        <MencionSwitcher />
       </div>
 
       <div className="mt-4">

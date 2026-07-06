@@ -28,10 +28,10 @@ SRC = sys.argv[1] if len(sys.argv) > 1 else "/Users/joaquincuevasmunoz/Downloads
 OUT = Path(__file__).resolve().parent.parent / "server" / "data" / "catalog.json"
 
 SPECIALTIES = [
-    {"id": "ici", "sheet": "ICI Malla", "name": "Industrial",
+    {"id": "ici", "sheet": "ICI Malla", "tit": "ICI Tit", "name": "Industrial",
      "fullName": "Ingeniería Civil Industrial", "icon": "factory",
      "tagline": "Optimiza procesos, gestiona recursos y lidera organizaciones."},
-    {"id": "ioc", "sheet": "IOC Malla", "name": "Obras Civiles",
+    {"id": "ioc", "sheet": "IOC Malla", "tit": "IOC Tit", "name": "Obras Civiles",
      "fullName": "Ingeniería Civil en Obras Civiles", "icon": "building",
      "tagline": "Diseña y construye la infraestructura que sostiene al país."},
     {"id": "ice", "sheet": "ICE Malla", "name": "Eléctrica",
@@ -145,12 +145,27 @@ def parse_malla(xl, sheet: str, cursos: dict):
                 "semester": sem_idx + 1,
                 "reqNums": req_nums,
                 "creditReq": credit_req,
-                "slot": slot,
+                "slot": detect_slot(name),
             })
+    return entries
 
-    # Numeración de slots ordenada por semestre (Minor 1 en s3, Minor 2 en s4...).
-    # Los TEO* ya traen numeración romana en el patrón; el resto se numera aquí,
-    # omitiendo el sufijo cuando hay una sola instancia en el plan.
+
+def detect_slot(name: str):
+    """¿El nombre corresponde a un slot genérico (Teología, Minor, Electivo...)?"""
+    for pat, prefix, label, category in SLOT_PATTERNS:
+        if re.match(pat, norm(name)):
+            # La numeración definitiva se asigna después (assign_slot_ids).
+            return {"prefix": prefix, "label": label, "category": category}
+    return None
+
+
+def assign_slot_ids(entries: list) -> None:
+    """Numera los slots ordenados por semestre (Minor 1 en s3, Minor 2 en s4...).
+
+    Los TEO* ya traen numeración romana en el patrón; el resto se numera aquí,
+    omitiendo el sufijo cuando hay una sola instancia en el plan. Se ejecuta sobre
+    el conjunto final de entradas del plan (base o de una mención concreta).
+    """
     by_prefix: dict = {}
     for e in entries:
         if e["slot"] and not e["slot"]["prefix"].startswith("TEO"):
@@ -164,7 +179,6 @@ def parse_malla(xl, sheet: str, cursos: dict):
     for e in entries:
         if e["slot"] and e["slot"]["prefix"].startswith("TEO"):
             e["slot"]["id"] = e["slot"]["prefix"]
-    return entries
 
 
 def concurrent_flag(course_meta, prereq_name: str) -> bool:
@@ -221,7 +235,12 @@ def enrich_plan(plan_courses: list, cursos: dict) -> list:
     return plan_courses
 
 
-def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnings: list):
+def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnings: list,
+               mention_of=None):
+    # Copia profunda: assign_slot_ids muta los slots y las entradas base se
+    # reutilizan para construir cada mención.
+    entries = json.loads(json.dumps(entries))
+    assign_slot_ids(entries)
     by_num = {}
     courses = []
     for e in entries:
@@ -263,7 +282,103 @@ def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnin
             "creditReq": e["creditReq"],
         })
     enrich_plan(plan_courses, cursos)
-    return {"id": plan_id, "name": plan_name, "courses": plan_courses}
+    return {"id": plan_id, "name": plan_name, "mentionOf": mention_of, "courses": plan_courses}
+
+
+# ─── Menciones (hojas "<ESP> Tit") ───────────────────────────────
+# La malla de mención comparte los semestres 1-8 con la malla base y sólo cambia
+# los cursos de los años 5-6 (nums 48-62). Los requisitos referencian la misma
+# numeración global que la malla base.
+
+# Slug estable por mención (evita depender de acentos/orden del encabezado).
+MENCION_IDS = {
+    "estructuras": "estructuras",
+    "desarrollo de proyectos de infraestructura": "dpi",
+    "gestion de operaciones": "operaciones",
+    "ingenieria financiera": "financiera",
+    "analitica de datos": "datos",
+}
+
+
+def _is_name_cell(v) -> bool:
+    """True si la celda parece un nombre de curso (texto, no un número)."""
+    if pd.isna(v):
+        return False
+    s = str(v).strip()
+    if not s:
+        return False
+    return not re.fullmatch(r"\d+(\.0)?", s)
+
+
+def parse_tit(xl, sheet: str, cursos: dict):
+    """Devuelve [{name, id, entries}] con las menciones de la hoja de título."""
+    df = pd.read_excel(xl, sheet_name=sheet, header=None)
+    # Encabezados de mención: celdas de la columna 0 que parten con "Mención".
+    headers = [r for r in range(df.shape[0])
+               if pd.notna(df.iat[r, 0]) and norm(df.iat[r, 0]).startswith("mencion")]
+    menciones = []
+    for hi, h in enumerate(headers):
+        end = headers[hi + 1] if hi + 1 < len(headers) else df.shape[0]
+        raw = str(df.iat[h, 0]).strip()
+        conc = re.sub(r"^menci[oó]n\s+", "", raw, flags=re.I).strip()
+        mid = MENCION_IDS.get(norm(conc))
+        if not mid:  # mención no reconocida: se omite en vez de generar ids frágiles.
+            continue
+        entries = []
+        for r in range(h + 1, end - 1):
+            for c in range(df.shape[1]):
+                v = df.iat[r, c]
+                if pd.isna(v):
+                    continue
+                try:
+                    num = int(float(v))
+                except (TypeError, ValueError):
+                    continue
+                name_cell = df.iat[r + 1, c]
+                if not _is_name_cell(name_cell):
+                    continue
+                name = str(name_cell).strip()
+                # Las prácticas se agregan luego vía enrich_plan (fuera de la grilla).
+                if "practice" in norm(name):
+                    continue
+                sct = df.iat[r, c + 1] if c + 1 < df.shape[1] else None
+                req_raw = df.iat[r, c + 2] if c + 2 < df.shape[1] else None
+                req_nums, credit_req = [], None
+                if pd.notna(req_raw):
+                    txt = str(req_raw).strip()
+                    m = re.search(r"(\d+)\s*(?:cr|sct)", txt, re.I)
+                    if m:
+                        credit_req = int(m.group(1))
+                    else:
+                        for tok in re.split(r"[,;]", txt):
+                            tok = tok.strip()
+                            if re.fullmatch(r"\d+(\.0)?", tok):
+                                req_nums.append(int(float(tok)))
+                # Semestre global: años 5-6 → 9 (48-52), 10 (53-58), 11 (60-62).
+                semester = 9 if num <= 52 else 10 if num <= 58 else 11
+                entries.append({
+                    "num": num, "name": name,
+                    "credits": int(sct) if pd.notna(sct) else 0,
+                    "semester": semester, "reqNums": req_nums,
+                    "creditReq": credit_req, "slot": detect_slot(name),
+                })
+        menciones.append({"name": conc, "id": mid, "entries": entries})
+    return menciones
+
+
+def build_mencion_plans(spec_id: str, base_entries: list, tit_menciones: list,
+                        cursos: dict, warnings: list):
+    """Construye un plan completo por mención (semestres 1-8 base + años 5-6 mención)."""
+    base_1_8 = [e for e in base_entries if e["num"] < 48]
+    plans = []
+    for men in tit_menciones:
+        combined = base_1_8 + men["entries"]
+        plan = build_plan(
+            f"{spec_id}-pe2022-{men['id']}", f"Mención {men['name']}",
+            combined, cursos, warnings, mention_of=f"{spec_id}-pe2022",
+        )
+        plans.append(plan)
+    return plans
 
 
 def build_icc_ajuste(base_plan: dict, cursos: dict) -> dict:
@@ -313,7 +428,8 @@ def build_icc_ajuste(base_plan: dict, cursos: dict) -> dict:
             c["prerequisites"] = [{"id": pid, "concurrent": con} for pid, con in req_overrides[c["id"]]]
         courses.append(c)
     courses.extend(new_courses)
-    return {"id": "icc-pe2022-a2025", "name": "PE 2022 · Ajuste 2025", "courses": courses}
+    return {"id": "icc-pe2022-a2025", "name": "PE 2022 · Ajuste 2025",
+            "mentionOf": None, "courses": courses}
 
 
 def main():
@@ -328,6 +444,10 @@ def main():
         plans = [plan]
         if spec["id"] == "icc":
             plans.append(build_icc_ajuste(plan, cursos))
+        # Menciones: planes completos que resuelven los cupos "Mención" de los años 5-6.
+        if spec.get("tit"):
+            tit_menciones = parse_tit(xl, spec["tit"], cursos)
+            plans.extend(build_mencion_plans(spec["id"], entries, tit_menciones, cursos, warnings))
         out["specialties"].append({
             "id": spec["id"], "name": spec["name"], "fullName": spec["fullName"],
             "icon": spec["icon"], "tagline": spec["tagline"], "plans": plans,

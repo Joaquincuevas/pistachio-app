@@ -46,6 +46,8 @@ export interface Course {
 export interface Plan {
   id: string;
   name: string;
+  /** Si es un plan de mención, el id del plan base al que pertenece; null/undefined si es base. */
+  mentionOf?: string | null;
   courses: Course[];
 }
 

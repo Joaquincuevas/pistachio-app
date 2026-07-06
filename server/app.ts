@@ -360,8 +360,8 @@ app.get('/api/catalog', async (_req, res) => {
       id: string; name: string; full_name: string; icon: string; tagline: string;
     }>(`SELECT id, name, full_name, icon, tagline FROM specialties ORDER BY sort`);
 
-    const plans = await all<{ id: string; specialty_id: string; name: string }>(
-      `SELECT id, specialty_id, name FROM plans ORDER BY sort`,
+    const plans = await all<{ id: string; specialty_id: string; name: string; mention_of: string | null }>(
+      `SELECT id, specialty_id, name, mention_of FROM plans ORDER BY sort`,
     );
 
     const courseRows = await all<{
@@ -415,7 +415,12 @@ app.get('/api/catalog', async (_req, res) => {
         tagline: s.tagline,
         plans: plans
           .filter((p) => p.specialty_id === s.id)
-          .map((p) => ({ id: p.id, name: p.name, courses: coursesByPlan.get(p.id) ?? [] })),
+          .map((p) => ({
+            id: p.id,
+            name: p.name,
+            mentionOf: p.mention_of,
+            courses: coursesByPlan.get(p.id) ?? [],
+          })),
       })),
     };
   }
@@ -439,10 +444,32 @@ app.put('/api/me/plan', requireAuth, async (req: AuthedRequest, res) => {
     res.status(404).json({ error: 'El plan no existe' });
     return;
   }
+  const userId = req.sessionUser!.id;
+
+  // Al cambiar de plan (p. ej. elegir una mención), se conserva el progreso de
+  // los ramos compartidos: se copian desde el plan anterior sin sobrescribir lo
+  // que ya exista en el plan nuevo. Así los semestres 1-8 comunes no se pierden.
+  const currentPlan = await get<{ plan_id: string | null }>(
+    `SELECT plan_id FROM users WHERE id = ?`,
+    [userId],
+  );
+  const previousPlanId = currentPlan?.plan_id ?? null;
+  if (previousPlanId && previousPlanId !== planId) {
+    await run(
+      `INSERT INTO progress (user_id, plan_id, course_id, status, updated_at)
+       SELECT user_id, ?, course_id, status, now()
+       FROM progress
+       WHERE user_id = ? AND plan_id = ?
+         AND course_id IN (SELECT course_id FROM plan_courses WHERE plan_id = ?)
+       ON CONFLICT (user_id, plan_id, course_id) DO NOTHING`,
+      [planId, userId, previousPlanId, planId],
+    );
+  }
+
   await run(`UPDATE users SET specialty_id = ?, plan_id = ? WHERE id = ?`, [
     specialtyId,
     planId,
-    req.sessionUser!.id,
+    userId,
   ]);
   res.json({ settings: { specialtyId, planId } });
 });

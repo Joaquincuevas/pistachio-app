@@ -53,7 +53,14 @@ export const useCurriculumStore = create<CurriculumState>()(
 
       choosePlan: async (specialtyId, planId) => {
         const { settings } = await api.setPlan(specialtyId, planId);
-        set({ specialtyId: settings.specialtyId, planId: settings.planId });
+        set((state) => ({
+          specialtyId: settings.specialtyId,
+          planId: settings.planId,
+          // Fuerza recargar el progreso del plan nuevo: el servidor pudo copiar
+          // el avance de los ramos compartidos al cambiar de mención.
+          syncedPlans: state.syncedPlans.filter((id) => id !== settings.planId),
+        }));
+        if (settings.planId) void get().loadProgress(settings.planId);
       },
 
       loadProgress: async (planId) => {

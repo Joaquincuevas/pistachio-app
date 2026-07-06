@@ -122,6 +122,8 @@ const SCHEMA_STATEMENTS = [
     name         TEXT NOT NULL,
     sort         INTEGER NOT NULL
   )`,
+  // Menciones: un plan de mención referencia su plan base (NULL = plan base).
+  `ALTER TABLE plans ADD COLUMN IF NOT EXISTS mention_of TEXT`,
   `CREATE TABLE IF NOT EXISTS courses (
     id            TEXT PRIMARY KEY,
     name          TEXT NOT NULL,
@@ -186,7 +188,7 @@ interface Catalog {
     fullName: string;
     icon: string;
     tagline: string;
-    plans: { id: string; name: string; courses: CatalogCourse[] }[];
+    plans: { id: string; name: string; mentionOf?: string | null; courses: CatalogCourse[] }[];
   }[];
 }
 
@@ -211,7 +213,7 @@ async function seedCatalog(): Promise<void> {
   data.specialties.forEach((spec, si) => {
     specRows.push([spec.id, spec.name, spec.fullName, spec.icon, spec.tagline, si]);
     spec.plans.forEach((plan, pi) => {
-      planRows.push([plan.id, spec.id, plan.name, pi]);
+      planRows.push([plan.id, spec.id, plan.name, pi, plan.mentionOf ?? null]);
       for (const course of plan.courses) {
         if (!courseById.has(course.id)) {
           courseById.set(course.id, [
@@ -238,7 +240,7 @@ async function seedCatalog(): Promise<void> {
   });
 
   await insertRows('specialties', ['id', 'name', 'full_name', 'icon', 'tagline', 'sort'], specRows);
-  await insertRows('plans', ['id', 'specialty_id', 'name', 'sort'], planRows);
+  await insertRows('plans', ['id', 'specialty_id', 'name', 'sort', 'mention_of'], planRows);
   await insertRows(
     'courses',
     ['id', 'name', 'is_slot', 'slot_category', 'hours_json', 'req_text', 'skills', 'offered'],
