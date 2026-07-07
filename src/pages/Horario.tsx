@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CalendarDays, Check, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CalendarDays, Check, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
 import { WeekGrid } from '@/components/schedule/WeekGrid';
 import { ScheduleUpload } from '@/components/schedule/ScheduleUpload';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
-import { analyzePlan, eligibleCourses, type Term } from '@/lib/advisor';
+import { adviceFor, analyzePlan, eligibleCourses, type Term } from '@/lib/advisor';
 import {
   buildAutoSchedule,
   DAYS_SHORT,
+  listOfferedCourses,
   minutesToHHMM,
   offeredCountForPlan,
   sectionsConflict,
@@ -40,6 +41,7 @@ export function Horario() {
   const statuses = plan ? (progressMap[plan.id] ?? EMPTY) : EMPTY;
   const term: Term = offering?.term.endsWith('10') ? 1 : 2;
   const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState('');
   const built = useRef(false);
 
   // Al cargar por primera vez un horario, propone un armado automático sin topes.
@@ -116,10 +118,37 @@ export function Horario() {
 
   const gridItems = selected.map((c) => ({ code: c.code, short: c.code, section: c.section }));
 
-  // Ramos elegibles que se dictan y aún no están en la selección.
-  const addable = eligibleCourses(analyzePlan(plan, statuses, term)).filter(
+  const advice = analyzePlan(plan, statuses, term);
+
+  // Ramos elegibles según la malla que se dictan y aún no están en la selección.
+  const addable = eligibleCourses(advice).filter(
     (a) => offering.byCourse[a.course.id]?.length && !selection[a.course.id],
   );
+
+  // Búsqueda libre sobre TODO el horario subido: los cupos "slot" de la malla
+  // (Electivo, Minor, Concentración Tecnológica…) se satisfacen con cualquier
+  // ramo real del horario cuyo código no coincide con el id del slot, así que
+  // el matching exacto de "addable" nunca los va a encontrar. Esto también
+  // cubre minors dictados por otra facultad, que ni siquiera están en la malla.
+  const q = query.trim().toLowerCase();
+  const browsable = listOfferedCourses(offering)
+    .filter((c) => !selection[c.code])
+    .filter((c) => !q || c.title.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    .map((c) => {
+      const planCourse = plan.courses.find((pc) => pc.id === c.code);
+      const a = planCourse ? adviceFor(advice, planCourse.id) : undefined;
+      const status = planCourse ? (statuses[planCourse.id] ?? 'pending') : 'pending';
+      return {
+        code: c.code,
+        title: planCourse?.name ?? c.title,
+        credits: planCourse?.credits ?? null,
+        inPlan: Boolean(planCourse),
+        status,
+        blocked: Boolean(a && !a.eligible),
+      };
+    })
+    .filter((c) => c.status !== 'completed' && c.status !== 'in-progress')
+    .slice(0, 40);
 
   const rebuild = () => {
     const auto = buildAutoSchedule(plan, statuses, offering, term);
@@ -248,56 +277,114 @@ export function Horario() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            disabled={addable.length === 0}
-            className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40"
           >
             <Plus className="h-4 w-4" aria-hidden />
-            Agregar ramo {addable.length > 0 && `(${addable.length} disponibles)`}
+            Agregar ramo {addable.length > 0 && `(${addable.length} sugeridos)`}
           </button>
         ) : (
           <div className="rounded-card border border-border bg-white p-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-text-secondary">
-                Ramos que puedes tomar y se dictan
-              </p>
+              <p className="text-xs font-medium text-text-secondary">Agregar ramo</p>
               <button
                 type="button"
-                onClick={() => setAdding(false)}
+                onClick={() => {
+                  setAdding(false);
+                  setQuery('');
+                }}
                 aria-label="Cerrar"
                 className="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
               >
                 <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <div className="mt-2 flex max-h-64 flex-col gap-1 overflow-y-auto">
-              {addable.length === 0 ? (
-                <p className="px-1 py-2 text-sm text-text-secondary">No quedan ramos por agregar.</p>
-              ) : (
-                addable.map((a) => {
-                  const first = offering.byCourse[a.course.id][0];
-                  return (
+
+            {/* Sugeridos según la malla (elegibles y sin topes evidentes) */}
+            {!q && addable.length > 0 && (
+              <div className="mt-2">
+                <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                  Sugeridos según tu malla
+                </p>
+                <div className="mt-1 flex flex-col gap-1">
+                  {addable.map((a) => {
+                    const first = offering.byCourse[a.course.id][0];
+                    return (
+                      <button
+                        key={a.course.id}
+                        type="button"
+                        onClick={() => {
+                          pickSection(a.course.id, first.nrc);
+                          setAdding(false);
+                          setQuery('');
+                        }}
+                        className="flex items-center justify-between gap-3 rounded-btn px-3 py-2 text-left hover:bg-surface"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm text-text-primary">
+                            {a.course.name}
+                          </span>
+                          <span className="block text-xs text-text-secondary">
+                            {a.course.id} · {a.course.credits} SCT
+                          </span>
+                        </span>
+                        <Plus className="h-4 w-4 shrink-0 text-accent" aria-hidden />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Búsqueda libre: cubre electivos, minors y cualquier ramo del horario
+                que la malla no pueda calzar automáticamente por código exacto. */}
+            <div className="mt-3">
+              <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-text-tertiary">
+                Buscar en el horario
+              </p>
+              <div className="relative mt-1">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-text-secondary"
+                  aria-hidden
+                />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Nombre o código, ej: Electivo, Minor, IOC4101"
+                  aria-label="Buscar cualquier ramo del horario"
+                  className="h-10 w-full rounded-btn border border-border bg-white pl-9 pr-3 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </div>
+              <div className="mt-1 flex max-h-64 flex-col gap-1 overflow-y-auto">
+                {browsable.length === 0 ? (
+                  <p className="px-1 py-2 text-sm text-text-secondary">
+                    {q ? 'Sin resultados.' : 'No quedan más ramos por agregar en el horario subido.'}
+                  </p>
+                ) : (
+                  browsable.map((c) => (
                     <button
-                      key={a.course.id}
+                      key={c.code}
                       type="button"
                       onClick={() => {
-                        pickSection(a.course.id, first.nrc);
+                        const first = offering.byCourse[c.code][0];
+                        pickSection(c.code, first.nrc);
                         setAdding(false);
+                        setQuery('');
                       }}
                       className="flex items-center justify-between gap-3 rounded-btn px-3 py-2 text-left hover:bg-surface"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-sm text-text-primary">
-                          {a.course.name}
-                        </span>
+                        <span className="block truncate text-sm text-text-primary">{c.title}</span>
                         <span className="block text-xs text-text-secondary">
-                          {a.course.id} · {a.course.credits} SCT
+                          {c.code} · {c.credits != null ? `${c.credits} SCT` : 'fuera de tu malla'}
+                          {c.blocked && ' · requisitos pendientes'}
                         </span>
                       </span>
                       <Plus className="h-4 w-4 shrink-0 text-accent" aria-hidden />
                     </button>
-                  );
-                })
-              )}
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}

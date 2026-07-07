@@ -223,3 +223,21 @@ export function buildAutoSchedule(
 export function offeredCountForPlan(plan: Plan, offering: Offering): number {
   return plan.courses.filter((c) => !c.isSlot && offering.byCourse[c.id]?.length).length;
 }
+
+export interface OfferedCourse {
+  code: string;
+  title: string;
+}
+
+/**
+ * Todos los ramos que aparecen en el horario subido (un registro por código),
+ * sin filtrar por la malla del alumno. Sirve para la búsqueda libre: minors,
+ * electivos y otros cupos "slot" de la malla se satisfacen con un ramo real
+ * cuyo código no calza exacto con el id del slot (ELE1, MINOR2…), así que la
+ * única forma de agregarlos es dejar buscar en todo el horario oficial.
+ */
+export function listOfferedCourses(offering: Offering): OfferedCourse[] {
+  return Object.entries(offering.byCourse)
+    .map(([code, sections]) => ({ code, title: sections[0]?.title ?? code }))
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
