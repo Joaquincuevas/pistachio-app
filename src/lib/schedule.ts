@@ -11,8 +11,24 @@ import { analyzePlan, eligibleCourses, type Term } from './advisor';
 export const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'] as const;
 export const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'] as const;
 
-/** Tipos de reunión que ocupan un bloque semanal (clase / ayudantía, presencial u online). */
-const WEEKLY_TYPES = new Set(['CLAS', 'OLIN', 'AYUD', 'AYON']);
+/**
+ * Tipos de reunión que ocupan un bloque semanal recurrente: clases, ayudantías
+ * y laboratorios/talleres (presencial u online). PRBA (pruebas) y EXAM son
+ * fechas puntuales, no bloques semanales, y se excluyen a propósito.
+ */
+const WEEKLY_TYPES = new Set(['CLAS', 'OLIN', 'AYUD', 'AYON', 'LAB/TALLER', 'LABT']);
+
+/** Nombre legible por tipo de reunión, para mostrar en la grilla y el .ics. */
+export const MEETING_TYPE_LABELS: Record<string, string> = {
+  CLAS: 'Clase',
+  OLIN: 'Clase online',
+  AYUD: 'Ayudantía',
+  AYON: 'Ayudantía online',
+  'LAB/TALLER': 'Laboratorio',
+  LABT: 'Laboratorio',
+};
+
+export const meetingTypeLabel = (type: string): string => MEETING_TYPE_LABELS[type] ?? type;
 
 export interface Meeting {
   /** 0 = lunes … 4 = viernes. */
@@ -22,6 +38,9 @@ export interface Meeting {
   end: number;
   type: string;
   room: string;
+  /** Rango de fechas del semestre en que se repite este bloque (ISO yyyy-mm-dd). */
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export interface Section {
@@ -61,6 +80,14 @@ export function minutesToHHMM(min: number): string {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return `${h}:${String(m).padStart(2, '0')}`;
+}
+
+/** "03/08/2026" (DD/MM/YYYY, como lo exporta la Facultad) → "2026-08-03". */
+function parseDDMMYYYY(raw: string): string | null {
+  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, d, mo, y] = m;
+  return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
 }
 
 /** Etiqueta legible del período a partir del código Banner (202620 → 2.º sem 2026). */
@@ -119,11 +146,13 @@ export async function parseHorario(data: ArrayBuffer, fileName: string): Promise
     const type = norm(row[col['TIPO DE REUNION']]).toUpperCase();
     if (!WEEKLY_TYPES.has(type)) continue;
     const room = col['SALA'] != null ? norm(row[col['SALA']]) : '';
+    const startDate = col['INICIO'] != null ? parseDDMMYYYY(norm(row[col['INICIO']])) : null;
+    const endDate = col['FIN'] != null ? parseDDMMYYYY(norm(row[col['FIN']])) : null;
     for (let d = 0; d < 5; d++) {
       const ci = dayCols[d];
       if (ci == null) continue;
       const range = parseTimeRange(norm(row[ci]));
-      if (range) sections.get(nrc)!.meetings.push({ day: d, ...range, type, room });
+      if (range) sections.get(nrc)!.meetings.push({ day: d, ...range, type, room, startDate, endDate });
     }
   }
 
@@ -240,4 +269,25 @@ export function listOfferedCourses(offering: Offering): OfferedCourse[] {
   return Object.entries(offering.byCourse)
     .map(([code, sections]) => ({ code, title: sections[0]?.title ?? code }))
     .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+// ─── Colores compartidos (grilla e imagen exportada) ─────────────
+
+/** Paleta suave por ramo (bg / borde / texto), en el lenguaje de la app. */
+export const SCHEDULE_PALETTE = [
+  { bg: '#EAF2ED', bd: '#4A7C59', tx: '#2F5A3F' },
+  { bg: '#E6F0FB', bd: '#4A90E2', tx: '#245B8F' },
+  { bg: '#F5EFE3', bd: '#C9A24B', tx: '#7A5F1E' },
+  { bg: '#F3E9F7', bd: '#9B6DC0', tx: '#5F3D7A' },
+  { bg: '#FBEEE9', bd: '#D8814F', tx: '#8A4A2A' },
+  { bg: '#E7F4F0', bd: '#2FA98A', tx: '#1C6B57' },
+];
+
+/** Asigna un color estable por código de ramo, en orden de aparición. */
+export function buildColorMap(codes: string[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const code of codes) {
+    if (!map.has(code)) map.set(code, map.size % SCHEDULE_PALETTE.length);
+  }
+  return map;
 }

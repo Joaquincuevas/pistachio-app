@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertTriangle, CalendarDays, Check, Plus, RefreshCw, Search, Trash2, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarDays,
+  CalendarPlus,
+  Check,
+  Copy,
+  ImageDown,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { WeekGrid } from '@/components/schedule/WeekGrid';
 import { ScheduleUpload } from '@/components/schedule/ScheduleUpload';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -15,9 +27,19 @@ import {
   sectionsConflict,
   type Section,
 } from '@/lib/schedule';
+import {
+  buildIcs,
+  buildNrcCsv,
+  copyToClipboard,
+  downloadCanvasPng,
+  downloadText,
+  renderScheduleCanvas,
+  type ScheduleItem,
+} from '@/lib/scheduleExport';
 import { cn } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import { useScheduleStore } from '@/stores/useScheduleStore';
+import { useToastStore } from '@/stores/useToastStore';
 
 const EMPTY: Record<string, never> = {};
 
@@ -37,6 +59,7 @@ export function Horario() {
   const pickSection = useScheduleStore((s) => s.pickSection);
   const removeCourse = useScheduleStore((s) => s.removeCourse);
   const clearOffering = useScheduleStore((s) => s.clearOffering);
+  const show = useToastStore((s) => s.show);
 
   const statuses = plan ? (progressMap[plan.id] ?? EMPTY) : EMPTY;
   const term: Term = offering?.term.endsWith('10') ? 1 : 2;
@@ -155,6 +178,38 @@ export function Horario() {
     setSelection(Object.fromEntries(auto.courses.map((c) => [c.code, c.section.nrc])));
   };
 
+  const exportItems: ScheduleItem[] = selected;
+
+  const copyNrc = async (nrc: string, label: string) => {
+    try {
+      await copyToClipboard(nrc);
+      show(`NRC ${nrc} copiado (${label}).`);
+    } catch {
+      show('No se pudo copiar. Cópialo manualmente.', 'error');
+    }
+  };
+
+  const copyAllNrcs = async () => {
+    try {
+      await copyToClipboard(buildNrcCsv(exportItems));
+      show(`${exportItems.length} NRC copiados, listos para la toma de ramos.`);
+    } catch {
+      show('No se pudo copiar. Cópialos manualmente desde cada ramo.', 'error');
+    }
+  };
+
+  const downloadIcs = () => {
+    const ics = buildIcs(exportItems, offering);
+    downloadText(`horario-${offering.term || 'pistachio'}.ics`, ics, 'text/calendar');
+    show('Calendario descargado. Ábrelo para importarlo a tu app de calendario.');
+  };
+
+  const downloadImage = () => {
+    const canvas = renderScheduleCanvas(exportItems, offering.label);
+    downloadCanvasPng(canvas, `horario-${offering.term || 'pistachio'}.png`);
+    show('Imagen del horario descargada.');
+  };
+
   return (
     <PageTransition className="mx-auto max-w-3xl px-4 py-4 md:px-8 md:py-8">
       {/* Encabezado */}
@@ -209,6 +264,36 @@ export function Horario() {
         </div>
       </div>
 
+      {/* Exportar: copiar NRC para la toma de ramos, calendario, imagen */}
+      {selected.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={copyAllNrcs}
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+          >
+            <Copy className="h-3.5 w-3.5" aria-hidden />
+            Copiar NRC
+          </button>
+          <button
+            type="button"
+            onClick={downloadIcs}
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
+            Calendario (.ics)
+          </button>
+          <button
+            type="button"
+            onClick={downloadImage}
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+          >
+            <ImageDown className="h-3.5 w-3.5" aria-hidden />
+            Imagen
+          </button>
+        </div>
+      )}
+
       {/* Cuadrícula semanal */}
       {selected.length > 0 && (
         <div className="mt-5">
@@ -240,14 +325,26 @@ export function Horario() {
                     {c.code} · {c.credits} SCT · Sección {c.section.section}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeCourse(c.code)}
-                  aria-label={`Quitar ${c.title}`}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
-                >
-                  <X className="h-4 w-4" aria-hidden />
-                </button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => copyNrc(c.section.nrc, c.title)}
+                    aria-label={`Copiar NRC de ${c.title}`}
+                    title={`Copiar NRC ${c.section.nrc}`}
+                    className="flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-text-secondary hover:bg-surface hover:text-accent-hover"
+                  >
+                    <Copy className="h-3.5 w-3.5" aria-hidden />
+                    {c.section.nrc}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeCourse(c.code)}
+                    aria-label={`Quitar ${c.title}`}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
               </div>
 
               <p className="mt-2 text-xs text-text-secondary">{sectionSummary(c.section)}</p>

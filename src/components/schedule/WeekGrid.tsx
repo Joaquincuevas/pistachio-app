@@ -1,20 +1,17 @@
 import { useMemo } from 'react';
-import { DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
+import {
+  buildColorMap,
+  DAYS_SHORT,
+  meetingTypeLabel,
+  minutesToHHMM,
+  SCHEDULE_PALETTE,
+  type Section,
+} from '@/lib/schedule';
 
 const START = 8 * 60; // 08:00
 const END = 21 * 60 + 30; // 21:30
 const PX_PER_MIN = 0.7;
 const HOURS = Array.from({ length: (END - START) / 60 + 1 }, (_, i) => 8 + i);
-
-/** Paleta suave por ramo (bg / borde / texto), en el lenguaje de la app. */
-const PALETTE = [
-  { bg: '#EAF2ED', bd: '#4A7C59', tx: '#2F5A3F' },
-  { bg: '#E6F0FB', bd: '#4A90E2', tx: '#245B8F' },
-  { bg: '#F5EFE3', bd: '#C9A24B', tx: '#7A5F1E' },
-  { bg: '#F3E9F7', bd: '#9B6DC0', tx: '#5F3D7A' },
-  { bg: '#FBEEE9', bd: '#D8814F', tx: '#8A4A2A' },
-  { bg: '#E7F4F0', bd: '#2FA98A', tx: '#1C6B57' },
-];
 
 export interface GridItem {
   code: string;
@@ -35,10 +32,7 @@ interface Block extends GridItem {
 /** Cuadrícula semanal (lun-vie) con los bloques de las secciones elegidas. */
 export function WeekGrid({ items }: { items: GridItem[] }) {
   const { blocks, colorByCode } = useMemo(() => {
-    const colorByCode = new Map<string, number>();
-    for (const it of items) {
-      if (!colorByCode.has(it.code)) colorByCode.set(it.code, colorByCode.size % PALETTE.length);
-    }
+    const colorByCode = buildColorMap(items.map((it) => it.code));
     const flat: Block[] = [];
     for (const it of items) {
       for (const m of it.section.meetings) {
@@ -101,7 +95,7 @@ export function WeekGrid({ items }: { items: GridItem[] }) {
               {blocks
                 .filter((b) => b.day === day)
                 .map((b, i) => {
-                  const c = PALETTE[colorByCode.get(b.code) ?? 0];
+                  const c = SCHEDULE_PALETTE[colorByCode.get(b.code) ?? 0];
                   const top = (b.start - START) * PX_PER_MIN;
                   const h = (b.end - b.start) * PX_PER_MIN;
                   return (
@@ -115,10 +109,10 @@ export function WeekGrid({ items }: { items: GridItem[] }) {
                         color: b.conflict ? '#A6291B' : c.tx,
                         border: `1px solid ${b.conflict ? '#D14434' : c.bd}`,
                       }}
-                      title={`${b.short} · ${b.type} · ${minutesToHHMM(b.start)}-${minutesToHHMM(b.end)}${b.room ? ` · ${b.room}` : ''}`}
+                      title={`${b.short} · ${meetingTypeLabel(b.type)} · ${minutesToHHMM(b.start)}-${minutesToHHMM(b.end)}${b.room ? ` · ${b.room}` : ''}`}
                     >
                       <span className="block font-semibold">{b.short}</span>
-                      <span className="block opacity-80">{b.type}</span>
+                      <span className="block truncate opacity-80">{meetingTypeLabel(b.type)}</span>
                     </div>
                   );
                 })}
