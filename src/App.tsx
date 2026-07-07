@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/Toast';
 import { Advisor } from '@/pages/Advisor';
 import { Dashboard } from '@/pages/Dashboard';
 import { ForgotPassword } from '@/pages/ForgotPassword';
+import { Horario } from '@/pages/Horario';
 import { Landing } from '@/pages/Landing';
 import { Login } from '@/pages/Login';
 import { Profile } from '@/pages/Profile';
@@ -44,6 +45,7 @@ export default function App() {
             <Route element={<AppShell />}>
               <Route path="/malla" element={<Dashboard />} />
               <Route path="/asistente" element={<Advisor />} />
+              <Route path="/horario" element={<Horario />} />
               <Route path="/search" element={<Search />} />
               <Route path="/profile" element={<Profile />} />
               {/* Perfil y Configuración quedaron unificados en /profile. */}

@@ -136,6 +136,32 @@ export function adviceFor(advice: CourseAdvice[], courseId: string): CourseAdvic
   return advice.find((a) => a.course.id === courseId);
 }
 
+/**
+ * Cadena completa de prerrequisitos (transitivos) que aún faltan para un ramo,
+ * ordenada por semestre sugerido (lo más temprano primero).
+ */
+export function collectMissing(
+  courseId: string,
+  courses: Course[],
+  progress: Record<string, CourseStatus>,
+): Course[] {
+  const byId = new Map(courses.map((c) => [c.id, c]));
+  const missing = new Map<string, Course>();
+  const visit = (id: string) => {
+    const course = byId.get(id);
+    if (!course) return;
+    for (const p of course.prerequisites) {
+      if (progress[p.id] === 'completed' || missing.has(p.id)) continue;
+      const pc = byId.get(p.id);
+      if (!pc) continue;
+      missing.set(p.id, pc);
+      visit(p.id);
+    }
+  };
+  visit(courseId);
+  return [...missing.values()].sort((a, b) => a.semester - b.semester || a.id.localeCompare(b.id));
+}
+
 /** Semestre académico por defecto según la fecha (2.º sem ~ jun-nov en Chile). */
 export function defaultTerm(date = new Date()): Term {
   const m = date.getMonth();

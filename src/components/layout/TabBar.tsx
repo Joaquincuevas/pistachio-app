@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Search, Sparkles, User } from 'lucide-react';
+import { CalendarDays, LayoutGrid, Search, Sparkles, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/malla', label: 'Malla', icon: LayoutGrid },
   { to: '/asistente', label: 'Asistente', icon: Sparkles },
+  { to: '/horario', label: 'Horario', icon: CalendarDays },
   { to: '/search', label: 'Buscar', icon: Search },
   { to: '/profile', label: 'Perfil', icon: User },
 ];

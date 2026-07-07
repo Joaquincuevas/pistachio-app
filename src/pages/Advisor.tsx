@@ -1,13 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
-import { Check, Lightbulb, Search as SearchIcon, Sparkles, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowUp, CalendarDays, Check, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
+import { useScheduleStore } from '@/stores/useScheduleStore';
 import {
   adviceFor,
   analyzePlan,
+  collectMissing,
   completedCredits,
   defaultTerm,
   eligibleCourses,
@@ -16,6 +19,8 @@ import {
   type CourseAdvice,
   type Term,
 } from '@/lib/advisor';
+import { SUGGESTIONS, understand } from '@/lib/nlu';
+import { DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
 import { cn, computeProgress } from '@/lib/utils';
 import type { Course } from '@/types';
 
@@ -50,16 +55,24 @@ function CourseLine({ course, reason }: { course: Course; reason?: string }) {
 const reasonFor = (a: CourseAdvice) =>
   a.unlocks > 0 ? `Desbloquea ${a.unlocks}` : 'Avanza tu malla';
 
+const sectionSummary = (s: Section) =>
+  s.meetings.length
+    ? s.meetings
+        .map((m) => `${DAYS_SHORT[m.day]} ${minutesToHHMM(m.start)}–${minutesToHHMM(m.end)}`)
+        .join(' · ')
+    : 'sin horario publicado';
+
 export function Advisor() {
   const { plan, loading } = useActivePlan();
   const user = useAuthStore((s) => s.user);
   const progressMap = useCurriculumStore((s) => s.progress);
+  const offering = useScheduleStore((s) => s.offering);
+  const navigate = useNavigate();
   const statuses = plan ? (progressMap[plan.id] ?? EMPTY) : EMPTY;
 
   const [term, setTerm] = useState<Term>(() => defaultTerm());
   const [messages, setMessages] = useState<Message[]>([]);
-  const [picking, setPicking] = useState(false);
-  const [query, setQuery] = useState('');
+  const [draft, setDraft] = useState('');
   const nextId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -167,8 +180,27 @@ export function Advisor() {
     );
   };
 
+  const answerProgress = () => {
+    const remaining = stats.totalCourses - stats.completedCourses;
+    push(
+      'bot',
+      <div>
+        <p>
+          Llevas <span className="font-medium text-text-primary">{stats.completedCourses}</span> de{' '}
+          {stats.totalCourses} ramos ({stats.percent}%) y{' '}
+          <span className="font-medium text-text-primary">{credits}</span> de {stats.totalCredits}{' '}
+          SCT.
+        </p>
+        <p className="mt-2 text-sm text-text-secondary">
+          Te quedan {remaining} ramos{stats.inProgressCourses > 0 ? ` (${stats.inProgressCourses} en curso)` : ''}.
+          {credits < 170 && ' La Práctica Pre-Profesional se habilita a los 170 SCT.'}
+          {credits >= 170 && credits < 282 && ' La Práctica Profesional se habilita a los 282 SCT.'}
+        </p>
+      </div>,
+    );
+  };
+
   const answerCourse = (course: Course) => {
-    push('user', <span>¿Puedo tomar {course.name}?</span>);
     const a = adviceFor(advice, course.id);
     const status = statuses[course.id] ?? 'pending';
 
@@ -181,12 +213,22 @@ export function Advisor() {
       return;
     }
     if (a?.eligible) {
+      const sections = offering?.byCourse[course.id];
       push(
         'bot',
-        <p>
-          Sí, puedes tomar <span className="font-medium text-text-primary">{course.name}</span> el{' '}
-          {ordinal(term)} semestre: cumples todos los requisitos.
-        </p>,
+        <div>
+          <p>
+            Sí, puedes tomar <span className="font-medium text-text-primary">{course.name}</span>{' '}
+            el {ordinal(term)} semestre: cumples todos los requisitos.
+          </p>
+          {sections && sections.length > 0 && (
+            <p className="mt-2 text-sm text-text-secondary">
+              Según el horario oficial, se dicta con {sections.length}{' '}
+              {sections.length === 1 ? 'sección' : 'secciones'}. Pregúntame "¿qué secciones tiene{' '}
+              {course.name}?" para verlas.
+            </p>
+          )}
+        </div>,
       );
       return;
     }
@@ -232,20 +274,206 @@ export function Advisor() {
     );
   };
 
-  const quickActions = [
-    { label: `¿Qué tomo el ${ordinal(term)} semestre?`, icon: Sparkles, run: () => { push('user', <span>¿Qué tomo el {ordinal(term)} semestre?</span>); answerRecommend(); } },
-    { label: '¿Qué ya puedo tomar?', icon: Check, run: () => { push('user', <span>¿Qué ya puedo tomar?</span>); answerEligible(); } },
-    { label: '¿Qué me conviene priorizar?', icon: Lightbulb, run: () => { push('user', <span>¿Qué me conviene priorizar?</span>); answerPriority(); } },
-    { label: '¿Puedo tomar un ramo?', icon: SearchIcon, run: () => setPicking(true) },
-  ];
+  const answerMissing = (course: Course) => {
+    const status = statuses[course.id] ?? 'pending';
+    if (status === 'completed') {
+      push('bot', <p>Nada: {course.name} ya está cursado.</p>);
+      return;
+    }
+    const missing = collectMissing(course.id, plan.courses, statuses);
+    const a = adviceFor(advice, course.id);
+    const creditsShort = a?.creditsShort ?? 0;
+    if (missing.length === 0 && creditsShort === 0) {
+      push(
+        'bot',
+        <p>
+          No te falta nada para{' '}
+          <span className="font-medium text-text-primary">{course.name}</span>: puedes tomarlo
+          cuando se dicte.
+        </p>,
+      );
+      return;
+    }
+    if (missing.length === 0) {
+      // Solo faltan créditos (típico de prácticas y proyectos de título).
+      push(
+        'bot',
+        <p>
+          Para <span className="font-medium text-text-primary">{course.name}</span> no te faltan
+          ramos, solo créditos: necesitas {creditsShort} SCT más (llevas {credits} de{' '}
+          {course.creditReq}).
+        </p>,
+      );
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>
+          Para tomar <span className="font-medium text-text-primary">{course.name}</span> te{' '}
+          {missing.length === 1 ? 'falta este ramo' : `faltan ${missing.length} ramos`} (incluye la
+          cadena completa de prerrequisitos):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {missing.map((c) => (
+            <CourseLine key={c.id} course={c} />
+          ))}
+        </div>
+        {creditsShort > 0 && (
+          <p className="mt-3 text-sm text-text-secondary">
+            Además necesitas {creditsShort} SCT más de créditos aprobados.
+          </p>
+        )}
+      </div>,
+    );
+  };
 
-  const pickable = plan.courses
-    .filter((c) => (statuses[c.id] ?? 'pending') !== 'completed')
-    .filter((c) => {
-      const q = query.trim().toLowerCase();
-      return !q || c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
-    })
-    .slice(0, 8);
+  const answerOffered = (course: Course) => {
+    if (!offering) {
+      push(
+        'bot',
+        <div>
+          <p>
+            Aún no has cargado el horario oficial del próximo semestre, así que no sé qué secciones
+            tiene {course.name}.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/horario')}
+            className="mt-3 inline-flex items-center gap-2 rounded-btn bg-accent px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden />
+            Subir horario
+          </button>
+        </div>,
+      );
+      return;
+    }
+    const sections = offering.byCourse[course.id];
+    if (!sections || sections.length === 0) {
+      push(
+        'bot',
+        <p>
+          Según el horario oficial ({offering.label}),{' '}
+          <span className="font-medium text-text-primary">{course.name}</span> no se dicta el
+          próximo semestre.
+        </p>,
+      );
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>
+          <span className="font-medium text-text-primary">{course.name}</span> se dicta con{' '}
+          {sections.length} {sections.length === 1 ? 'sección' : 'secciones'} ({offering.label}):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {sections.map((s) => (
+            <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+              <p className="text-sm font-medium text-text-primary">
+                Sección {s.section} · NRC {s.nrc}
+              </p>
+              <p className="text-xs text-text-secondary">{sectionSummary(s)}</p>
+              {s.professor && <p className="text-xs text-text-tertiary">{s.professor}</p>}
+            </div>
+          ))}
+        </div>
+      </div>,
+    );
+  };
+
+  const answerBuildSchedule = () => {
+    push(
+      'bot',
+      <div>
+        <p>
+          Vamos al planificador: ahí cruzo tu malla con el horario oficial y te armo un horario sin
+          topes, sección por sección.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/horario')}
+          className="mt-3 inline-flex items-center gap-2 rounded-btn bg-accent px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+        >
+          <CalendarDays className="h-4 w-4" aria-hidden />
+          Ir a Toma de ramos
+        </button>
+      </div>,
+    );
+  };
+
+  const answerFallback = () => {
+    push(
+      'bot',
+      <div>
+        <p>No estoy seguro de haber entendido. Puedo ayudarte con cosas como:</p>
+        <ul className="mt-2 list-inside list-disc text-sm text-text-secondary">
+          {SUGGESTIONS.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ul>
+      </div>,
+    );
+  };
+
+  // ─── Entrada de texto libre (Pistacho IA) ───────────────────────
+
+  const handleText = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    setDraft('');
+    push('user', <span>{text}</span>);
+
+    const result = understand(text, plan);
+    switch (result.intent) {
+      case 'recommend':
+        answerRecommend();
+        break;
+      case 'eligible':
+        answerEligible();
+        break;
+      case 'priority':
+        answerPriority();
+        break;
+      case 'progress':
+        answerProgress();
+        break;
+      case 'course_can':
+        if (result.course) answerCourse(result.course);
+        else answerFallback();
+        break;
+      case 'course_missing':
+        if (result.course) answerMissing(result.course);
+        else answerFallback();
+        break;
+      case 'offered':
+        if (result.course) answerOffered(result.course);
+        else answerFallback();
+        break;
+      case 'build_schedule':
+        answerBuildSchedule();
+        break;
+      case 'greeting':
+        push(
+          'bot',
+          <p>¡Hola! Pregúntame qué ramos tomar, por un ramo puntual, o pídeme armar tu horario.</p>,
+        );
+        break;
+      default:
+        // Último recurso: si nombró un ramo con confianza media, da el veredicto.
+        if (result.course && result.courseScore >= 0.5) answerCourse(result.course);
+        else answerFallback();
+    }
+  };
+
+  const quickActions = [
+    { label: `¿Qué tomo el ${ordinal(term)} semestre?`, icon: Sparkles, run: () => handleText(`¿Qué tomo el ${ordinal(term)} semestre?`) },
+    { label: '¿Qué ya puedo tomar?', icon: Check, run: () => handleText('¿Qué puedo tomar?') },
+    { label: '¿Cómo voy?', icon: TrendingUp, run: () => handleText('¿Cómo voy?') },
+    { label: '¿Qué priorizo?', icon: Lightbulb, run: () => handleText('¿Qué me conviene priorizar?') },
+    { label: 'Ármame el horario', icon: CalendarDays, run: () => handleText('Ármame el horario') },
+  ];
 
   return (
     <PageTransition className="flex h-full flex-col">
@@ -289,13 +517,16 @@ export function Advisor() {
           {/* Saludo inicial */}
           <BotBubble>
             <p>
-              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy tu asistente de malla. Te ayudo a
-              decidir qué ramos tomar según lo que ya llevas cursado, mirando prerrequisitos y
-              créditos.
+              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy tu asistente de malla. Escríbeme
+              lo que necesites: qué ramos tomar, si puedes tomar uno puntual, qué te falta para
+              otro, o pídeme armar tu horario para la toma de ramos.
             </p>
-            <p className="mt-2 text-sm text-text-secondary">
-              Toca una pregunta abajo para empezar.
-            </p>
+            {!offering && (
+              <p className="mt-2 text-sm text-text-secondary">
+                Consejo: si subes el horario oficial en “Horario”, también te digo secciones,
+                profesores y topes.
+              </p>
+            )}
           </BotBubble>
 
           {messages.map((m) =>
@@ -313,72 +544,48 @@ export function Advisor() {
         </div>
       </div>
 
-      {/* Selector de ramo (inline) */}
-      {picking && (
-        <div className="shrink-0 border-t border-border bg-white px-4 py-3 md:px-8">
-          <div className="mx-auto max-w-2xl">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-text-secondary">Elige un ramo para consultar</p>
-              <button
-                type="button"
-                onClick={() => { setPicking(false); setQuery(''); }}
-                aria-label="Cerrar"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-            <input
-              autoFocus
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nombre o código, ej: Hormigón o IOC4101"
-              className="mt-2 h-11 w-full rounded-input border border-border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
-            />
-            {query && (
-              <div className="mt-2 flex max-h-52 flex-col gap-1 overflow-y-auto">
-                {pickable.length === 0 ? (
-                  <p className="px-1 py-2 text-sm text-text-secondary">Sin resultados.</p>
-                ) : (
-                  pickable.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => { answerCourse(c); setPicking(false); setQuery(''); }}
-                      className="flex items-center justify-between gap-3 rounded-btn px-3 py-2 text-left hover:bg-surface"
-                    >
-                      <span className="truncate text-sm text-text-primary">{c.name}</span>
-                      <span className="shrink-0 text-xs text-text-secondary">
-                        {c.isSlot ? c.slotCategory : c.id}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Respuestas rápidas */}
-      {!picking && (
-        <div className="shrink-0 border-t border-border bg-white px-4 py-3 pb-safe md:px-8">
-          <div className="no-scrollbar mx-auto flex max-w-2xl gap-2 overflow-x-auto">
+      {/* Respuestas rápidas + entrada de texto */}
+      <div className="shrink-0 border-t border-border bg-white px-4 pb-safe pt-3 md:px-8">
+        <div className="mx-auto max-w-2xl">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2">
             {quickActions.map(({ label, icon: Icon, run }) => (
               <button
                 key={label}
                 type="button"
                 onClick={run}
-                className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-border bg-white px-3.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+                className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden />
                 {label}
               </button>
             ))}
           </div>
+          <form
+            className="flex items-end gap-2 pb-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleText(draft);
+            }}
+          >
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Escríbeme, ej: ¿puedo tomar Hidráulica?"
+              aria-label="Pregúntale al asistente"
+              className="h-11 min-w-0 flex-1 rounded-input border border-border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim()}
+              aria-label="Enviar"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-hover disabled:opacity-40"
+            >
+              <ArrowUp className="h-5 w-5" aria-hidden />
+            </button>
+          </form>
         </div>
-      )}
+      </div>
     </PageTransition>
   );
 }
