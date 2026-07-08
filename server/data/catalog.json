@@ -14223,10 +14223,6 @@
                   "concurrent": false
                 },
                 {
-                  "id": "ICC4101",
-                  "concurrent": false
-                },
-                {
                   "id": "ICC4130",
                   "concurrent": false
                 }
@@ -15942,10 +15938,6 @@
               "slotCategory": null,
               "semester": 8,
               "prerequisites": [
-                {
-                  "id": "ICC4101",
-                  "concurrent": false
-                },
                 {
                   "id": "ICC4130",
                   "concurrent": false

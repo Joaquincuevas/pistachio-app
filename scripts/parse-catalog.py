@@ -202,10 +202,24 @@ PRACTICES = [
     {"code": "ING6104", "semester": 11, "creditReq": 282},  # Professional Practice
 ]
 
+# Prerrequisitos que el catálogo trae pero no corresponden en la malla real
+# (correcciones manuales confirmadas por un alumno de la carrera).
+PREREQ_REMOVALS = {
+    # Proyecto Desarrollo de Software no requiere Algorithms and Competitive
+    # Programming: son ramos independientes pese a lo que dice el catálogo.
+    "ICC4201": {"ICC4101"},
+}
+
 
 def enrich_plan(plan_courses: list, cursos: dict) -> list:
     """Encadena los slots secuenciales y agrega las prácticas a un plan."""
     by_id = {c["id"]: c for c in plan_courses}
+
+    # Quita prerrequisitos incorrectos del catálogo (ver PREREQ_REMOVALS).
+    for course_id, drop in PREREQ_REMOVALS.items():
+        course = by_id.get(course_id)
+        if course:
+            course["prerequisites"] = [p for p in course["prerequisites"] if p["id"] not in drop]
 
     # Encadena minors y teologías: cada uno requiere el anterior.
     for chain in SLOT_CHAINS:
@@ -387,7 +401,8 @@ def build_icc_ajuste(base_plan: dict, cursos: dict) -> dict:
     moves = {"ICC3204": 5, "ICC4130": 6, "ICE5204": 7, "ICC5140": 8, "ICC4200": 9}
     req_overrides = {
         "ICC4130": [("ICC3100", False), ("ICC3204", True)],    # Web Tech: Paradigmas + BD en paralelo
-        "ICC4201": [("ICC4101", False), ("ICC4130", False), ("ICE5204", False)],
+        # No incluye ICC4101 (Algorithms and Competitive Programming): ver PREREQ_REMOVALS.
+        "ICC4201": [("ICC4130", False), ("ICE5204", False)],
         "ICC5140": [("ICC4130", False), ("ICE5204", False)],
         "ICC4200": [("ICC3202", False), ("ICE5204", False)],
         "ICC5105": [("ICC4204", False)],
