@@ -1,17 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { CalendarDays, LayoutGrid, LogOut, Search, Sparkles, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { NAV_LINKS } from './navLinks';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useToastStore } from '@/stores/useToastStore';
-
-const links = [
-  { to: '/malla', label: 'Mi malla', icon: LayoutGrid },
-  { to: '/asistente', label: 'Asistente', icon: Sparkles },
-  { to: '/horario', label: 'Horario', icon: CalendarDays },
-  { to: '/search', label: 'Buscar', icon: Search },
-  { to: '/profile', label: 'Perfil', icon: User },
-];
 
 /** Navegación lateral minimal, solo desktop. */
 export function Sidebar() {
@@ -33,7 +26,7 @@ export function Sidebar() {
       </div>
 
       <nav aria-label="Navegación principal" className="flex flex-1 flex-col gap-1 px-3">
-        {links.map(({ to, label, icon: Icon }) => (
+        {NAV_LINKS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

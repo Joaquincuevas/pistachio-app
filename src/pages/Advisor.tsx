@@ -481,9 +481,12 @@ export function Advisor() {
       <div className="shrink-0 border-b border-border bg-white px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-light">
-              <Sparkles className="h-5 w-5 text-accent" aria-hidden />
-            </span>
+            <img
+              src="/assistant-mascot.jpg"
+              alt=""
+              aria-hidden
+              className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+            />
             <div>
               <h1 className="text-lg font-semibold tracking-tight text-text-primary">Asistente</h1>
               <p className="text-xs text-text-secondary">
@@ -594,9 +597,12 @@ export function Advisor() {
 function BotBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2.5">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-light">
-        <Sparkles className="h-3.5 w-3.5 text-accent" aria-hidden />
-      </span>
+      <img
+        src="/assistant-mascot.jpg"
+        alt=""
+        aria-hidden
+        className="mt-0.5 h-7 w-7 shrink-0 rounded-full border border-border object-cover"
+      />
       <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border bg-white px-4 py-3 text-sm leading-relaxed text-text-primary">
         {children}
       </div>
