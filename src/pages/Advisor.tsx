@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, CalendarDays, Check, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import { useScheduleStore } from '@/stores/useScheduleStore';
+import { useToastStore } from '@/stores/useToastStore';
 import {
   adviceFor,
   analyzePlan,
@@ -20,7 +21,8 @@ import {
   type Term,
 } from '@/lib/advisor';
 import { SUGGESTIONS, understand } from '@/lib/nlu';
-import { DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
+import { buildAutoSchedule, DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
+import { buildNrcCsv, copyToClipboard, type ScheduleItem } from '@/lib/scheduleExport';
 import { cn, computeProgress } from '@/lib/utils';
 import type { Course } from '@/types';
 
@@ -55,6 +57,34 @@ function CourseLine({ course, reason }: { course: Course; reason?: string }) {
 const reasonFor = (a: CourseAdvice) =>
   a.unlocks > 0 ? `Desbloquea ${a.unlocks}` : 'Avanza tu malla';
 
+/** Línea de un ramo ya calzado en un horario: sección, NRC y bloques. */
+function ScheduledLine({
+  code,
+  title,
+  credits,
+  section,
+}: {
+  code: string;
+  title: string;
+  credits: number;
+  section: Section;
+}) {
+  return (
+    <div className="rounded-btn border border-border bg-white px-3 py-2">
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-sm font-medium text-text-primary">{title}</p>
+        <span className="shrink-0 rounded-full bg-accent-light px-2.5 py-1 text-[11px] font-medium text-accent-hover">
+          NRC {section.nrc}
+        </span>
+      </div>
+      <p className="mt-0.5 text-xs text-text-secondary">
+        {code} · {credits} SCT · Sección {section.section}
+      </p>
+      <p className="mt-0.5 text-xs text-text-tertiary">{sectionSummary(section)}</p>
+    </div>
+  );
+}
+
 const sectionSummary = (s: Section) =>
   s.meetings.length
     ? s.meetings
@@ -67,6 +97,7 @@ export function Advisor() {
   const user = useAuthStore((s) => s.user);
   const progressMap = useCurriculumStore((s) => s.progress);
   const offering = useScheduleStore((s) => s.offering);
+  const showToast = useToastStore((s) => s.show);
   const navigate = useNavigate();
   const statuses = plan ? (progressMap[plan.id] ?? EMPTY) : EMPTY;
 
@@ -103,7 +134,92 @@ export function Advisor() {
 
   // ─── Respuestas del asistente ───────────────────────────────────
 
+  const copyNrcs = async (items: ScheduleItem[]) => {
+    try {
+      await copyToClipboard(buildNrcCsv(items));
+      showToast('NRC copiados al portapapeles', 'success');
+    } catch {
+      showToast('No se pudieron copiar los NRC', 'error');
+    }
+  };
+
   const answerRecommend = () => {
+    // Con el horario oficial cargado, damos la toma de ramos "de verdad":
+    // cruzamos malla + Excel y armamos una carga sin topes, con NRC y horario.
+    if (offering) {
+      const auto = buildAutoSchedule(plan, statuses, offering, term);
+      if (auto.courses.length > 0) {
+        const items: ScheduleItem[] = auto.courses.map((c) => ({
+          code: c.code,
+          title: c.title,
+          credits: c.credits,
+          section: c.section,
+        }));
+        push(
+          'bot',
+          <div>
+            <p>
+              Crucé tu malla con el horario oficial ({offering.label}) y te armé una carga de{' '}
+              <span className="font-medium text-text-primary">{auto.totalSct} SCT</span> sin topes,
+              priorizando lo que más te destraba:
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              {auto.courses.map((c) => (
+                <ScheduledLine
+                  key={c.code}
+                  code={c.code}
+                  title={c.title}
+                  credits={c.credits}
+                  section={c.section}
+                />
+              ))}
+            </div>
+            {auto.unschedulable.length > 0 && (
+              <p className="mt-3 text-sm text-text-secondary">
+                Estos también te sirven, pero chocan de horario con los de arriba:{' '}
+                {auto.unschedulable.map((u) => u.title).join(', ')}. Puedes cambiar secciones en la
+                toma de ramos.
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => copyNrcs(items)}
+                className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+              >
+                <Copy className="h-4 w-4" aria-hidden />
+                Copiar NRC
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/horario')}
+                className="inline-flex items-center gap-2 rounded-btn bg-accent px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+              >
+                <CalendarDays className="h-4 w-4" aria-hidden />
+                Abrir en Toma de ramos
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-text-secondary">
+              Es una sugerencia según tus prerrequisitos, créditos y los topes del horario. Tú
+              eliges tu carga final.
+            </p>
+          </div>,
+        );
+        return;
+      }
+      // Hay horario, pero nada calza (por requisitos o porque no se dicta).
+      push(
+        'bot',
+        <p>
+          Revisé el horario oficial ({offering.label}) contra tu malla y por ahora no encuentro
+          ramos que puedas tomar el {ordinal(term)} semestre: puede que te falten prerrequisitos,
+          créditos, o que aún no se publiquen. Pregúntame por un ramo puntual para ver qué te falta.
+        </p>,
+      );
+      return;
+    }
+
+    // Sin Excel: recomendación solo con la malla (y sugerimos subir el horario).
     const { picks, totalSct } = recommendSemester(advice);
     if (picks.length === 0) {
       push(
@@ -130,7 +246,15 @@ export function Advisor() {
           ))}
         </div>
         <p className="mt-3 text-xs text-text-secondary">
-          Son sugerencias según tus prerrequisitos y créditos. Tú eliges tu carga final.
+          Son sugerencias según tus prerrequisitos y créditos.{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/horario')}
+            className="font-medium text-accent-hover underline underline-offset-2"
+          >
+            Sube el horario oficial
+          </button>{' '}
+          y te doy secciones, NRC y un horario sin topes.
         </p>
       </div>,
     );
@@ -221,12 +345,31 @@ export function Advisor() {
             Sí, puedes tomar <span className="font-medium text-text-primary">{course.name}</span>{' '}
             el {ordinal(term)} semestre: cumples todos los requisitos.
           </p>
-          {sections && sections.length > 0 && (
-            <p className="mt-2 text-sm text-text-secondary">
-              Según el horario oficial, se dicta con {sections.length}{' '}
-              {sections.length === 1 ? 'sección' : 'secciones'}. Pregúntame "¿qué secciones tiene{' '}
-              {course.name}?" para verlas.
-            </p>
+          {sections && sections.length > 0 ? (
+            <>
+              <p className="mt-2 text-sm text-text-secondary">
+                Según el horario oficial ({offering!.label}) se dicta con {sections.length}{' '}
+                {sections.length === 1 ? 'sección' : 'secciones'}:
+              </p>
+              <div className="mt-2 flex flex-col gap-2">
+                {sections.map((s) => (
+                  <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+                    <p className="text-sm font-medium text-text-primary">
+                      Sección {s.section} · NRC {s.nrc}
+                    </p>
+                    <p className="text-xs text-text-secondary">{sectionSummary(s)}</p>
+                    {s.professor && <p className="text-xs text-text-tertiary">{s.professor}</p>}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            offering && (
+              <p className="mt-2 text-sm text-text-secondary">
+                Eso sí, no aparece en el horario oficial ({offering.label}), así que puede que no se
+                dicte el próximo semestre.
+              </p>
+            )
           )}
         </div>,
       );
@@ -403,6 +546,25 @@ export function Advisor() {
     );
   };
 
+  const answerHelp = () => {
+    push(
+      'bot',
+      <div>
+        <p>Soy tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
+        <ul className="mt-2 list-inside list-disc text-sm text-text-secondary">
+          <li>Recomendarte qué ramos tomar el próximo semestre, sin topes de horario.</li>
+          <li>Decirte si puedes tomar un ramo puntual y, si no, qué te falta.</li>
+          <li>Mostrarte secciones, NRC, horarios y profesores de un ramo.</li>
+          <li>Darte tu avance de malla y créditos.</li>
+          <li>Armarte el horario completo para la toma de ramos.</li>
+        </ul>
+        <p className="mt-2 text-sm text-text-secondary">
+          Todo corre en tu dispositivo: no comparto tus datos con nadie.
+        </p>
+      </div>,
+    );
+  };
+
   const answerFallback = () => {
     push(
       'bot',
@@ -453,6 +615,9 @@ export function Advisor() {
         break;
       case 'build_schedule':
         answerBuildSchedule();
+        break;
+      case 'help':
+        answerHelp();
         break;
       case 'greeting':
         push(
