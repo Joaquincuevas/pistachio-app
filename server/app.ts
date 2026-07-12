@@ -21,12 +21,21 @@ import {
 } from './auth.js';
 import { sendPasswordResetEmail } from './mailer.js';
 import { generateTotpSecret, otpauthUri, verifyTotp } from './totp.js';
+import { clientIp, securityHeaders } from './security.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE = 'pistachio_sid';
 
 export const app = express();
-app.use(express.json());
+// No revelar "Express" en las respuestas.
+app.disable('x-powered-by');
+// Confiar en el proxy (Vercel) para leer la IP real vía X-Forwarded-For.
+app.set('trust proxy', true);
+// Cabeceras de seguridad en todas las respuestas (incl. errores).
+app.use(securityHeaders);
+// Límite de tamaño del body: los payloads legítimos son diminutos; esto frena
+// intentos de agotar memoria con cuerpos gigantes.
+app.use(express.json({ limit: '64kb' }));
 app.use(cookieParser());
 
 // La base se inicializa/siembra una vez; cada request espera a que esté lista.
@@ -158,8 +167,15 @@ app.get('/api/health', (_req, res) => {
 // ─── Auth ───────────────────────────────────────────────────────
 
 app.post('/api/auth/register', async (req, res) => {
+  // Freno de abuso: evita creación masiva de cuentas desde una misma IP.
+  const ipKey = `register:${clientIp(req)}`;
+  if (!loginAllowed(ipKey)) {
+    res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos e intenta de nuevo.' });
+    return;
+  }
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
+    registerFailedLogin(ipKey);
     res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
     return;
   }
@@ -168,6 +184,7 @@ app.post('/api/auth/register', async (req, res) => {
 
   const exists = await get(`SELECT 1 FROM users WHERE email = ?`, [normalized]);
   if (exists) {
+    registerFailedLogin(ipKey);
     res.status(409).json({ error: 'Ya existe una cuenta con este correo. Intenta iniciar sesión.' });
     return;
   }
@@ -304,12 +321,21 @@ app.post('/api/auth/forgot', async (req, res) => {
 
 // Confirmar recuperación: valida el token y fija la nueva contraseña.
 app.post('/api/auth/reset', async (req, res) => {
+  // Freno de abuso por IP: aunque el token es aleatorio y de un solo uso, esto
+  // corta cualquier intento automatizado de adivinarlo.
+  const ipKey = `reset:${clientIp(req)}`;
+  if (!loginAllowed(ipKey)) {
+    res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos e intenta de nuevo.' });
+    return;
+  }
   const parsed = resetSchema.safeParse(req.body);
   if (!parsed.success) {
+    registerFailedLogin(ipKey);
     res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
     return;
   }
   const userId = await consumePasswordReset(parsed.data.token);
+  if (userId === null) registerFailedLogin(ipKey);
   if (userId === null) {
     res.status(400).json({ error: 'El enlace no es válido o ya expiró. Solicita uno nuevo.' });
     return;
@@ -622,6 +648,31 @@ app.put('/api/progress/:planId/:courseId', requireAuth, async (req: AuthedReques
   }
 
   res.json({ ok: true, statuses: changed });
+});
+
+// ─── Manejo de errores ──────────────────────────────────────────
+
+// 404 para rutas de API no reconocidas (evita respuestas confusas).
+app.use('/api', (_req, res) => {
+  res.status(404).json({ error: 'Recurso no encontrado.' });
+});
+
+// Manejador global: registra el detalle en el servidor pero nunca lo expone al
+// cliente (no filtra stacks, SQL ni rutas internas). Cubre también los errores
+// de body-parser (JSON malformado o cuerpo demasiado grande).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const status = (err as { status?: number; type?: string })?.status ?? 500;
+  if (status === 400 || (err as { type?: string })?.type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'La solicitud no es válida.' });
+    return;
+  }
+  if (status === 413) {
+    res.status(413).json({ error: 'La solicitud es demasiado grande.' });
+    return;
+  }
+  console.error('[api] error no controlado', err);
+  res.status(500).json({ error: 'Ocurrió un error inesperado. Intenta de nuevo.' });
 });
 
 export default app;

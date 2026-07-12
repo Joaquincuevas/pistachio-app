@@ -16,6 +16,7 @@ export type Intent =
   | 'course_missing' // "¿qué me falta para tomar X?"
   | 'offered'        // "¿se dicta X?" / "¿qué secciones tiene X?"
   | 'build_schedule' // "ármame el horario"
+  | 'help'           // "¿qué puedes hacer?"
   | 'greeting'
   | 'unknown';
 
@@ -93,42 +94,70 @@ interface IntentRule {
 const RULES: IntentRule[] = [
   {
     intent: 'course_missing',
-    patterns: [/que (me )?falta/, /cuanto (me )?falta para/, /requisitos? (de|para)/, /por que no puedo/],
+    patterns: [
+      /que (me )?falta/, /cuanto (me )?falta para/, /requisitos? (de|para)/, /prerrequisitos?/,
+      /por que no puedo/, /que necesito para/, /cadena de/,
+    ],
     needsCourse: true,
   },
   {
     intent: 'offered',
-    patterns: [/se dicta/, /secciones?/, /horarios? (de|del|tiene)/, /nrc/, /profesor/, /cuando (se )?(dicta|hace)/, /(se )?ofrece/],
+    patterns: [
+      /se dicta/, /secciones?/, /horarios? (de|del|tiene)/, /nrc/, /profesor/, /profe/,
+      /cuando (se )?(dicta|hace|es)/, /(se )?ofrece/, /a que hora/, /que dia/, /en que dia/,
+      /que sala/, /donde (es|se hace|lo hacen)/,
+    ],
     needsCourse: true,
   },
   {
     intent: 'course_can',
-    patterns: [/puedo (tomar|cursar|inscribir|hacer)/, /me deja/, /estoy habilitado/, /cumplo/],
+    patterns: [
+      /puedo (tomar|cursar|inscribir|hacer|meter)/, /me deja/, /estoy habilitado/, /cumplo/,
+      /me sirve/, /alcanzo a (tomar|cursar)/, /califico/, /soy elegible/, /podria tomar/,
+    ],
     needsCourse: true,
   },
   {
     intent: 'build_schedule',
-    patterns: [/arma(me|r)? (el |un )?horario/, /horario sin topes/, /planifica/, /toma de ramos/],
+    patterns: [/arma(me|r)? (el |un |mi )?horario/, /horario sin topes/, /planifica/, /organiza(me)? (el |mi )?(horario|semestre)/],
   },
   {
     intent: 'progress',
-    patterns: [/como voy/, /cuanto (me )?falta( |$)/, /mi avance/, /cuantos creditos/, /me falta para (terminar|titular|egresar)/, /porcentaje/],
+    patterns: [
+      /como voy/, /cuanto (me )?falta( |$)/, /mi avance/, /cuanto llevo/, /cuantos creditos/,
+      /me falta para (terminar|titular|egresar|recibir|graduar)/, /porcentaje/, /voy bien/,
+      /cuantos ramos (llevo|me quedan)/,
+    ],
   },
   {
     intent: 'priority',
-    patterns: [/prioriza/, /conviene/, /mas importante/, /primero/, /critico/, /desbloquea/],
+    patterns: [/prioriza/, /conviene/, /mas importante/, /(que|cual) (tomo )?primero/, /critico/, /desbloquea/, /destraba/, /clave/],
   },
   {
     intent: 'recommend',
-    patterns: [/que (tomo|deberia|me recomiendas|inscribo)/, /recomienda/, /sugiere/, /arma(me)? (la |una )?carga/, /cuales tomo/],
+    patterns: [
+      /que (tomo|deberia|me recomiendas|inscribo|ramos tomo)/, /recomienda/, /sugiere/, /sugerencia/,
+      /arma(me)? (la |una )?carga/, /cuales tomo/, /toma de ramos/, /que me conviene tomar/,
+      /que ramos (me convienen|tomar)/, /carga (academica|de ramos)/,
+    ],
   },
   {
     intent: 'eligible',
-    patterns: [/que puedo (tomar|cursar|inscribir)/, /disponibles/, /habilitados/, /opciones/, /puedo tomar$/],
+    patterns: [
+      /que puedo (tomar|cursar|inscribir)/, /que ramos puedo/, /disponibles/, /habilitad/,
+      /opciones/, /puedo tomar$/, /para cuales (cumplo|tengo)/, /desbloquead/,
+    ],
+  },
+  {
+    intent: 'help',
+    patterns: [
+      /que puedes hacer/, /en que (me )?puedes ayudar/, /^ayuda$/, /para que sirves/,
+      /que sabes hacer/, /como (te )?(uso|funcionas)/, /que me puedes decir/,
+    ],
   },
   {
     intent: 'greeting',
-    patterns: [/^(hola|buenas|hey|que tal|hello|holi)( .*)?$/, /^(gracias|genial|ok|dale|ya)( .*)?$/],
+    patterns: [/^(hola|buenas|hey|que tal|hello|holi|holaa+)( .*)?$/, /^(gracias|genial|ok|dale|ya|perfecto|bacan)( .*)?$/],
   },
 ];
 
