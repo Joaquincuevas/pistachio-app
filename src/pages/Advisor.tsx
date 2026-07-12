@@ -92,6 +92,16 @@ const sectionSummary = (s: Section) =>
         .join(' · ')
     : 'sin horario publicado';
 
+/** "DULOVITS/CORTES ALEXANDER ALOIS" → "Dulovits Cortes Alexander Alois". */
+const prettyProfessor = (raw: string): string =>
+  raw
+    .replace(/\//g, ' ')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
 export function Advisor() {
   const { plan, loading } = useActivePlan();
   const user = useAuthStore((s) => s.user);
@@ -526,6 +536,184 @@ export function Advisor() {
     );
   };
 
+  const answerCourseInfo = (course: Course) => {
+    const semestreTxt = course.isSlot
+      ? `es un cupo de ${course.slotCategory}`
+      : `va en el ${course.semester}.º semestre de la malla`;
+    const reqCount = course.prerequisites.length;
+    push(
+      'bot',
+      <div>
+        <p>
+          <span className="font-medium text-text-primary">{course.name}</span>
+          {course.isSlot ? '' : ` (${course.id})`} tiene{' '}
+          <span className="font-medium text-text-primary">{course.credits} SCT</span> y {semestreTxt}.
+        </p>
+        {reqCount > 0 && (
+          <p className="mt-2 text-sm text-text-secondary">
+            Tiene {reqCount} {reqCount === 1 ? 'prerrequisito' : 'prerrequisitos'}. Pregúntame “¿qué
+            me falta para {course.name}?” para ver la cadena completa.
+          </p>
+        )}
+        {course.creditReq != null && (
+          <p className="mt-2 text-sm text-text-secondary">
+            Además exige {course.creditReq} SCT aprobados para inscribirlo.
+          </p>
+        )}
+      </div>,
+    );
+  };
+
+  const answerCourseProfessor = (course: Course) => {
+    if (!offering) {
+      push(
+        'bot',
+        <div>
+          <p>
+            Para decirte quién dicta {course.name} necesito el horario oficial del próximo semestre.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/horario')}
+            className="mt-3 inline-flex items-center gap-2 rounded-btn bg-accent px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+          >
+            <CalendarDays className="h-4 w-4" aria-hidden />
+            Subir horario
+          </button>
+        </div>,
+      );
+      return;
+    }
+    const sections = offering.byCourse[course.id];
+    if (!sections || sections.length === 0) {
+      push(
+        'bot',
+        <p>
+          Según el horario oficial ({offering.label}),{' '}
+          <span className="font-medium text-text-primary">{course.name}</span> no se dicta el
+          próximo semestre, así que no tengo profesor asignado.
+        </p>,
+      );
+      return;
+    }
+    const withProf = sections.filter((s) => s.professor);
+    if (withProf.length === 0) {
+      push(
+        'bot',
+        <p>
+          <span className="font-medium text-text-primary">{course.name}</span> aparece en el horario
+          ({offering.label}) pero aún no tiene profesor publicado.
+        </p>,
+      );
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>
+          {withProf.length === 1 ? 'El profesor de' : 'Los profesores de'}{' '}
+          <span className="font-medium text-text-primary">{course.name}</span> ({offering.label}):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {withProf.map((s) => (
+            <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+              <p className="text-sm font-medium text-text-primary">{prettyProfessor(s.professor)}</p>
+              <p className="text-xs text-text-secondary">
+                Sección {s.section} · NRC {s.nrc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>,
+    );
+  };
+
+  const answerProfessorCourses = (professor: string) => {
+    if (!offering) {
+      answerFallback();
+      return;
+    }
+    const sections = offering.sections.filter((s) => s.professor === professor);
+    // Un ramo por código (un profe puede repetirse en varias secciones del mismo).
+    const byCode = new Map<string, { title: string; sections: Section[] }>();
+    for (const s of sections) {
+      const entry = byCode.get(s.code) ?? { title: s.title, sections: [] };
+      entry.sections.push(s);
+      byCode.set(s.code, entry);
+    }
+    if (byCode.size === 0) {
+      push('bot', <p>No encuentro ramos de ese profesor en el horario oficial ({offering.label}).</p>);
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>
+          <span className="font-medium text-text-primary">{prettyProfessor(professor)}</span> dicta{' '}
+          {byCode.size} {byCode.size === 1 ? 'ramo' : 'ramos'} este semestre ({offering.label}):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {[...byCode.entries()].map(([code, { title, sections: secs }]) => (
+            <div key={code} className="rounded-btn border border-border bg-white px-3 py-2">
+              <p className="text-sm font-medium text-text-primary">{title}</p>
+              <p className="text-xs text-text-secondary">
+                {code} · {secs.map((s) => `Sección ${s.section} (NRC ${s.nrc})`).join(' · ')}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>,
+    );
+  };
+
+  const answerElectives = (category: string) => {
+    const slots = plan.courses.filter((c) => c.isSlot && c.slotCategory === category);
+    if (slots.length === 0) {
+      push(
+        'bot',
+        <p>
+          Tu malla ({plan.name}) no tiene cupos de {category}. Prueba con “¿qué electivos hay?” o
+          “¿qué minors hay?”.
+        </p>,
+      );
+      return;
+    }
+    const pendientes = slots.filter((c) => (statuses[c.id] ?? 'pending') !== 'completed');
+    push(
+      'bot',
+      <div>
+        <p>
+          Tu malla tiene {slots.length} {slots.length === 1 ? 'cupo' : 'cupos'} de{' '}
+          <span className="font-medium text-text-primary">{category}</span>
+          {pendientes.length < slots.length
+            ? ` (te ${slots.length - pendientes.length === 1 ? 'queda' : 'quedan'} ${pendientes.length} por cursar)`
+            : ''}
+          :
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {slots.map((c) => (
+            <CourseLine
+              key={c.id}
+              course={c}
+              reason={(statuses[c.id] ?? 'pending') === 'completed' ? 'Cursado' : undefined}
+            />
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-text-secondary">
+          Cada cupo se llena con un ramo real. {offering ? 'Búscalo' : 'Sube el horario y búscalo'} en{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/horario')}
+            className="font-medium text-accent-hover underline underline-offset-2"
+          >
+            Toma de ramos
+          </button>
+          .
+        </p>
+      </div>,
+    );
+  };
+
   const answerBuildSchedule = () => {
     push(
       'bot',
@@ -587,7 +775,7 @@ export function Advisor() {
     setDraft('');
     push('user', <span>{text}</span>);
 
-    const result = understand(text, plan);
+    const result = understand(text, plan, offering);
     switch (result.intent) {
       case 'recommend':
         answerRecommend();
@@ -609,9 +797,24 @@ export function Advisor() {
         if (result.course) answerMissing(result.course);
         else answerFallback();
         break;
+      case 'course_info':
+        if (result.course) answerCourseInfo(result.course);
+        else answerFallback();
+        break;
       case 'offered':
         if (result.course) answerOffered(result.course);
         else answerFallback();
+        break;
+      case 'course_professor':
+        if (result.course) answerCourseProfessor(result.course);
+        else answerFallback();
+        break;
+      case 'professor_courses':
+        if (result.professor) answerProfessorCourses(result.professor);
+        else answerFallback();
+        break;
+      case 'list_electives':
+        answerElectives(result.electiveCategory ?? 'Electivo');
         break;
       case 'build_schedule':
         answerBuildSchedule();

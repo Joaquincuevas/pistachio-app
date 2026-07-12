@@ -1,4 +1,5 @@
 import type { Course, Plan } from '@/types';
+import type { Offering } from './schedule';
 
 /**
  * Pistacho IA — motor de lenguaje natural propio (sin API, sin modelos externos).
@@ -8,15 +9,19 @@ import type { Course, Plan } from '@/types';
  */
 
 export type Intent =
-  | 'recommend'      // "¿qué tomo el próximo semestre?"
-  | 'eligible'       // "¿qué puedo tomar?"
-  | 'priority'       // "¿qué me conviene priorizar?"
-  | 'progress'       // "¿cómo voy?" / "¿cuánto me falta?"
-  | 'course_can'     // "¿puedo tomar Hormigón Armado?"
-  | 'course_missing' // "¿qué me falta para tomar X?"
-  | 'offered'        // "¿se dicta X?" / "¿qué secciones tiene X?"
-  | 'build_schedule' // "ármame el horario"
-  | 'help'           // "¿qué puedes hacer?"
+  | 'recommend'         // "¿qué tomo el próximo semestre?"
+  | 'eligible'          // "¿qué puedo tomar?"
+  | 'priority'          // "¿qué me conviene priorizar?"
+  | 'progress'          // "¿cómo voy?" / "¿cuánto me falta?"
+  | 'course_can'        // "¿puedo tomar Hormigón Armado?"
+  | 'course_missing'    // "¿qué me falta para tomar X?"
+  | 'course_info'       // "¿cuántos créditos tiene X?" / "¿de qué semestre es X?"
+  | 'offered'           // "¿se dicta X?" / "¿qué secciones tiene X?"
+  | 'course_professor'  // "¿quién es el profesor de X?"
+  | 'professor_courses' // "¿qué ramos da el profesor Y?"
+  | 'list_electives'    // "¿qué electivos hay?" / "¿qué minors hay?"
+  | 'build_schedule'    // "ármame el horario"
+  | 'help'              // "¿qué puedes hacer?"
   | 'greeting'
   | 'unknown';
 
@@ -25,6 +30,10 @@ export interface NluResult {
   course: Course | null;
   /** Confianza 0-1 del matching del ramo (si hay). */
   courseScore: number;
+  /** Nombre del profesor detectado en el horario oficial (si hay). */
+  professor: string | null;
+  /** Categoría de cupo consultada ("Electivo", "Minor"…), para list_electives. */
+  electiveCategory: string | null;
 }
 
 /** Minúsculas, sin tildes, espacios colapsados. */
@@ -86,12 +95,25 @@ const variants = (qt: string): string[] => [qt, ...(ES_EN[qt] ?? [])];
 interface IntentRule {
   intent: Intent;
   patterns: RegExp[];
-  /** Requiere (o excluye) que se haya detectado un ramo en la frase. */
+  /** Requiere que se haya detectado un ramo en la frase. */
   needsCourse?: boolean;
+  /** Requiere que se haya detectado un profesor del horario oficial. */
+  needsProfessor?: boolean;
 }
 
 /** Orden importa: la primera regla que calza con mejor especificidad gana. */
 const RULES: IntentRule[] = [
+  {
+    // Va antes que "progress" para que "cuántos créditos tiene X" no se confunda
+    // con "cuántos créditos llevo".
+    intent: 'course_info',
+    patterns: [
+      /cuantos? (creditos?|sct)/, /creditos? (de|tiene|vale|son)/, /cuantos? sct/,
+      /de que semestre (es|va|son)/, /en que semestre (va|esta|es|se dicta)/,
+      /cuantas horas/, /que ramo es/, /informacion (de|del|sobre)/, /(de que|que) trata/,
+    ],
+    needsCourse: true,
+  },
   {
     intent: 'course_missing',
     patterns: [
@@ -101,9 +123,17 @@ const RULES: IntentRule[] = [
     needsCourse: true,
   },
   {
+    intent: 'course_professor',
+    patterns: [
+      /quien (es |da |dicta |hace |ensena |imparte )?.*(profesor|profe)/, /profesor(a)? (de|del)/,
+      /quien (da|dicta|hace|ensena|imparte)/, /con quien (es|se toma)/, /quien lo (dicta|hace)/,
+    ],
+    needsCourse: true,
+  },
+  {
     intent: 'offered',
     patterns: [
-      /se dicta/, /secciones?/, /horarios? (de|del|tiene)/, /nrc/, /profesor/, /profe/,
+      /se dicta/, /secciones?/, /horarios? (de|del|tiene)/, /nrc/,
       /cuando (se )?(dicta|hace|es)/, /(se )?ofrece/, /a que hora/, /que dia/, /en que dia/,
       /que sala/, /donde (es|se hace|lo hacen)/,
     ],
@@ -118,13 +148,29 @@ const RULES: IntentRule[] = [
     needsCourse: true,
   },
   {
+    intent: 'professor_courses',
+    patterns: [
+      /que (ramos|cursos|clases|asignaturas) (da|dicta|hace|tiene|imparte)/, /ramos del (profe|profesor)/,
+      /^profe(sor|sora)?\b/, /que (dicta|da|hace|imparte) (el |la )?(profe|profesor)/,
+      /clases? (de|del) (profe|profesor)/, /(da|dicta) clases/,
+    ],
+    needsProfessor: true,
+  },
+  {
+    intent: 'list_electives',
+    patterns: [
+      /electivos?/, /optativos?/, /\bminors?\b/, /formacion general/, /\bofg\b/,
+      /concentracion(es)? tecnologic/, /que menciones/,
+    ],
+  },
+  {
     intent: 'build_schedule',
     patterns: [/arma(me|r)? (el |un |mi )?horario/, /horario sin topes/, /planifica/, /organiza(me)? (el |mi )?(horario|semestre)/],
   },
   {
     intent: 'progress',
     patterns: [
-      /como voy/, /cuanto (me )?falta( |$)/, /mi avance/, /cuanto llevo/, /cuantos creditos/,
+      /como voy/, /cuanto (me )?falta( |$)/, /mi avance/, /cuanto llevo/, /cuantos creditos llevo/,
       /me falta para (terminar|titular|egresar|recibir|graduar)/, /porcentaje/, /voy bien/,
       /cuantos ramos (llevo|me quedan)/,
     ],
@@ -160,6 +206,62 @@ const RULES: IntentRule[] = [
     patterns: [/^(hola|buenas|hey|que tal|hello|holi|holaa+)( .*)?$/, /^(gracias|genial|ok|dale|ya|perfecto|bacan)( .*)?$/],
   },
 ];
+
+/** Qué categoría de cupo (slot) se está preguntando, según palabras clave. */
+function electiveCategoryFor(raw: string): string {
+  if (/\bminors?\b/.test(raw)) return 'Minor';
+  if (/formacion general|\bofg\b/.test(raw)) return 'Formación General';
+  if (/concentracion|tecnologic/.test(raw)) return 'Concentración Tecnológica';
+  if (/mencion/.test(raw)) return 'Mención';
+  return 'Electivo';
+}
+
+// ─── Extracción del profesor (matching difuso sobre el horario) ──
+
+/** Palabras de la pregunta que no aportan al matching de un nombre de profesor. */
+const PROF_STOP = new Set([
+  'profesor', 'profesora', 'profe', 'ramos', 'ramo', 'cursos', 'curso', 'clases', 'clase',
+  'da', 'dicta', 'hace', 'imparte', 'tiene', 'ensena', 'quien', 'quienes', 'es', 'el', 'la',
+  'de', 'del', 'los', 'las', 'un', 'una', 'que', 'cuales', 'con', 'asignaturas', 'asignatura',
+]);
+
+export interface ProfessorMatch {
+  /** Nombre tal cual aparece en el horario oficial. */
+  name: string;
+  score: number;
+}
+
+/**
+ * Busca un profesor mencionado en la frase contra los nombres del horario
+ * oficial. Los nombres vienen como "APELLIDO/APELLIDO NOMBRE1 NOMBRE2"; se
+ * comparan por tokens (apellidos y nombres) con tolerancia a que el alumno
+ * escriba solo el apellido o el nombre.
+ */
+export function extractProfessor(text: string, offering: Offering): ProfessorMatch | null {
+  const queryTokens = normalize(text)
+    .split(' ')
+    .filter((t) => t.length >= 3 && !PROF_STOP.has(t) && !STOPWORDS.has(t));
+  if (queryTokens.length === 0) return null;
+
+  const names = new Set<string>();
+  for (const s of offering.sections) if (s.professor) names.add(s.professor);
+
+  let best: ProfessorMatch | null = null;
+  for (const name of names) {
+    const nameTokens = normalize(name).split(' ').filter((t) => t.length >= 2);
+    if (nameTokens.length === 0) continue;
+    let hits = 0;
+    for (const qt of queryTokens) {
+      if (nameTokens.some((nt) => nt === qt || (qt.length >= 4 && nt.startsWith(qt)))) hits += 1;
+    }
+    if (hits === 0) continue;
+    // Prioriza más coincidencias y penaliza nombres con muchos tokens sueltos.
+    const score = hits + hits / nameTokens.length;
+    if (!best || score > best.score) best = { name, score };
+  }
+  // Al menos un token del nombre debe calzar de forma sólida.
+  return best && best.score >= 1 ? best : null;
+}
 
 // ─── Extracción del ramo (matching difuso) ───────────────────────
 
@@ -223,31 +325,44 @@ export function extractCourse(text: string, courses: Course[]): CourseMatch | nu
 
 // ─── Análisis completo de la frase ───────────────────────────────
 
-export function understand(text: string, plan: Plan): NluResult {
+export function understand(text: string, plan: Plan, offering?: Offering | null): NluResult {
   const raw = normalize(text);
   const match = extractCourse(text, plan.courses);
+  // Solo intentamos un profesor si el ramo no calzó con fuerza (evita que
+  // "quién da Hidráulica" se lea como un apellido).
+  const prof = offering && (!match || match.score < 0.9) ? extractProfessor(text, offering) : null;
 
   let detected: Intent = 'unknown';
   for (const rule of RULES) {
     if (rule.needsCourse && !match) continue;
+    if (rule.needsProfessor && !prof) continue;
     if (rule.patterns.some((p) => p.test(raw))) {
       detected = rule.intent;
       break;
     }
   }
 
-  // Si nombró un ramo pero ningún patrón calzó, lo más útil es el veredicto.
-  if (detected === 'unknown' && match && match.score >= 0.6) {
-    detected = 'course_can';
+  // Último recurso cuando nombró algo pero ningún patrón calzó:
+  if (detected === 'unknown') {
+    if (match && match.score >= 0.6) detected = 'course_can';
+    else if (prof) detected = 'professor_courses';
   }
 
-  return { intent: detected, course: match?.course ?? null, courseScore: match?.score ?? 0 };
+  return {
+    intent: detected,
+    course: match?.course ?? null,
+    courseScore: match?.score ?? 0,
+    professor: prof?.name ?? null,
+    electiveCategory: detected === 'list_electives' ? electiveCategoryFor(raw) : null,
+  };
 }
 
 /** Sugerencias que el asistente ofrece cuando no entiende. */
 export const SUGGESTIONS = [
   '¿Qué tomo el próximo semestre?',
   '¿Puedo tomar Hormigón Armado?',
-  '¿Qué me falta para Proyecto de Titulo 1?',
-  '¿Cómo voy?',
+  '¿Cuántos créditos tiene Proyecto de Desarrollo de Software?',
+  '¿Quién es el profesor de Hidráulica?',
+  '¿Qué ramos da el profesor Ballesteros?',
+  '¿Qué electivos hay?',
 ];
