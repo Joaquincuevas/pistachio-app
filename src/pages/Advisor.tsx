@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -21,6 +21,7 @@ import {
   type Term,
 } from '@/lib/advisor';
 import { SUGGESTIONS, understand } from '@/lib/nlu';
+import { loadIntentModel } from '@/lib/intentModel';
 import { buildAutoSchedule, DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
 import { buildNrcCsv, copyToClipboard, type ScheduleItem } from '@/lib/scheduleExport';
 import { cn, computeProgress } from '@/lib/utils';
@@ -121,6 +122,11 @@ export function Advisor() {
     () => (plan ? analyzePlan(plan, statuses, term) : []),
     [plan, statuses, term],
   );
+
+  // Carga (una vez) el modelo de intención entrenado, en segundo plano.
+  useEffect(() => {
+    void loadIntentModel();
+  }, []);
 
   const push = (role: Message['role'], node: React.ReactNode) => {
     setMessages((prev) => [...prev, { id: nextId.current++, role, node }]);
@@ -738,7 +744,7 @@ export function Advisor() {
     push(
       'bot',
       <div>
-        <p>Soy tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
+        <p>Soy Export, tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
         <ul className="mt-2 list-inside list-disc text-sm text-text-secondary">
           <li>Recomendarte qué ramos tomar el próximo semestre, sin topes de horario.</li>
           <li>Decirte si puedes tomar un ramo puntual y, si no, qué te falta.</li>
@@ -856,7 +862,7 @@ export function Advisor() {
               className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
             />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Asistente</h1>
+              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Export</h1>
               <p className="text-xs text-text-secondary">
                 {stats.completedCourses}/{stats.totalCourses} ramos · {credits} SCT
               </p>
@@ -888,7 +894,7 @@ export function Advisor() {
           {/* Saludo inicial */}
           <BotBubble>
             <p>
-              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy tu asistente de malla. Escríbeme
+              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy Export, tu asistente de malla. Escríbeme
               lo que necesites: qué ramos tomar, si puedes tomar uno puntual, qué te falta para
               otro, o pídeme armar tu horario para la toma de ramos.
             </p>

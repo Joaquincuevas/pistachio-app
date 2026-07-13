@@ -1,0 +1,179 @@
+{
+  "_comment": "Dataset de entrenamiento de Export. Cada clave es una intención y su valor son frases de ejemplo (como las escribiría un alumno). Para mejorar el modelo, AGREGA frases variadas aquí y corre: npm run train:intent. Mientras más ejemplos y más naturales, mejor generaliza.",
+
+  "recommend": [
+    "que ramos tomo el proximo semestre",
+    "que me recomiendas tomar",
+    "armame la carga del semestre",
+    "que deberia inscribir",
+    "recomiendame ramos",
+    "cuales me conviene tomar",
+    "que tomo ahora",
+    "sugiere una carga academica",
+    "ayudame a elegir mis ramos",
+    "que ramos me convienen este semestre",
+    "dame una recomendacion de ramos",
+    "que curso tomo el otro semestre",
+    "que me sugieres para el segundo semestre"
+  ],
+
+  "eligible": [
+    "que ramos puedo tomar",
+    "que tengo habilitado",
+    "que opciones tengo",
+    "para cuales cumplo requisitos",
+    "que ramos estan disponibles",
+    "que puedo cursar ahora",
+    "muestrame los ramos habilitados",
+    "que ramos se me abren",
+    "cuales puedo inscribir",
+    "que ramos ya puedo tomar"
+  ],
+
+  "priority": [
+    "que me conviene priorizar",
+    "que ramo es mas importante",
+    "que tomo primero",
+    "cual es el ramo critico",
+    "que ramo desbloquea mas",
+    "que deberia priorizar",
+    "cual es mas clave",
+    "que me destraba mas",
+    "cual es el ramo mas urgente"
+  ],
+
+  "progress": [
+    "como voy",
+    "cuanto me falta",
+    "cuantos ramos llevo",
+    "cual es mi avance",
+    "que porcentaje llevo",
+    "cuanto llevo de la carrera",
+    "cuantos creditos llevo",
+    "voy bien con la malla",
+    "cuanto me falta para titularme",
+    "cuantos ramos me quedan",
+    "cuanto me queda para terminar"
+  ],
+
+  "course_can": [
+    "puedo tomar hidraulica",
+    "me deja tomar ese ramo",
+    "estoy habilitado para hormigon armado",
+    "puedo cursar mecanica de fluidos",
+    "alcanzo a tomar termodinamica",
+    "cumplo los requisitos de ese ramo",
+    "puedo inscribir calculo tres",
+    "soy elegible para ese ramo",
+    "puedo meter ese curso",
+    "podria tomar estatica"
+  ],
+
+  "course_missing": [
+    "que me falta para hidraulica",
+    "que necesito para hormigon armado",
+    "que requisitos tiene ese ramo",
+    "por que no puedo tomar termodinamica",
+    "cuanto me falta para ese ramo",
+    "que prerrequisitos tiene calculo tres",
+    "que me falta para el proyecto de titulo",
+    "dime la cadena de requisitos de ese ramo",
+    "que tengo que aprobar antes de hidraulica"
+  ],
+
+  "course_info": [
+    "cuantos creditos tiene hidraulica",
+    "cuantos sct tiene ese ramo",
+    "de que semestre es hormigon armado",
+    "cuantas horas tiene ese ramo",
+    "cuantos creditos vale termodinamica",
+    "en que semestre va calculo tres",
+    "que creditos tiene ese ramo",
+    "informacion de ese ramo",
+    "de que trata ese ramo",
+    "cuantos creditos son proyecto de desarrollo de software"
+  ],
+
+  "offered": [
+    "se dicta hidraulica el proximo semestre",
+    "que secciones tiene ese ramo",
+    "a que hora es hormigon armado",
+    "que dia se hace ese ramo",
+    "cuando se dicta termodinamica",
+    "en que sala es ese ramo",
+    "que nrc tiene ese ramo",
+    "se ofrece calculo tres",
+    "donde se hace ese ramo",
+    "cuantas secciones tiene ese ramo"
+  ],
+
+  "course_professor": [
+    "quien es el profesor de hidraulica",
+    "quien dicta ese ramo",
+    "con quien se toma hormigon armado",
+    "quien hace termodinamica",
+    "profesor de calculo tres",
+    "quien lo dicta",
+    "quien imparte ese ramo",
+    "quien da ese ramo",
+    "quien enseña ese ramo"
+  ],
+
+  "professor_courses": [
+    "que ramos da el profesor perez",
+    "que dicta el profe gonzalez",
+    "ramos del profesor martinez",
+    "profesor ballesteros",
+    "que clases hace la profesora rojas",
+    "que asignaturas imparte el profesor soto",
+    "que ramos tiene el profe fuentes",
+    "clases del profesor lopez",
+    "que da el profesor hernandez"
+  ],
+
+  "list_electives": [
+    "que electivos hay",
+    "que optativos hay",
+    "que minors hay",
+    "muestrame los electivos",
+    "cuales son los electivos de especialidad",
+    "que ofg puedo tomar",
+    "que menciones hay",
+    "que concentraciones tecnologicas hay",
+    "lista los electivos",
+    "que electivos me faltan"
+  ],
+
+  "build_schedule": [
+    "armame el horario",
+    "planifica mi horario",
+    "hazme un horario sin topes",
+    "organiza mi semestre",
+    "armame un horario para la toma de ramos",
+    "quiero armar mi horario",
+    "ayudame a armar el horario"
+  ],
+
+  "help": [
+    "que puedes hacer",
+    "en que me puedes ayudar",
+    "ayuda",
+    "para que sirves",
+    "que sabes hacer",
+    "como te uso",
+    "que me puedes decir",
+    "cuales son tus funciones"
+  ],
+
+  "greeting": [
+    "hola",
+    "buenas",
+    "hey",
+    "que tal",
+    "hola export",
+    "gracias",
+    "genial",
+    "buenas tardes",
+    "hola como estas"
+  ]
+}

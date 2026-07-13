@@ -1,5 +1,6 @@
 import type { Course, Plan } from '@/types';
 import type { Offering } from './schedule';
+import { classifyIntent } from './intentModel';
 
 /**
  * Pistacho IA — motor de lenguaje natural propio (sin API, sin modelos externos).
@@ -325,6 +326,13 @@ export function extractCourse(text: string, courses: Course[]): CourseMatch | nu
 
 // ─── Análisis completo de la frase ───────────────────────────────
 
+/** Intenciones que solo tienen sentido si además se identificó un ramo. */
+const NEEDS_COURSE = new Set<Intent>([
+  'course_can', 'course_missing', 'course_info', 'offered', 'course_professor',
+]);
+/** Confianza mínima del modelo para confiar en su predicción. */
+const MODEL_THRESHOLD = 0.5;
+
 export function understand(text: string, plan: Plan, offering?: Offering | null): NluResult {
   const raw = normalize(text);
   const match = extractCourse(text, plan.courses);
@@ -342,7 +350,20 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
     }
   }
 
-  // Último recurso cuando nombró algo pero ningún patrón calzó:
+  // Capa aprendida: si las reglas no reconocieron la frase, consultamos el
+  // modelo entrenado (Export). Respeta las mismas condiciones de entidad para
+  // no inventar respuestas (p. ej. "cuántos créditos" sin ramo detectado).
+  if (detected === 'unknown') {
+    const pred = classifyIntent(text);
+    if (pred && pred.confidence >= MODEL_THRESHOLD) {
+      const intent = pred.intent as Intent;
+      const okCourse = !NEEDS_COURSE.has(intent) || Boolean(match);
+      const okProf = intent !== 'professor_courses' || Boolean(prof);
+      if (okCourse && okProf) detected = intent;
+    }
+  }
+
+  // Último recurso cuando nombró algo pero ningún patrón/modelo calzó:
   if (detected === 'unknown') {
     if (match && match.score >= 0.6) detected = 'course_can';
     else if (prof) detected = 'professor_courses';

@@ -11,6 +11,7 @@
     "build": "tsc -b && vite build",
     "vercel-build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
+    "train:intent": "tsx ml/train-intent.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit && tsc -p tsconfig.server.json"
   },
