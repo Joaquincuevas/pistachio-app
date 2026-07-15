@@ -92,22 +92,38 @@ modelo es "nuestro" —lo entrenamos con nuestros datos— y es chico, rápido y
   en unigramas y bigramas de palabras, con marcadores de inicio/fin. Así el
   modelo aprende expresiones clave ("cuantos creditos", "que ramos da", "puedo
   tomar") sin explotar el tamaño del vocabulario.
+- **Enmascaramiento de entidades:** en el dataset, los nombres de ramo se
+  escriben como el token `ramox` y los de profesor como `profex`. En inferencia,
+  `nlu.ts` reemplaza el ramo/profesor detectado por esos mismos tokens antes de
+  clasificar. Resultado: el modelo aprende la **forma** de la pregunta
+  ("cuanto pesa ramox") y generaliza a cualquier ramo, en vez de memorizar
+  nombres puntuales.
 - **Modelo:** una matriz de pesos `W` (intención × feature) + sesgo `b`. Para
   una frase: `logit[k] = b[k] + Σ W[k][feature]`, luego `softmax` → probabilidad
   por intención → gana la más alta.
 - **Entrenamiento:** para cada ejemplo se calcula el gradiente
   `(predicción − real)` y se ajustan los pesos (con regularización L2). Se
-  repite `EPOCHS` veces sobre el dataset barajado.
+  repite `EPOCHS` veces sobre el dataset barajado. El RNG tiene semilla fija:
+  correr dos veces da exactamente los mismos números (métricas comparables
+  entre días).
+- **Evaluación:** validación cruzada de 5 folds (cada ejemplo se evalúa una vez
+  como "no visto") + reporte de confusiones `real → predicho`, que dice
+  exactamente dónde agregar frases. La exactitud final se mide con los pesos
+  **ya podados/redondeados** — el modelo real que corre en el navegador.
 - **Tamaño:** los pesos casi nulos se descartan (almacenamiento disperso) y se
-  redondean. Hoy: ~92 KB (~28 KB gzip), cargado como **chunk aparte** para no
+  redondean. Hoy: ~126 KB (~43 KB gzip), cargado como **chunk aparte** para no
   engordar el bundle inicial.
 
 ### Baseline actual
 
-```
-134 ejemplos · 14 intenciones · 623 features
-Validación: train 100.0% · val 75.0%
-```
+| Día | Ejemplos | Features | Validación (5-fold CV) |
+|-----|----------|----------|------------------------|
+| 1   | 134      | 623      | ~75 % (split único de 20 ej., poco confiable) |
+| 2   | 412      | 1426     | **82.0 % ± 2.7 %** + enmascaramiento de entidades |
+
+Confusiones típicas hoy: `eligible ↔ recommend`, `help → greeting`,
+`course_missing → course_info` — intenciones semánticamente vecinas; se
+mejoran con más frases que marquen la diferencia.
 
 ---
 
@@ -164,12 +180,12 @@ horario sin topes**, y "¿quién da X?" lee el profesor directamente del Excel.
 ## 6. Roadmap
 
 **Del modelo**
-1. Crecer el dataset (más frases, más coloquiales).
-2. Enmascarar nombres de ramo en el dataset (token `RAMOX`) para que aprenda la
-   *forma* de la pregunta, no ramos puntuales.
-3. Matriz de confusión para ver qué intenciones se confunden.
+1. ~~Crecer el dataset~~ ✅ Día 2: 134 → 412 ejemplos (y sigue creciendo a diario).
+2. ~~Enmascarar nombres de ramo/profesor~~ ✅ Día 2: tokens `ramox`/`profex`.
+3. ~~Matriz de confusión~~ ✅ Día 2: 5-fold CV + reporte de confusiones.
 4. Feedback 👍/👎 por respuesta → recolectar datos reales → reentrenar.
 5. Pregunta aclaratoria cuando la confianza es baja.
+6. Trigramas de caracteres como features extra (robustez ante typos).
 
 **Funciones nuevas**
 - 🎓 Ruta a titularte: planificador multi-semestre completo (ruta crítica del

@@ -333,6 +333,37 @@ const NEEDS_COURSE = new Set<Intent>([
 /** Confianza mínima del modelo para confiar en su predicción. */
 const MODEL_THRESHOLD = 0.5;
 
+/** Códigos de ramo en el texto (ioc4101, ing 1201…), para enmascararlos. */
+const CODE_RE_GLOBAL = /\b(i[a-zñ]{2}|ing|teo|opt|min|ele|men|ct)\s?\d{1,4}\b/g;
+
+/**
+ * Reemplaza en la frase los tokens que calzan con un nombre (de ramo o de
+ * profesor) por un token genérico ('ramox' / 'profex'). El dataset de
+ * entrenamiento usa esos mismos tokens, así el modelo aprende la FORMA de la
+ * pregunta ("cuantos creditos tiene ramox") y generaliza a cualquier ramo.
+ * Usa la misma tolerancia a typos/traducciones que extractCourse.
+ */
+function maskMention(text: string, nameTokens: string[], token: string): string {
+  const words = normalize(text).split(' ').filter(Boolean);
+  const matchesName = (w: string) =>
+    !STOPWORDS.has(w) &&
+    nameTokens.some((nt) =>
+      variants(w).some(
+        (v) => nt === v || (v.length >= 4 && nt.startsWith(v)) || (nt.length >= 4 && v.startsWith(nt)),
+      ),
+    );
+  const out: string[] = [];
+  for (const w of words) {
+    if (matchesName(w)) {
+      // Nombres de varias palabras colapsan en un único token.
+      if (out[out.length - 1] !== token) out.push(token);
+    } else {
+      out.push(w);
+    }
+  }
+  return out.join(' ');
+}
+
 export function understand(text: string, plan: Plan, offering?: Offering | null): NluResult {
   const raw = normalize(text);
   const match = extractCourse(text, plan.courses);
@@ -351,10 +382,17 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
   }
 
   // Capa aprendida: si las reglas no reconocieron la frase, consultamos el
-  // modelo entrenado (Export). Respeta las mismas condiciones de entidad para
-  // no inventar respuestas (p. ej. "cuántos créditos" sin ramo detectado).
+  // modelo entrenado (Export). Antes de clasificar se enmascaran las entidades
+  // detectadas (ramo → 'ramox', profesor → 'profex'), igual que en el dataset
+  // de entrenamiento. Se respetan las condiciones de entidad para no inventar
+  // respuestas (p. ej. "cuántos créditos" sin ramo detectado).
   if (detected === 'unknown') {
-    const pred = classifyIntent(text);
+    let modelText = raw.replace(CODE_RE_GLOBAL, ' ramox ');
+    if (match) modelText = maskMention(modelText, tokens(match.course.name), 'ramox');
+    if (prof) {
+      modelText = maskMention(modelText, normalize(prof.name).split(' ').filter(Boolean), 'profex');
+    }
+    const pred = classifyIntent(modelText);
     if (pred && pred.confidence >= MODEL_THRESHOLD) {
       const intent = pred.intent as Intent;
       const okCourse = !NEEDS_COURSE.has(intent) || Boolean(match);
