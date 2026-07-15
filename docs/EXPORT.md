@@ -119,11 +119,34 @@ modelo es "nuestro" —lo entrenamos con nuestros datos— y es chico, rápido y
 | Día | Ejemplos | Features | Validación (5-fold CV) |
 |-----|----------|----------|------------------------|
 | 1   | 134      | 623      | ~75 % (split único de 20 ej., poco confiable) |
-| 2   | 412      | 1426     | **82.0 % ± 2.7 %** + enmascaramiento de entidades |
+| 2   | 412      | 1426     | 82.0 % ± 2.7 % + enmascaramiento de entidades |
+| 3   | 477      | 2411     | **88.9 % ± 3.4 %** + trigramas de caracteres (typos) |
 
-Confusiones típicas hoy: `eligible ↔ recommend`, `help → greeting`,
-`course_missing → course_info` — intenciones semánticamente vecinas; se
-mejoran con más frases que marquen la diferencia.
+Confusiones típicas hoy: `recommend ↔ eligible`, `offered → course_info`,
+`priority → recommend` — intenciones semánticamente vecinas; se mejoran con
+más frases que marquen la diferencia.
+
+### Cuando el modelo duda, pregunta
+
+Si ninguna intención supera el umbral de confianza (0.5), Export **no adivina**:
+muestra "¿Te refieres a algo de esto?" con las hipótesis del modelo como chips
+accionables (filtradas por entidades — no ofrece "créditos de un ramo" si no
+detectó ningún ramo). Elegir un chip ejecuta la intención al tiro.
+
+### Feedback 👍/👎 (recolección de datos reales)
+
+Cada respuesta lleva pulgares. Al calificar se guarda
+`{ts, query, intent, helpful}` en `localStorage` bajo la clave
+`pistachio:export-feedback` (tope 300 registros, solo en el dispositivo del
+alumno — nada viaja al servidor). Para cosecharlo y crecer el dataset:
+
+```js
+// En la consola del navegador (DevTools):
+copy(localStorage.getItem('pistachio:export-feedback'))
+```
+
+Los `helpful: false` son frases mal entendidas → agrégalas a `ml/intents.json`
+con su intención correcta y reentrena.
 
 ---
 
@@ -180,12 +203,14 @@ horario sin topes**, y "¿quién da X?" lee el profesor directamente del Excel.
 ## 6. Roadmap
 
 **Del modelo**
-1. ~~Crecer el dataset~~ ✅ Día 2: 134 → 412 ejemplos (y sigue creciendo a diario).
+1. ~~Crecer el dataset~~ ✅ Día 2: 134 → 412 · Día 3: → 477 (dirigido a confusiones).
 2. ~~Enmascarar nombres de ramo/profesor~~ ✅ Día 2: tokens `ramox`/`profex`.
 3. ~~Matriz de confusión~~ ✅ Día 2: 5-fold CV + reporte de confusiones.
-4. Feedback 👍/👎 por respuesta → recolectar datos reales → reentrenar.
-5. Pregunta aclaratoria cuando la confianza es baja.
-6. Trigramas de caracteres como features extra (robustez ante typos).
+4. ~~Feedback 👍/👎 por respuesta~~ ✅ Día 3: se guarda en localStorage para reentrenar.
+5. ~~Pregunta aclaratoria cuando la confianza es baja~~ ✅ Día 3: chips accionables.
+6. ~~Trigramas de caracteres~~ ✅ Día 3: CV 83.4 % → 88.9 %.
+7. Reentrenar con el feedback recolectado (cerrar el ciclo con datos reales).
+8. Memoria de conversación: "¿y cuántos créditos tiene?" refiriéndose al ramo anterior.
 
 **Funciones nuevas**
 - 🎓 Ruta a titularte: planificador multi-semestre completo (ruta crítica del
