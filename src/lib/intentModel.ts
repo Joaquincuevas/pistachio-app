@@ -40,21 +40,23 @@ export interface IntentPrediction {
 }
 
 /**
- * Clasifica la intención de una frase. Devuelve null si el modelo aún no está
- * cargado (el motor de reglas sigue funcionando mientras tanto).
+ * Clasifica una frase y devuelve las `k` intenciones más probables (ordenadas
+ * por confianza). Devuelve [] si el modelo aún no está cargado — el motor de
+ * reglas sigue funcionando mientras tanto. El top-k alimenta la pregunta
+ * aclaratoria del asistente cuando ninguna intención domina.
  */
-export function classifyIntent(text: string): IntentPrediction | null {
-  if (!model) return null;
+export function classifyIntentTopK(text: string, k = 3): IntentPrediction[] {
+  if (!model) return [];
   // Dedup: el entrenamiento usa features binarias (presencia), así que la
   // inferencia debe contarlas una sola vez aunque se repitan en la frase.
   const feats = [...new Set(featurize(text))];
-  if (feats.length === 0) return null;
+  if (feats.length === 0) return [];
 
   const K = model.intents.length;
   const logits = new Array<number>(K);
-  for (let k = 0; k < K; k++) {
-    let s = model.bias[k] ?? 0;
-    const w = model.weights[k];
+  for (let ki = 0; ki < K; ki++) {
+    let s = model.bias[ki] ?? 0;
+    const w = model.weights[ki];
     for (const f of feats) {
       const idx = model.vocab[f];
       if (idx !== undefined) {
@@ -62,7 +64,7 @@ export function classifyIntent(text: string): IntentPrediction | null {
         if (wv !== undefined) s += wv;
       }
     }
-    logits[k] = s;
+    logits[ki] = s;
   }
 
   const max = Math.max(...logits);
@@ -73,14 +75,13 @@ export function classifyIntent(text: string): IntentPrediction | null {
     return e;
   });
 
-  let best = 0;
-  let bestP = -1;
-  for (let k = 0; k < K; k++) {
-    const p = exp[k] / sum;
-    if (p > bestP) {
-      bestP = p;
-      best = k;
-    }
-  }
-  return { intent: model.intents[best], confidence: bestP };
+  return exp
+    .map((e, i) => ({ intent: model!.intents[i], confidence: e / sum }))
+    .sort((a, b) => b.confidence - a.confidence)
+    .slice(0, k);
+}
+
+/** La intención más probable (o null si el modelo no está cargado). */
+export function classifyIntent(text: string): IntentPrediction | null {
+  return classifyIntentTopK(text, 1)[0] ?? null;
 }

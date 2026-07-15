@@ -1,6 +1,6 @@
 import type { Course, Plan } from '@/types';
 import type { Offering } from './schedule';
-import { classifyIntent } from './intentModel';
+import { classifyIntentTopK } from './intentModel';
 
 /**
  * Pistacho IA — motor de lenguaje natural propio (sin API, sin modelos externos).
@@ -35,6 +35,13 @@ export interface NluResult {
   professor: string | null;
   /** Categoría de cupo consultada ("Electivo", "Minor"…), para list_electives. */
   electiveCategory: string | null;
+  /**
+   * Candidatos del modelo cuando la intención quedó 'unknown' pero el modelo
+   * tenía hipótesis razonables (confianza media). El asistente los ofrece como
+   * pregunta aclaratoria en vez de adivinar. Ya vienen filtrados por entidades
+   * (no sugiere "créditos de un ramo" si no se detectó ramo).
+   */
+  modelGuesses: { intent: Intent; confidence: number }[];
 }
 
 /** Minúsculas, sin tildes, espacios colapsados. */
@@ -386,18 +393,33 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
   // detectadas (ramo → 'ramox', profesor → 'profex'), igual que en el dataset
   // de entrenamiento. Se respetan las condiciones de entidad para no inventar
   // respuestas (p. ej. "cuántos créditos" sin ramo detectado).
+  let modelGuesses: { intent: Intent; confidence: number }[] = [];
   if (detected === 'unknown') {
     let modelText = raw.replace(CODE_RE_GLOBAL, ' ramox ');
     if (match) modelText = maskMention(modelText, tokens(match.course.name), 'ramox');
     if (prof) {
       modelText = maskMention(modelText, normalize(prof.name).split(' ').filter(Boolean), 'profex');
     }
-    const pred = classifyIntent(modelText);
-    if (pred && pred.confidence >= MODEL_THRESHOLD) {
-      const intent = pred.intent as Intent;
-      const okCourse = !NEEDS_COURSE.has(intent) || Boolean(match);
-      const okProf = intent !== 'professor_courses' || Boolean(prof);
-      if (okCourse && okProf) detected = intent;
+    const entityOk = (intent: Intent) =>
+      (!NEEDS_COURSE.has(intent) || Boolean(match)) &&
+      (intent !== 'professor_courses' || Boolean(prof));
+
+    const preds = classifyIntentTopK(modelText, 3);
+    const top = preds[0];
+    if (top && top.confidence >= MODEL_THRESHOLD && entityOk(top.intent as Intent)) {
+      detected = top.intent as Intent;
+    } else {
+      // Confianza media: no adivinamos — dejamos hipótesis para que el
+      // asistente pregunte "¿te refieres a…?" con opciones accionables.
+      modelGuesses = preds
+        .map((p) => ({ intent: p.intent as Intent, confidence: p.confidence }))
+        .filter(
+          (p) =>
+            p.confidence >= 0.12 &&
+            p.intent !== 'greeting' &&
+            p.intent !== 'unknown' &&
+            entityOk(p.intent),
+        );
     }
   }
 
@@ -413,6 +435,7 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
     courseScore: match?.score ?? 0,
     professor: prof?.name ?? null,
     electiveCategory: detected === 'list_electives' ? electiveCategoryFor(raw) : null,
+    modelGuesses: detected === 'unknown' ? modelGuesses : [],
   };
 }
 

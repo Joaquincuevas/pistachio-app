@@ -20,7 +20,7 @@ import {
   type CourseAdvice,
   type Term,
 } from '@/lib/advisor';
-import { SUGGESTIONS, understand } from '@/lib/nlu';
+import { SUGGESTIONS, understand, type Intent, type NluResult } from '@/lib/nlu';
 import { loadIntentModel } from '@/lib/intentModel';
 import { buildAutoSchedule, DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
 import { buildNrcCsv, copyToClipboard, type ScheduleItem } from '@/lib/scheduleExport';
@@ -775,14 +775,9 @@ export function Advisor() {
 
   // ─── Entrada de texto libre (Pistacho IA) ───────────────────────
 
-  const handleText = (raw: string) => {
-    const text = raw.trim();
-    if (!text) return;
-    setDraft('');
-    push('user', <span>{text}</span>);
-
-    const result = understand(text, plan, offering);
-    switch (result.intent) {
+  /** Ejecuta la respuesta de una intención ya resuelta (con sus entidades). */
+  const runIntent = (intent: Intent, ctx: Pick<NluResult, 'course' | 'professor' | 'electiveCategory'>) => {
+    switch (intent) {
       case 'recommend':
         answerRecommend();
         break;
@@ -796,31 +791,31 @@ export function Advisor() {
         answerProgress();
         break;
       case 'course_can':
-        if (result.course) answerCourse(result.course);
+        if (ctx.course) answerCourse(ctx.course);
         else answerFallback();
         break;
       case 'course_missing':
-        if (result.course) answerMissing(result.course);
+        if (ctx.course) answerMissing(ctx.course);
         else answerFallback();
         break;
       case 'course_info':
-        if (result.course) answerCourseInfo(result.course);
+        if (ctx.course) answerCourseInfo(ctx.course);
         else answerFallback();
         break;
       case 'offered':
-        if (result.course) answerOffered(result.course);
+        if (ctx.course) answerOffered(ctx.course);
         else answerFallback();
         break;
       case 'course_professor':
-        if (result.course) answerCourseProfessor(result.course);
+        if (ctx.course) answerCourseProfessor(ctx.course);
         else answerFallback();
         break;
       case 'professor_courses':
-        if (result.professor) answerProfessorCourses(result.professor);
+        if (ctx.professor) answerProfessorCourses(ctx.professor);
         else answerFallback();
         break;
       case 'list_electives':
-        answerElectives(result.electiveCategory ?? 'Electivo');
+        answerElectives(ctx.electiveCategory ?? 'Electivo');
         break;
       case 'build_schedule':
         answerBuildSchedule();
@@ -835,10 +830,79 @@ export function Advisor() {
         );
         break;
       default:
-        // Último recurso: si nombró un ramo con confianza media, da el veredicto.
-        if (result.course && result.courseScore >= 0.5) answerCourse(result.course);
-        else answerFallback();
+        answerFallback();
     }
+  };
+
+  /** Etiqueta accionable para ofrecer una intención como pregunta aclaratoria. */
+  const clarifyLabel = (intent: Intent, ctx: Pick<NluResult, 'course' | 'professor'>): string | null => {
+    const name = ctx.course?.name;
+    switch (intent) {
+      case 'recommend': return 'Recomiéndame qué tomar';
+      case 'eligible': return 'Qué ramos puedo tomar';
+      case 'priority': return 'Qué me conviene priorizar';
+      case 'progress': return 'Cómo va mi avance';
+      case 'course_can': return name ? `¿Puedo tomar ${name}?` : null;
+      case 'course_missing': return name ? `Qué me falta para ${name}` : null;
+      case 'course_info': return name ? `Info de ${name}` : null;
+      case 'offered': return name ? `Secciones de ${name}` : null;
+      case 'course_professor': return name ? `Profesor de ${name}` : null;
+      case 'professor_courses': return ctx.professor ? `Ramos de ${prettyProfessor(ctx.professor)}` : null;
+      case 'list_electives': return 'Ver mis electivos';
+      case 'build_schedule': return 'Ármame el horario';
+      case 'help': return 'Qué puedes hacer';
+      default: return null;
+    }
+  };
+
+  /**
+   * Confianza media del modelo: en vez de adivinar (y responder cualquier
+   * cosa), Export pregunta. Cada opción es un chip que ejecuta la intención.
+   */
+  const answerClarify = (result: NluResult) => {
+    const options = result.modelGuesses
+      .map((g) => ({ intent: g.intent, label: clarifyLabel(g.intent, result) }))
+      .filter((o): o is { intent: Intent; label: string } => o.label !== null);
+    if (options.length === 0) {
+      answerFallback();
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>No estoy seguro de haber entendido. ¿Te refieres a algo de esto?</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {options.map((o) => (
+            <button
+              key={o.intent}
+              type="button"
+              onClick={() => runIntent(o.intent, result)}
+              className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>,
+    );
+  };
+
+  const handleText = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    setDraft('');
+    push('user', <span>{text}</span>);
+
+    const result = understand(text, plan, offering);
+    if (result.intent === 'unknown') {
+      // Último recurso: si nombró un ramo con confianza media, da el veredicto;
+      // si el modelo tiene hipótesis, pregunta en vez de adivinar.
+      if (result.course && result.courseScore >= 0.5) answerCourse(result.course);
+      else if (result.modelGuesses.length > 0) answerClarify(result);
+      else answerFallback();
+      return;
+    }
+    runIntent(result.intent, result);
   };
 
   const quickActions = [
