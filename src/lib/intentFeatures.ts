@@ -21,10 +21,15 @@ export function normalize(text: string): string {
 }
 
 /**
- * Convierte una frase en sus features. Usamos unigramas y bigramas de palabras:
- * capturan expresiones clave del dominio ("cuantos creditos", "que ramos da",
- * "puedo tomar") sin explotar el tamaño del vocabulario. Se agregan marcadores
- * de inicio/fin para que el modelo aprenda aperturas típicas de pregunta.
+ * Convierte una frase en sus features:
+ * - Unigramas y bigramas de palabras: capturan expresiones clave del dominio
+ *   ("cuantos creditos", "que ramos da") con marcadores de inicio/fin para las
+ *   aperturas típicas de pregunta.
+ * - Trigramas de caracteres por palabra (con bordes '#'): dan robustez ante
+ *   typos — "credtos" comparte la mayoría de sus trigramas con "creditos",
+ *   así que la frase igual cae en la intención correcta aunque el unigrama
+ *   exacto no exista. Solo palabras de 4+ letras (las cortas no lo necesitan
+ *   y agregan ruido).
  */
 export function featurize(text: string): string[] {
   const words = normalize(text).split(' ').filter(Boolean);
@@ -32,8 +37,15 @@ export function featurize(text: string): string[] {
   const tokens = ['<s>', ...words, '</s>'];
   const feats: string[] = [];
   for (let i = 0; i < tokens.length; i++) {
-    if (tokens[i] !== '<s>' && tokens[i] !== '</s>') feats.push(`u:${tokens[i]}`);
-    if (i < tokens.length - 1) feats.push(`b:${tokens[i]}_${tokens[i + 1]}`);
+    const t = tokens[i];
+    if (t !== '<s>' && t !== '</s>') {
+      feats.push(`u:${t}`);
+      if (t.length >= 4) {
+        const padded = `#${t}#`;
+        for (let j = 0; j <= padded.length - 3; j++) feats.push(`c:${padded.slice(j, j + 3)}`);
+      }
+    }
+    if (i < tokens.length - 1) feats.push(`b:${t}_${tokens[i + 1]}`);
   }
   return feats;
 }

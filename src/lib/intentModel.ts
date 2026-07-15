@@ -45,7 +45,9 @@ export interface IntentPrediction {
  */
 export function classifyIntent(text: string): IntentPrediction | null {
   if (!model) return null;
-  const feats = featurize(text);
+  // Dedup: el entrenamiento usa features binarias (presencia), así que la
+  // inferencia debe contarlas una sola vez aunque se repitan en la frase.
+  const feats = [...new Set(featurize(text))];
   if (feats.length === 0) return null;
 
   const K = model.intents.length;
