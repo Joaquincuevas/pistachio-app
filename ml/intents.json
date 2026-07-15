@@ -39,7 +39,15 @@
     "que tomarias tu en mi lugar",
     "arma una propuesta de ramos",
     "necesito ayuda para decidir mis ramos",
-    "que carga me recomiendas"
+    "que carga me recomiendas",
+    "que me aconsejas tomar",
+    "aconsejame con la toma de ramos",
+    "cual seria la mejor carga para mi",
+    "que ramos me recomiendas inscribir",
+    "si fueras yo que tomarias",
+    "dame tu recomendacion para el semestre",
+    "que conviene tomar ahora",
+    "elige mis ramos por mi"
   ],
 
   "eligible": [
@@ -74,7 +82,15 @@
     "muestra mis ramos elegibles",
     "que ramos podria inscribir hoy",
     "cuales se me habilitaron este semestre",
-    "que nuevos ramos puedo tomar"
+    "que nuevos ramos puedo tomar",
+    "dime que ramos tengo disponibles",
+    "cuales ramos estan abiertos para mi",
+    "que materias tengo habilitadas ahora",
+    "muestrame mis opciones disponibles",
+    "que se me abrio este semestre",
+    "cuales puedo tomar sin que me falte nada",
+    "que ramos tengo liberados",
+    "todos los ramos que cumplo para inscribir"
   ],
 
   "priority": [
@@ -103,7 +119,13 @@
     "que curso es el mas importante que me queda",
     "cual ramo deberia sacar antes que todo",
     "que me recomiendas priorizar en la toma",
-    "cual es el ramo llave de mi malla"
+    "cual es el ramo llave de mi malla",
+    "cual ramo deberia tomar primero que todo",
+    "que ramo es el mas estrategico",
+    "cual me conviene sacar ya para no atrasarme",
+    "que ramo abre mas caminos en mi malla",
+    "cual es el proximo ramo clave",
+    "que deberia sacar primero"
   ],
 
   "progress": [
@@ -140,7 +162,14 @@
     "dime mi porcentaje de avance",
     "cuanta carrera me queda",
     "cuantos creditos me faltan para egresar",
-    "estado de mi avance"
+    "estado de mi avance",
+    "cuantos creditos he aprobado hasta ahora",
+    "como va mi carrera",
+    "que porcentaje de la malla llevo",
+    "cuanto avance tengo",
+    "cuantos ramos me faltan por aprobar",
+    "hazme un resumen de como voy",
+    "en que semestre voy de la carrera"
   ],
 
   "course_can": [
@@ -210,7 +239,13 @@
     "que ramos van antes de ramox",
     "que debo cursar primero para tomar ramox",
     "cuales ramos me abren ramox",
-    "que me esta trancando ramox"
+    "que me esta trancando ramox",
+    "que me falta aprobar para ramox",
+    "que necesito cursar antes de ramox",
+    "que me impide inscribir ramox",
+    "cuales requisitos no cumplo de ramox",
+    "que me queda pendiente para tomar ramox",
+    "que debo terminar para poder tomar ramox"
   ],
 
   "course_info": [
@@ -245,7 +280,14 @@
     "describe ramox",
     "que tan pesado es ramox",
     "cuanto son los sct de ramox",
-    "a que semestre pertenece ramox"
+    "a que semestre pertenece ramox",
+    "cuantos creditos otorga ramox",
+    "cuanto sct es ramox",
+    "que semestre es ramox en la malla",
+    "cuantos creditos aporta ramox",
+    "dame la ficha de ramox",
+    "que informacion tienes de ramox",
+    "cuantas horas a la semana es ramox"
   ],
 
   "offered": [
@@ -282,7 +324,15 @@
     "cuando son las ayudantias de ramox",
     "a que hora es el laboratorio de ramox",
     "sale ramox en el excel",
-    "hay oferta de ramox"
+    "hay oferta de ramox",
+    "en que horario queda ramox",
+    "que dias se dicta ramox",
+    "a que horas tiene clases ramox",
+    "cuando tiene catedra ramox",
+    "dame los horarios de ramox",
+    "que secciones abrieron de ramox",
+    "en que bloque cae ramox",
+    "cual seccion de ramox me sirve"
   ],
 
   "course_professor": [
@@ -423,7 +473,14 @@
     "que haces exactamente",
     "muestrame tus opciones",
     "manual de uso",
-    "que servicios ofreces"
+    "que servicios ofreces",
+    "que funciones tienes",
+    "que tipos de preguntas puedo hacerte",
+    "en que me ayudas exactamente",
+    "que puedes responder",
+    "como me puedes ayudar con mi malla",
+    "dime que sabes hacer",
+    "que opciones me das"
   ],
 
   "greeting": [
@@ -452,6 +509,14 @@
     "buena",
     "perfecto gracias",
     "ok gracias",
-    "te pasaste gracias"
+    "te pasaste gracias",
+    "hola que tal export",
+    "buenas export",
+    "hey buenas",
+    "gracias export",
+    "muchas gracias por la ayuda",
+    "excelente muchas gracias",
+    "un gusto",
+    "hasta luego"
   ]
 }
