@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, ThumbsDown, ThumbsUp, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
@@ -34,7 +34,17 @@ interface Message {
   id: number;
   role: 'bot' | 'user';
   node: React.ReactNode;
+  /** Consulta e intención que generaron esta respuesta (habilita el 👍/👎). */
+  meta?: { query: string; intent: string };
 }
+
+/**
+ * Feedback local del alumno sobre las respuestas de Export. Se guarda SOLO en
+ * este dispositivo (localStorage): sirve para recolectar frases reales con las
+ * que crecer ml/intents.json. Los 👎 son oro: son frases mal entendidas.
+ */
+const FEEDBACK_KEY = 'pistachio:export-feedback';
+const FEEDBACK_MAX = 300;
 
 /** Línea compacta de un ramo dentro de una respuesta del asistente. */
 function CourseLine({ course, reason }: { course: Course; reason?: string }) {
@@ -115,8 +125,12 @@ export function Advisor() {
   const [term, setTerm] = useState<Term>(() => defaultTerm());
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const [rated, setRated] = useState<Record<number, boolean>>({});
   const nextId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
+  // Meta pendiente: la setea handleText (o un chip aclaratorio) justo antes de
+  // ejecutar una intención; el siguiente push de bot se la lleva.
+  const pendingMeta = useRef<Message['meta'] | null>(null);
 
   const advice = useMemo(
     () => (plan ? analyzePlan(plan, statuses, term) : []),
@@ -129,9 +143,28 @@ export function Advisor() {
   }, []);
 
   const push = (role: Message['role'], node: React.ReactNode) => {
-    setMessages((prev) => [...prev, { id: nextId.current++, role, node }]);
+    const meta = role === 'bot' ? (pendingMeta.current ?? undefined) : undefined;
+    if (role === 'bot') pendingMeta.current = null;
+    setMessages((prev) => [...prev, { id: nextId.current++, role, node, meta }]);
     // Deja que el DOM pinte antes de bajar el scroll.
     window.setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 40);
+  };
+
+  /** Registra el 👍/👎 de una respuesta en localStorage (solo este equipo). */
+  const rate = (m: Message, helpful: boolean) => {
+    if (!m.meta) return;
+    try {
+      const list = JSON.parse(localStorage.getItem(FEEDBACK_KEY) ?? '[]') as unknown[];
+      list.push({ ts: new Date().toISOString(), query: m.meta.query, intent: m.meta.intent, helpful });
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list.slice(-FEEDBACK_MAX)));
+    } catch {
+      // localStorage lleno o bloqueado: el feedback es best-effort.
+    }
+    setRated((prev) => ({ ...prev, [m.id]: helpful }));
+    showToast(
+      helpful ? '¡Gracias por tu feedback!' : 'Gracias — esto ayuda a entrenar a Export.',
+      'success',
+    );
   };
 
   if (loading) {
@@ -859,7 +892,7 @@ export function Advisor() {
    * Confianza media del modelo: en vez de adivinar (y responder cualquier
    * cosa), Export pregunta. Cada opción es un chip que ejecuta la intención.
    */
-  const answerClarify = (result: NluResult) => {
+  const answerClarify = (result: NluResult, query: string) => {
     const options = result.modelGuesses
       .map((g) => ({ intent: g.intent, label: clarifyLabel(g.intent, result) }))
       .filter((o): o is { intent: Intent; label: string } => o.label !== null);
@@ -876,7 +909,11 @@ export function Advisor() {
             <button
               key={o.intent}
               type="button"
-              onClick={() => runIntent(o.intent, result)}
+              onClick={() => {
+                // La elección del alumno es una etiqueta implícita frase→intención.
+                pendingMeta.current = { query, intent: o.intent };
+                runIntent(o.intent, result);
+              }}
               className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
             >
               {o.label}
@@ -897,10 +934,15 @@ export function Advisor() {
     if (result.intent === 'unknown') {
       // Último recurso: si nombró un ramo con confianza media, da el veredicto;
       // si el modelo tiene hipótesis, pregunta en vez de adivinar.
-      if (result.course && result.courseScore >= 0.5) answerCourse(result.course);
-      else if (result.modelGuesses.length > 0) answerClarify(result);
+      if (result.course && result.courseScore >= 0.5) {
+        pendingMeta.current = { query: text, intent: 'course_can' };
+        answerCourse(result.course);
+      } else if (result.modelGuesses.length > 0) answerClarify(result, text);
       else answerFallback();
       return;
+    }
+    if (result.intent !== 'greeting') {
+      pendingMeta.current = { query: text, intent: result.intent };
     }
     runIntent(result.intent, result);
   };
@@ -972,7 +1014,37 @@ export function Advisor() {
 
           {messages.map((m) =>
             m.role === 'bot' ? (
-              <BotBubble key={m.id}>{m.node}</BotBubble>
+              <div key={m.id}>
+                <BotBubble>{m.node}</BotBubble>
+                {m.meta && (
+                  <div className="mt-1.5 flex items-center gap-0.5 pl-[38px]">
+                    {rated[m.id] !== undefined ? (
+                      <span className="text-[11px] text-text-tertiary">
+                        Gracias por tu feedback
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => rate(m, true)}
+                          aria-label="Respuesta útil"
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-accent-light hover:text-accent-hover"
+                        >
+                          <ThumbsUp className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => rate(m, false)}
+                          aria-label="Respuesta incorrecta"
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-danger/10 hover:text-danger"
+                        >
+                          <ThumbsDown className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div key={m.id} className="flex justify-end">
                 <div className="max-w-[80%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-white">
