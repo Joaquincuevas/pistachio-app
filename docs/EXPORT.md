@@ -126,6 +126,25 @@ Confusiones típicas hoy: `recommend ↔ eligible`, `offered → course_info`,
 `priority → recommend` — intenciones semánticamente vecinas; se mejoran con
 más frases que marquen la diferencia.
 
+### Memoria conversacional
+
+Export recuerda el último ramo/profesor del que se habló, así que se puede
+conversar sin repetir el nombre:
+
+> — ¿Puedo tomar Hidráulica?
+> — Aún no puedes tomar **Hidráulica**: te falta Fluid Mechanics.
+> — ¿Y cuántos créditos tiene?
+> — **Hidráulica** (IOC4103) tiene 6 SCT…
+> — ¿Qué me falta para ese ramo?
+> — Para tomar **Hidráulica** te faltan 10 ramos…
+
+`understand()` hace dos pasadas: la normal (entidades explícitas en la frase) y,
+si queda `unknown`, una segunda usando la entidad recordada. La segunda solo se
+acepta si resuelve una intención que **de verdad necesita** esa entidad — por
+eso "cuánto me falta para titularme" sigue respondiendo tu avance y no el ramo
+anterior, y sin contexto previo "¿y cuántos créditos tiene?" pregunta en vez de
+inventar.
+
 ### Cuando el modelo duda, pregunta
 
 Si ninguna intención supera el umbral de confianza (0.5), Export **no adivina**:
@@ -210,7 +229,7 @@ horario sin topes**, y "¿quién da X?" lee el profesor directamente del Excel.
 5. ~~Pregunta aclaratoria cuando la confianza es baja~~ ✅ Día 3: chips accionables.
 6. ~~Trigramas de caracteres~~ ✅ Día 3: CV 83.4 % → 88.9 %.
 7. Reentrenar con el feedback recolectado (cerrar el ciclo con datos reales).
-8. Memoria de conversación: "¿y cuántos créditos tiene?" refiriéndose al ramo anterior.
+8. ~~Memoria de conversación~~ ✅ Día 4: recuerda el último ramo/profesor.
 
 **Funciones nuevas**
 - 🎓 Ruta a titularte: planificador multi-semestre completo (ruta crítica del

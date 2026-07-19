@@ -371,13 +371,52 @@ function maskMention(text: string, nameTokens: string[], token: string): string 
   return out.join(' ');
 }
 
-export function understand(text: string, plan: Plan, offering?: Offering | null): NluResult {
+/**
+ * Contexto conversacional: la última entidad de la que se habló. Permite
+ * resolver referencias implícitas ("¿y cuántos créditos tiene?", "¿quién lo
+ * dicta?", "qué me falta para ese ramo") sin repetir el nombre.
+ */
+export interface NluContext {
+  course: Course | null;
+  professor: string | null;
+}
+
+export function understand(
+  text: string,
+  plan: Plan,
+  offering?: Offering | null,
+  context?: NluContext,
+): NluResult {
   const raw = normalize(text);
-  const match = extractCourse(text, plan.courses);
+  const direct = extractCourse(text, plan.courses);
   // Solo intentamos un profesor si el ramo no calzó con fuerza (evita que
   // "quién da Hidráulica" se lea como un apellido).
-  const prof = offering && (!match || match.score < 0.9) ? extractProfessor(text, offering) : null;
+  const prof = offering && (!direct || direct.score < 0.9) ? extractProfessor(text, offering) : null;
 
+  const first = resolveIntent(raw, direct, prof);
+  if (first.intent !== 'unknown') return first;
+
+  // Memoria conversacional: la frase no nombra ramo/profesor, pero la
+  // conversación ya tiene uno. Reintentamos con esa referencia y solo la
+  // aceptamos si así se resuelve una intención que de verdad necesita la
+  // entidad — cualquier otra frase mantiene su comportamiento de siempre.
+  const ctxMatch = !direct && context?.course ? { course: context.course, score: 0.45 } : direct;
+  const ctxProf = !prof && context?.professor ? { name: context.professor, score: 1 } : prof;
+  if (ctxMatch !== direct || ctxProf !== prof) {
+    const second = resolveIntent(raw, ctxMatch, ctxProf);
+    const viaCourse = ctxMatch !== direct && NEEDS_COURSE.has(second.intent);
+    const viaProf = ctxProf !== prof && second.intent === 'professor_courses';
+    if (viaCourse || viaProf) return second;
+  }
+  return first;
+}
+
+/** Resuelve la intención de una frase dadas las entidades disponibles. */
+function resolveIntent(
+  raw: string,
+  match: CourseMatch | null,
+  prof: ProfessorMatch | null,
+): NluResult {
   let detected: Intent = 'unknown';
   for (const rule of RULES) {
     if (rule.needsCourse && !match) continue;

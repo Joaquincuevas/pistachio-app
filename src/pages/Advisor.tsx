@@ -46,6 +46,11 @@ interface Message {
 const FEEDBACK_KEY = 'pistachio:export-feedback';
 const FEEDBACK_MAX = 300;
 
+/** Intenciones cuya respuesta habla de un ramo (actualizan la memoria). */
+const COURSE_INTENTS: ReadonlySet<Intent> = new Set([
+  'course_can', 'course_missing', 'course_info', 'offered', 'course_professor',
+]);
+
 /** Línea compacta de un ramo dentro de una respuesta del asistente. */
 function CourseLine({ course, reason }: { course: Course; reason?: string }) {
   return (
@@ -131,6 +136,10 @@ export function Advisor() {
   // Meta pendiente: la setea handleText (o un chip aclaratorio) justo antes de
   // ejecutar una intención; el siguiente push de bot se la lleva.
   const pendingMeta = useRef<Message['meta'] | null>(null);
+  // Memoria conversacional: el último ramo/profesor del que se habló, para
+  // resolver "¿y cuántos créditos tiene?" sin repetir el nombre.
+  const lastCourse = useRef<Course | null>(null);
+  const lastProfessor = useRef<string | null>(null);
 
   const advice = useMemo(
     () => (plan ? analyzePlan(plan, statuses, term) : []),
@@ -810,6 +819,9 @@ export function Advisor() {
 
   /** Ejecuta la respuesta de una intención ya resuelta (con sus entidades). */
   const runIntent = (intent: Intent, ctx: Pick<NluResult, 'course' | 'professor' | 'electiveCategory'>) => {
+    // Actualiza la memoria conversacional con la entidad que se va a responder.
+    if (ctx.course && COURSE_INTENTS.has(intent)) lastCourse.current = ctx.course;
+    if (ctx.professor && intent === 'professor_courses') lastProfessor.current = ctx.professor;
     switch (intent) {
       case 'recommend':
         answerRecommend();
@@ -930,12 +942,16 @@ export function Advisor() {
     setDraft('');
     push('user', <span>{text}</span>);
 
-    const result = understand(text, plan, offering);
+    const result = understand(text, plan, offering, {
+      course: lastCourse.current,
+      professor: lastProfessor.current,
+    });
     if (result.intent === 'unknown') {
       // Último recurso: si nombró un ramo con confianza media, da el veredicto;
       // si el modelo tiene hipótesis, pregunta en vez de adivinar.
       if (result.course && result.courseScore >= 0.5) {
         pendingMeta.current = { query: text, intent: 'course_can' };
+        lastCourse.current = result.course;
         answerCourse(result.course);
       } else if (result.modelGuesses.length > 0) answerClarify(result, text);
       else answerFallback();
