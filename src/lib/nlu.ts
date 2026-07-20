@@ -1,5 +1,6 @@
 import type { Course, Plan } from '@/types';
 import type { Offering } from './schedule';
+import { classifyIntentTopK } from './intentModel';
 
 /**
  * Pistacho IA — motor de lenguaje natural propio (sin API, sin modelos externos).
@@ -20,6 +21,7 @@ export type Intent =
   | 'course_professor'  // "¿quién es el profesor de X?"
   | 'professor_courses' // "¿qué ramos da el profesor Y?"
   | 'list_electives'    // "¿qué electivos hay?" / "¿qué minors hay?"
+  | 'graduation_path'   // "¿cuándo me titulo?" / "planifícame la carrera"
   | 'build_schedule'    // "ármame el horario"
   | 'help'              // "¿qué puedes hacer?"
   | 'greeting'
@@ -34,6 +36,13 @@ export interface NluResult {
   professor: string | null;
   /** Categoría de cupo consultada ("Electivo", "Minor"…), para list_electives. */
   electiveCategory: string | null;
+  /**
+   * Candidatos del modelo cuando la intención quedó 'unknown' pero el modelo
+   * tenía hipótesis razonables (confianza media). El asistente los ofrece como
+   * pregunta aclaratoria en vez de adivinar. Ya vienen filtrados por entidades
+   * (no sugiere "créditos de un ramo" si no se detectó ramo).
+   */
+  modelGuesses: { intent: Intent; confidence: number }[];
 }
 
 /** Minúsculas, sin tildes, espacios colapsados. */
@@ -161,6 +170,18 @@ const RULES: IntentRule[] = [
     patterns: [
       /electivos?/, /optativos?/, /\bminors?\b/, /formacion general/, /\bofg\b/,
       /concentracion(es)? tecnologic/, /que menciones/,
+    ],
+  },
+  {
+    // Va antes que "progress": "cuántos semestres me quedan" se responde mucho
+    // mejor con la proyección completa que con el porcentaje de avance.
+    intent: 'graduation_path',
+    patterns: [
+      /ruta (a|para) (titular|el titulo)/, /plan (de|para) (titulacion|titularme|la carrera)/,
+      /planifica(me)? (toda )?(la|mi) carrera/, /cuando me titulo/, /cuando (egreso|salgo de la carrera)/,
+      /cuantos semestres me (quedan|faltan)/, /semestre a semestre/, /hasta titularme/,
+      /proyecc?ion de (mi )?carrera/, /todos los semestres/, /en cuantos semestres/,
+      /cuando termino la carrera/, /me queda(n)? .* semestres/,
     ],
   },
   {
@@ -325,13 +346,90 @@ export function extractCourse(text: string, courses: Course[]): CourseMatch | nu
 
 // ─── Análisis completo de la frase ───────────────────────────────
 
-export function understand(text: string, plan: Plan, offering?: Offering | null): NluResult {
+/** Intenciones que solo tienen sentido si además se identificó un ramo. */
+const NEEDS_COURSE = new Set<Intent>([
+  'course_can', 'course_missing', 'course_info', 'offered', 'course_professor',
+]);
+/** Confianza mínima del modelo para confiar en su predicción. */
+const MODEL_THRESHOLD = 0.5;
+
+/** Códigos de ramo en el texto (ioc4101, ing 1201…), para enmascararlos. */
+const CODE_RE_GLOBAL = /\b(i[a-zñ]{2}|ing|teo|opt|min|ele|men|ct)\s?\d{1,4}\b/g;
+
+/**
+ * Reemplaza en la frase los tokens que calzan con un nombre (de ramo o de
+ * profesor) por un token genérico ('ramox' / 'profex'). El dataset de
+ * entrenamiento usa esos mismos tokens, así el modelo aprende la FORMA de la
+ * pregunta ("cuantos creditos tiene ramox") y generaliza a cualquier ramo.
+ * Usa la misma tolerancia a typos/traducciones que extractCourse.
+ */
+function maskMention(text: string, nameTokens: string[], token: string): string {
+  const words = normalize(text).split(' ').filter(Boolean);
+  const matchesName = (w: string) =>
+    !STOPWORDS.has(w) &&
+    nameTokens.some((nt) =>
+      variants(w).some(
+        (v) => nt === v || (v.length >= 4 && nt.startsWith(v)) || (nt.length >= 4 && v.startsWith(nt)),
+      ),
+    );
+  const out: string[] = [];
+  for (const w of words) {
+    if (matchesName(w)) {
+      // Nombres de varias palabras colapsan en un único token.
+      if (out[out.length - 1] !== token) out.push(token);
+    } else {
+      out.push(w);
+    }
+  }
+  return out.join(' ');
+}
+
+/**
+ * Contexto conversacional: la última entidad de la que se habló. Permite
+ * resolver referencias implícitas ("¿y cuántos créditos tiene?", "¿quién lo
+ * dicta?", "qué me falta para ese ramo") sin repetir el nombre.
+ */
+export interface NluContext {
+  course: Course | null;
+  professor: string | null;
+}
+
+export function understand(
+  text: string,
+  plan: Plan,
+  offering?: Offering | null,
+  context?: NluContext,
+): NluResult {
   const raw = normalize(text);
-  const match = extractCourse(text, plan.courses);
+  const direct = extractCourse(text, plan.courses);
   // Solo intentamos un profesor si el ramo no calzó con fuerza (evita que
   // "quién da Hidráulica" se lea como un apellido).
-  const prof = offering && (!match || match.score < 0.9) ? extractProfessor(text, offering) : null;
+  const prof = offering && (!direct || direct.score < 0.9) ? extractProfessor(text, offering) : null;
 
+  const first = resolveIntent(raw, direct, prof);
+  if (first.intent !== 'unknown') return first;
+
+  // Memoria conversacional: la frase no nombra ramo/profesor, pero la
+  // conversación ya tiene uno. Reintentamos con esa referencia y solo la
+  // aceptamos si así se resuelve una intención que de verdad necesita la
+  // entidad — cualquier otra frase mantiene su comportamiento de siempre.
+  const ctxMatch = !direct && context?.course ? { course: context.course, score: 0.45 } : direct;
+  const ctxProf = !prof && context?.professor ? { name: context.professor, score: 1 } : prof;
+  if (ctxMatch !== direct || ctxProf !== prof) {
+    const second = resolveIntent(raw, ctxMatch, ctxProf);
+    const viaCourse = ctxMatch !== direct && NEEDS_COURSE.has(second.intent);
+    const viaProf = ctxProf !== prof && second.intent === 'professor_courses';
+    if (viaCourse || viaProf) return second;
+  }
+  return first;
+}
+
+/** Resuelve la intención de una frase dadas las entidades disponibles. */
+function resolveIntent(
+  raw: string,
+  match: CourseMatch | null,
+  prof: ProfessorMatch | null,
+): NluResult {
   let detected: Intent = 'unknown';
   for (const rule of RULES) {
     if (rule.needsCourse && !match) continue;
@@ -342,7 +440,42 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
     }
   }
 
-  // Último recurso cuando nombró algo pero ningún patrón calzó:
+  // Capa aprendida: si las reglas no reconocieron la frase, consultamos el
+  // modelo entrenado (Export). Antes de clasificar se enmascaran las entidades
+  // detectadas (ramo → 'ramox', profesor → 'profex'), igual que en el dataset
+  // de entrenamiento. Se respetan las condiciones de entidad para no inventar
+  // respuestas (p. ej. "cuántos créditos" sin ramo detectado).
+  let modelGuesses: { intent: Intent; confidence: number }[] = [];
+  if (detected === 'unknown') {
+    let modelText = raw.replace(CODE_RE_GLOBAL, ' ramox ');
+    if (match) modelText = maskMention(modelText, tokens(match.course.name), 'ramox');
+    if (prof) {
+      modelText = maskMention(modelText, normalize(prof.name).split(' ').filter(Boolean), 'profex');
+    }
+    const entityOk = (intent: Intent) =>
+      (!NEEDS_COURSE.has(intent) || Boolean(match)) &&
+      (intent !== 'professor_courses' || Boolean(prof));
+
+    const preds = classifyIntentTopK(modelText, 3);
+    const top = preds[0];
+    if (top && top.confidence >= MODEL_THRESHOLD && entityOk(top.intent as Intent)) {
+      detected = top.intent as Intent;
+    } else {
+      // Confianza media: no adivinamos — dejamos hipótesis para que el
+      // asistente pregunte "¿te refieres a…?" con opciones accionables.
+      modelGuesses = preds
+        .map((p) => ({ intent: p.intent as Intent, confidence: p.confidence }))
+        .filter(
+          (p) =>
+            p.confidence >= 0.12 &&
+            p.intent !== 'greeting' &&
+            p.intent !== 'unknown' &&
+            entityOk(p.intent),
+        );
+    }
+  }
+
+  // Último recurso cuando nombró algo pero ningún patrón/modelo calzó:
   if (detected === 'unknown') {
     if (match && match.score >= 0.6) detected = 'course_can';
     else if (prof) detected = 'professor_courses';
@@ -354,6 +487,7 @@ export function understand(text: string, plan: Plan, offering?: Offering | null)
     courseScore: match?.score ?? 0,
     professor: prof?.name ?? null,
     electiveCategory: detected === 'list_electives' ? electiveCategoryFor(raw) : null,
+    modelGuesses: detected === 'unknown' ? modelGuesses : [],
   };
 }
 

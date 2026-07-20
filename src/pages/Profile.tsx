@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Clock, GraduationCap, LogOut, RefreshCw } from 'lucide-react';
 import { AccountSecurity } from '@/components/account/AccountSecurity';
+import { ExportFeedback } from '@/components/profile/ExportFeedback';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -129,6 +130,11 @@ export function Profile() {
           </dl>
         </div>
       </Card>
+
+      {/* Feedback del asistente (solo aparece si el alumno valoró respuestas) */}
+      <div className="mt-6">
+        <ExportFeedback />
+      </div>
 
       {/* Cuenta y seguridad */}
       <div className="mt-8">

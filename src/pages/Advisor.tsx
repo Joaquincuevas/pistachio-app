@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, TrendingUp } from 'lucide-react';
+import { ArrowUp, CalendarDays, Check, Copy, GraduationCap, Lightbulb, Sparkles, ThumbsDown, ThumbsUp, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
@@ -15,12 +15,14 @@ import {
   completedCredits,
   defaultTerm,
   eligibleCourses,
+  planToGraduation,
   recommendSemester,
   topPriority,
   type CourseAdvice,
   type Term,
 } from '@/lib/advisor';
-import { SUGGESTIONS, understand } from '@/lib/nlu';
+import { SUGGESTIONS, understand, type Intent, type NluResult } from '@/lib/nlu';
+import { loadIntentModel } from '@/lib/intentModel';
 import { buildAutoSchedule, DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
 import { buildNrcCsv, copyToClipboard, type ScheduleItem } from '@/lib/scheduleExport';
 import { cn, computeProgress } from '@/lib/utils';
@@ -33,7 +35,22 @@ interface Message {
   id: number;
   role: 'bot' | 'user';
   node: React.ReactNode;
+  /** Consulta e intención que generaron esta respuesta (habilita el 👍/👎). */
+  meta?: { query: string; intent: string };
 }
+
+/**
+ * Feedback local del alumno sobre las respuestas de Export. Se guarda SOLO en
+ * este dispositivo (localStorage): sirve para recolectar frases reales con las
+ * que crecer ml/intents.json. Los 👎 son oro: son frases mal entendidas.
+ */
+const FEEDBACK_KEY = 'pistachio:export-feedback';
+const FEEDBACK_MAX = 300;
+
+/** Intenciones cuya respuesta habla de un ramo (actualizan la memoria). */
+const COURSE_INTENTS: ReadonlySet<Intent> = new Set([
+  'course_can', 'course_missing', 'course_info', 'offered', 'course_professor',
+]);
 
 /** Línea compacta de un ramo dentro de una respuesta del asistente. */
 function CourseLine({ course, reason }: { course: Course; reason?: string }) {
@@ -114,18 +131,50 @@ export function Advisor() {
   const [term, setTerm] = useState<Term>(() => defaultTerm());
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const [rated, setRated] = useState<Record<number, boolean>>({});
   const nextId = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
+  // Meta pendiente: la setea handleText (o un chip aclaratorio) justo antes de
+  // ejecutar una intención; el siguiente push de bot se la lleva.
+  const pendingMeta = useRef<Message['meta'] | null>(null);
+  // Memoria conversacional: el último ramo/profesor del que se habló, para
+  // resolver "¿y cuántos créditos tiene?" sin repetir el nombre.
+  const lastCourse = useRef<Course | null>(null);
+  const lastProfessor = useRef<string | null>(null);
 
   const advice = useMemo(
     () => (plan ? analyzePlan(plan, statuses, term) : []),
     [plan, statuses, term],
   );
 
+  // Carga (una vez) el modelo de intención entrenado, en segundo plano.
+  useEffect(() => {
+    void loadIntentModel();
+  }, []);
+
   const push = (role: Message['role'], node: React.ReactNode) => {
-    setMessages((prev) => [...prev, { id: nextId.current++, role, node }]);
+    const meta = role === 'bot' ? (pendingMeta.current ?? undefined) : undefined;
+    if (role === 'bot') pendingMeta.current = null;
+    setMessages((prev) => [...prev, { id: nextId.current++, role, node, meta }]);
     // Deja que el DOM pinte antes de bajar el scroll.
     window.setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 40);
+  };
+
+  /** Registra el 👍/👎 de una respuesta en localStorage (solo este equipo). */
+  const rate = (m: Message, helpful: boolean) => {
+    if (!m.meta) return;
+    try {
+      const list = JSON.parse(localStorage.getItem(FEEDBACK_KEY) ?? '[]') as unknown[];
+      list.push({ ts: new Date().toISOString(), query: m.meta.query, intent: m.meta.intent, helpful });
+      localStorage.setItem(FEEDBACK_KEY, JSON.stringify(list.slice(-FEEDBACK_MAX)));
+    } catch {
+      // localStorage lleno o bloqueado: el feedback es best-effort.
+    }
+    setRated((prev) => ({ ...prev, [m.id]: helpful }));
+    showToast(
+      helpful ? '¡Gracias por tu feedback!' : 'Gracias — esto ayuda a entrenar a Export.',
+      'success',
+    );
   };
 
   if (loading) {
@@ -714,6 +763,72 @@ export function Advisor() {
     );
   };
 
+  const answerGraduationPath = () => {
+    const route = planToGraduation(plan, statuses, term);
+    if (route.remainingCourses === 0) {
+      push('bot', <p>¡Ya tienes toda tu malla cursada! No te queda nada por delante. 🎓</p>);
+      return;
+    }
+    if (route.semesters.length === 0) {
+      push(
+        'bot',
+        <p>
+          No pude proyectar tu ruta: no encuentro ramos que puedas tomar todavía. Pregúntame por un
+          ramo puntual para ver qué te falta.
+        </p>,
+      );
+      return;
+    }
+    const años = Math.ceil(route.totalSemesters / 2);
+    push(
+      'bot',
+      <div>
+        <p>
+          Te quedan <span className="font-medium text-text-primary">{route.remainingCourses} ramos</span>. Proyectando
+          una carga de hasta 30 SCT por semestre, te titulas en{' '}
+          <span className="font-medium text-text-primary">
+            {route.totalSemesters} {route.totalSemesters === 1 ? 'semestre' : 'semestres'}
+          </span>{' '}
+          (~{años} {años === 1 ? 'año' : 'años'}):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {route.semesters.map((s) => (
+            <div key={s.index} className="rounded-btn border border-border bg-white px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-text-primary">
+                  Semestre {s.index} · {ordinal(s.term)} sem
+                </p>
+                <span className="shrink-0 rounded-full bg-accent-light px-2.5 py-1 text-[11px] font-medium text-accent-hover">
+                  {s.totalSct} SCT
+                </span>
+              </div>
+              <ul className="mt-1.5 flex flex-col gap-0.5">
+                {s.courses.map((c) => (
+                  <li key={c.id} className="text-xs text-text-secondary">
+                    {c.name}
+                    <span className="text-text-tertiary"> · {c.credits} SCT</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        {route.unplaceable.length > 0 && (
+          <p className="mt-3 text-sm text-text-secondary">
+            No pude ubicar {route.unplaceable.length}{' '}
+            {route.unplaceable.length === 1 ? 'ramo' : 'ramos'}:{' '}
+            {route.unplaceable.map((c) => c.name).join(', ')}. Puede que dependan de requisitos que
+            aún no tengo o de cupos que se definen más adelante.
+          </p>
+        )}
+        <p className="mt-3 text-xs text-text-secondary">
+          Es una proyección: asume que apruebas todo y que los ramos se siguen dictando en el mismo
+          semestre. Sirve para orientarte, no es oficial.
+        </p>
+      </div>,
+    );
+  };
+
   const answerBuildSchedule = () => {
     push(
       'bot',
@@ -738,7 +853,7 @@ export function Advisor() {
     push(
       'bot',
       <div>
-        <p>Soy tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
+        <p>Soy Export, tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
         <ul className="mt-2 list-inside list-disc text-sm text-text-secondary">
           <li>Recomendarte qué ramos tomar el próximo semestre, sin topes de horario.</li>
           <li>Decirte si puedes tomar un ramo puntual y, si no, qué te falta.</li>
@@ -769,14 +884,12 @@ export function Advisor() {
 
   // ─── Entrada de texto libre (Pistacho IA) ───────────────────────
 
-  const handleText = (raw: string) => {
-    const text = raw.trim();
-    if (!text) return;
-    setDraft('');
-    push('user', <span>{text}</span>);
-
-    const result = understand(text, plan, offering);
-    switch (result.intent) {
+  /** Ejecuta la respuesta de una intención ya resuelta (con sus entidades). */
+  const runIntent = (intent: Intent, ctx: Pick<NluResult, 'course' | 'professor' | 'electiveCategory'>) => {
+    // Actualiza la memoria conversacional con la entidad que se va a responder.
+    if (ctx.course && COURSE_INTENTS.has(intent)) lastCourse.current = ctx.course;
+    if (ctx.professor && intent === 'professor_courses') lastProfessor.current = ctx.professor;
+    switch (intent) {
       case 'recommend':
         answerRecommend();
         break;
@@ -790,31 +903,34 @@ export function Advisor() {
         answerProgress();
         break;
       case 'course_can':
-        if (result.course) answerCourse(result.course);
+        if (ctx.course) answerCourse(ctx.course);
         else answerFallback();
         break;
       case 'course_missing':
-        if (result.course) answerMissing(result.course);
+        if (ctx.course) answerMissing(ctx.course);
         else answerFallback();
         break;
       case 'course_info':
-        if (result.course) answerCourseInfo(result.course);
+        if (ctx.course) answerCourseInfo(ctx.course);
         else answerFallback();
         break;
       case 'offered':
-        if (result.course) answerOffered(result.course);
+        if (ctx.course) answerOffered(ctx.course);
         else answerFallback();
         break;
       case 'course_professor':
-        if (result.course) answerCourseProfessor(result.course);
+        if (ctx.course) answerCourseProfessor(ctx.course);
         else answerFallback();
         break;
       case 'professor_courses':
-        if (result.professor) answerProfessorCourses(result.professor);
+        if (ctx.professor) answerProfessorCourses(ctx.professor);
         else answerFallback();
         break;
       case 'list_electives':
-        answerElectives(result.electiveCategory ?? 'Electivo');
+        answerElectives(ctx.electiveCategory ?? 'Electivo');
+        break;
+      case 'graduation_path':
+        answerGraduationPath();
         break;
       case 'build_schedule':
         answerBuildSchedule();
@@ -829,10 +945,93 @@ export function Advisor() {
         );
         break;
       default:
-        // Último recurso: si nombró un ramo con confianza media, da el veredicto.
-        if (result.course && result.courseScore >= 0.5) answerCourse(result.course);
-        else answerFallback();
+        answerFallback();
     }
+  };
+
+  /** Etiqueta accionable para ofrecer una intención como pregunta aclaratoria. */
+  const clarifyLabel = (intent: Intent, ctx: Pick<NluResult, 'course' | 'professor'>): string | null => {
+    const name = ctx.course?.name;
+    switch (intent) {
+      case 'recommend': return 'Recomiéndame qué tomar';
+      case 'eligible': return 'Qué ramos puedo tomar';
+      case 'priority': return 'Qué me conviene priorizar';
+      case 'progress': return 'Cómo va mi avance';
+      case 'course_can': return name ? `¿Puedo tomar ${name}?` : null;
+      case 'course_missing': return name ? `Qué me falta para ${name}` : null;
+      case 'course_info': return name ? `Info de ${name}` : null;
+      case 'offered': return name ? `Secciones de ${name}` : null;
+      case 'course_professor': return name ? `Profesor de ${name}` : null;
+      case 'professor_courses': return ctx.professor ? `Ramos de ${prettyProfessor(ctx.professor)}` : null;
+      case 'list_electives': return 'Ver mis electivos';
+      case 'graduation_path': return 'Mi ruta a titularme';
+      case 'build_schedule': return 'Ármame el horario';
+      case 'help': return 'Qué puedes hacer';
+      default: return null;
+    }
+  };
+
+  /**
+   * Confianza media del modelo: en vez de adivinar (y responder cualquier
+   * cosa), Export pregunta. Cada opción es un chip que ejecuta la intención.
+   */
+  const answerClarify = (result: NluResult, query: string) => {
+    const options = result.modelGuesses
+      .map((g) => ({ intent: g.intent, label: clarifyLabel(g.intent, result) }))
+      .filter((o): o is { intent: Intent; label: string } => o.label !== null);
+    if (options.length === 0) {
+      answerFallback();
+      return;
+    }
+    push(
+      'bot',
+      <div>
+        <p>No estoy seguro de haber entendido. ¿Te refieres a algo de esto?</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {options.map((o) => (
+            <button
+              key={o.intent}
+              type="button"
+              onClick={() => {
+                // La elección del alumno es una etiqueta implícita frase→intención.
+                pendingMeta.current = { query, intent: o.intent };
+                runIntent(o.intent, result);
+              }}
+              className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>,
+    );
+  };
+
+  const handleText = (raw: string) => {
+    const text = raw.trim();
+    if (!text) return;
+    setDraft('');
+    push('user', <span>{text}</span>);
+
+    const result = understand(text, plan, offering, {
+      course: lastCourse.current,
+      professor: lastProfessor.current,
+    });
+    if (result.intent === 'unknown') {
+      // Último recurso: si nombró un ramo con confianza media, da el veredicto;
+      // si el modelo tiene hipótesis, pregunta en vez de adivinar.
+      if (result.course && result.courseScore >= 0.5) {
+        pendingMeta.current = { query: text, intent: 'course_can' };
+        lastCourse.current = result.course;
+        answerCourse(result.course);
+      } else if (result.modelGuesses.length > 0) answerClarify(result, text);
+      else answerFallback();
+      return;
+    }
+    if (result.intent !== 'greeting') {
+      pendingMeta.current = { query: text, intent: result.intent };
+    }
+    runIntent(result.intent, result);
   };
 
   const quickActions = [
@@ -840,6 +1039,7 @@ export function Advisor() {
     { label: '¿Qué ya puedo tomar?', icon: Check, run: () => handleText('¿Qué puedo tomar?') },
     { label: '¿Cómo voy?', icon: TrendingUp, run: () => handleText('¿Cómo voy?') },
     { label: '¿Qué priorizo?', icon: Lightbulb, run: () => handleText('¿Qué me conviene priorizar?') },
+    { label: 'Ruta a titularme', icon: GraduationCap, run: () => handleText('¿Cuándo me titulo?') },
     { label: 'Ármame el horario', icon: CalendarDays, run: () => handleText('Ármame el horario') },
   ];
 
@@ -856,7 +1056,7 @@ export function Advisor() {
               className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
             />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Asistente</h1>
+              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Export</h1>
               <p className="text-xs text-text-secondary">
                 {stats.completedCourses}/{stats.totalCourses} ramos · {credits} SCT
               </p>
@@ -888,7 +1088,7 @@ export function Advisor() {
           {/* Saludo inicial */}
           <BotBubble>
             <p>
-              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy tu asistente de malla. Escríbeme
+              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy Export, tu asistente de malla. Escríbeme
               lo que necesites: qué ramos tomar, si puedes tomar uno puntual, qué te falta para
               otro, o pídeme armar tu horario para la toma de ramos.
             </p>
@@ -902,7 +1102,37 @@ export function Advisor() {
 
           {messages.map((m) =>
             m.role === 'bot' ? (
-              <BotBubble key={m.id}>{m.node}</BotBubble>
+              <div key={m.id}>
+                <BotBubble>{m.node}</BotBubble>
+                {m.meta && (
+                  <div className="mt-1.5 flex items-center gap-0.5 pl-[38px]">
+                    {rated[m.id] !== undefined ? (
+                      <span className="text-[11px] text-text-tertiary">
+                        Gracias por tu feedback
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => rate(m, true)}
+                          aria-label="Respuesta útil"
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-accent-light hover:text-accent-hover"
+                        >
+                          <ThumbsUp className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => rate(m, false)}
+                          aria-label="Respuesta incorrecta"
+                          className="flex h-7 w-7 items-center justify-center rounded-full text-text-tertiary transition-colors hover:bg-danger/10 hover:text-danger"
+                        >
+                          <ThumbsDown className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div key={m.id} className="flex justify-end">
                 <div className="max-w-[80%] rounded-2xl rounded-br-md bg-accent px-4 py-2.5 text-sm text-white">
