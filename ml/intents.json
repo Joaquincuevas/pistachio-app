@@ -1,6 +1,5 @@
 {
   "_comment": "Dataset de entrenamiento de Export. Cada clave es una intención y su valor son frases de ejemplo (como las escribiría un alumno). CONVENCIÓN DE ENMASCARAMIENTO: escribe 'ramox' donde iría el nombre de un ramo y 'profex' donde iría el nombre/apellido de un profesor — así el modelo aprende la FORMA de la pregunta y no ramos puntuales (en inferencia, nlu.ts reemplaza el ramo/profesor detectado por estos mismos tokens). Para mejorar el modelo: agrega frases variadas y coloquiales aquí y corre npm run train:intent.",
-
   "recommend": [
     "que ramos tomo el proximo semestre",
     "que me recomiendas tomar",
@@ -49,7 +48,6 @@
     "que conviene tomar ahora",
     "elige mis ramos por mi"
   ],
-
   "eligible": [
     "que ramos puedo tomar",
     "que tengo habilitado",
@@ -92,7 +90,6 @@
     "que ramos tengo liberados",
     "todos los ramos que cumplo para inscribir"
   ],
-
   "priority": [
     "que me conviene priorizar",
     "que ramo es mas importante",
@@ -127,7 +124,6 @@
     "cual es el proximo ramo clave",
     "que deberia sacar primero"
   ],
-
   "progress": [
     "como voy",
     "cuanto me falta",
@@ -144,7 +140,6 @@
     "estoy atrasado",
     "cuantos ramos he aprobado",
     "cuanto me falta para egresar",
-    "cuando me titulo",
     "como va mi avance en la malla",
     "que tan avanzado estoy",
     "cuantos sct llevo aprobados",
@@ -155,7 +150,6 @@
     "resumen de mi avance",
     "como esta mi malla",
     "cuanto he avanzado",
-    "cuantos semestres me quedan",
     "cuanto me falta para la practica",
     "voy al dia con la carrera",
     "estoy muy atrasado con los ramos",
@@ -171,7 +165,6 @@
     "hazme un resumen de como voy",
     "en que semestre voy de la carrera"
   ],
-
   "course_can": [
     "puedo tomar ramox",
     "me deja tomar ramox",
@@ -208,7 +201,6 @@
     "cacho que quiero tomar ramox se puede",
     "dime si puedo tomar ramox"
   ],
-
   "course_missing": [
     "que me falta para ramox",
     "que necesito para ramox",
@@ -247,7 +239,6 @@
     "que me queda pendiente para tomar ramox",
     "que debo terminar para poder tomar ramox"
   ],
-
   "course_info": [
     "cuantos creditos tiene ramox",
     "cuantos sct tiene ramox",
@@ -289,7 +280,6 @@
     "que informacion tienes de ramox",
     "cuantas horas a la semana es ramox"
   ],
-
   "offered": [
     "se dicta ramox el proximo semestre",
     "que secciones tiene ramox",
@@ -334,7 +324,6 @@
     "en que bloque cae ramox",
     "cual seccion de ramox me sirve"
   ],
-
   "course_professor": [
     "quien es el profesor de ramox",
     "quien dicta ramox",
@@ -363,7 +352,6 @@
     "quien ensena ramox este año",
     "conoces al profesor de ramox"
   ],
-
   "professor_courses": [
     "que ramos da el profesor profex",
     "que dicta el profe profex",
@@ -392,7 +380,6 @@
     "en que cursos hace clases profex",
     "que materias da el profesor profex"
   ],
-
   "list_electives": [
     "que electivos hay",
     "que optativos hay",
@@ -423,7 +410,28 @@
     "que electivos de especialidad me quedan",
     "hay electivos en mi malla"
   ],
-
+  "graduation_path": [
+    "cuando me titulo",
+    "cuantos semestres me quedan",
+    "planificame la carrera",
+    "ruta para titularme",
+    "hazme el plan hasta titularme",
+    "en cuantos semestres termino",
+    "muestrame todos los semestres que me faltan",
+    "proyeccion de mi carrera",
+    "cuando termino la carrera",
+    "plan de titulacion",
+    "que me queda semestre a semestre",
+    "arma mi carrera completa",
+    "cuando egreso",
+    "cuantos semestres me faltan para salir",
+    "hazme una proyeccion hasta el final",
+    "planifica todos mis semestres",
+    "en cuanto tiempo me titulo",
+    "muestrame la ruta hasta el titulo",
+    "como seria mi carrera de aqui al final",
+    "distribuyeme los ramos que me faltan por semestre"
+  ],
   "build_schedule": [
     "armame el horario",
     "planifica mi horario",
@@ -448,7 +456,6 @@
     "quiero planificar mi semana de clases",
     "montame el horario"
   ],
-
   "help": [
     "que puedes hacer",
     "en que me puedes ayudar",
@@ -482,7 +489,6 @@
     "dime que sabes hacer",
     "que opciones me das"
   ],
-
   "greeting": [
     "hola",
     "buenas",

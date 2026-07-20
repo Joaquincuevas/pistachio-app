@@ -21,6 +21,7 @@ export type Intent =
   | 'course_professor'  // "¿quién es el profesor de X?"
   | 'professor_courses' // "¿qué ramos da el profesor Y?"
   | 'list_electives'    // "¿qué electivos hay?" / "¿qué minors hay?"
+  | 'graduation_path'   // "¿cuándo me titulo?" / "planifícame la carrera"
   | 'build_schedule'    // "ármame el horario"
   | 'help'              // "¿qué puedes hacer?"
   | 'greeting'
@@ -169,6 +170,18 @@ const RULES: IntentRule[] = [
     patterns: [
       /electivos?/, /optativos?/, /\bminors?\b/, /formacion general/, /\bofg\b/,
       /concentracion(es)? tecnologic/, /que menciones/,
+    ],
+  },
+  {
+    // Va antes que "progress": "cuántos semestres me quedan" se responde mucho
+    // mejor con la proyección completa que con el porcentaje de avance.
+    intent: 'graduation_path',
+    patterns: [
+      /ruta (a|para) (titular|el titulo)/, /plan (de|para) (titulacion|titularme|la carrera)/,
+      /planifica(me)? (toda )?(la|mi) carrera/, /cuando me titulo/, /cuando (egreso|salgo de la carrera)/,
+      /cuantos semestres me (quedan|faltan)/, /semestre a semestre/, /hasta titularme/,
+      /proyecc?ion de (mi )?carrera/, /todos los semestres/, /en cuantos semestres/,
+      /cuando termino la carrera/, /me queda(n)? .* semestres/,
     ],
   },
   {

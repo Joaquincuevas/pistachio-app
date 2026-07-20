@@ -62,6 +62,7 @@ modelo solo rellena los huecos que las reglas no cubren.
 | `course_professor`  | "¿Quién es el profesor de Hidráulica?"             |
 | `professor_courses` | "¿Qué ramos da el profesor Ballesteros?"           |
 | `list_electives`    | "¿Qué electivos / minors / OFG hay?"               |
+| `graduation_path`   | "¿Cuándo me titulo?" / "¿Cuántos semestres me quedan?" |
 | `build_schedule`    | "Ármame el horario"                                |
 | `help`              | "¿Qué puedes hacer?"                               |
 | `greeting`          | "Hola"                                             |
@@ -121,6 +122,7 @@ modelo es "nuestro" —lo entrenamos con nuestros datos— y es chico, rápido y
 | 1   | 134      | 623      | ~75 % (split único de 20 ej., poco confiable) |
 | 2   | 412      | 1426     | 82.0 % ± 2.7 % + enmascaramiento de entidades |
 | 3   | 477      | 2411     | **88.9 % ± 3.4 %** + trigramas de caracteres (typos) |
+| 5   | 495 (15 intenciones) | 2498 | 86.9 % ± 3.1 % — baja esperable: entra `graduation_path`, vecina de `progress` |
 
 Confusiones típicas hoy: `recommend ↔ eligible`, `offered → course_info`,
 `priority → recommend` — intenciones semánticamente vecinas; se mejoran con
@@ -197,7 +199,8 @@ correspondiente, que se apoya en dos motores determinísticos:
   `analyzePlan` calcula, para cada ramo, si es elegible (pendiente + se dicta +
   créditos suficientes + prerrequisitos cumplidos, incluyendo concurrentes),
   cuántos ramos desbloquea, y arma una carga recomendada priorizando la ruta
-  crítica.
+  crítica. `planToGraduation` simula la malla hacia adelante semestre a semestre
+  hasta titularse (ver abajo).
 - **Horario oficial** ([`src/lib/schedule.ts`](../src/lib/schedule.ts)): el
   Excel que la Facultad publica en Canvas, parseado en el navegador (SheetJS).
   De ahí salen secciones, NRC, horarios, profesores y la detección de topes
@@ -205,6 +208,20 @@ correspondiente, que se apoya en dos motores determinísticos:
 
 Así, "¿qué tomo?" con el horario cargado devuelve una carga real **con NRC y
 horario sin topes**, y "¿quién da X?" lee el profesor directamente del Excel.
+
+### Ruta a titularte
+
+`planToGraduation(plan, progress, startTerm)` proyecta **todos** los semestres
+que faltan. Simula la malla hacia adelante: en cada semestre toma los ramos
+elegibles priorizando los que más desbloquean (hasta 30 SCT / 6 ramos), los
+marca como aprobados y avanza alternando 1.º/2.º semestre. Como reutiliza
+`analyzePlan`, la proyección **nunca viola un prerrequisito ni un mínimo de
+créditos**: Hidráulica siempre cae después de Fluid Mechanics, y las prácticas
+después de sus topes de SCT. Los ramos "en curso" cuentan como aprobados.
+
+Si un semestre no tiene nada elegible, prueba el otro antes de rendirse (hay
+ramos que solo se dictan en semestres impares o pares). Lo que no logra ubicar
+se reporta aparte en vez de omitirse en silencio.
 
 ---
 
@@ -232,8 +249,7 @@ horario sin topes**, y "¿quién da X?" lee el profesor directamente del Excel.
 8. ~~Memoria de conversación~~ ✅ Día 4: recuerda el último ramo/profesor.
 
 **Funciones nuevas**
-- 🎓 Ruta a titularte: planificador multi-semestre completo (ruta crítica del
-  grafo de prerrequisitos).
+- ~~🎓 Ruta a titularte~~ ✅ Día 5: `planToGraduation` + intención `graduation_path`.
 - 🔀 "¿Qué pasa si repruebo X?" — replanificación.
 - ⚖️ Comparador de menciones.
 - 📅 Analítica del horario ("días libres", horario más liviano, 3 opciones).

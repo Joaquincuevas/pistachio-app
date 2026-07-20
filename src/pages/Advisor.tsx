@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUp, CalendarDays, Check, Copy, Lightbulb, Sparkles, ThumbsDown, ThumbsUp, TrendingUp } from 'lucide-react';
+import { ArrowUp, CalendarDays, Check, Copy, GraduationCap, Lightbulb, Sparkles, ThumbsDown, ThumbsUp, TrendingUp } from 'lucide-react';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useActivePlan } from '@/hooks/useActivePlan';
@@ -15,6 +15,7 @@ import {
   completedCredits,
   defaultTerm,
   eligibleCourses,
+  planToGraduation,
   recommendSemester,
   topPriority,
   type CourseAdvice,
@@ -762,6 +763,72 @@ export function Advisor() {
     );
   };
 
+  const answerGraduationPath = () => {
+    const route = planToGraduation(plan, statuses, term);
+    if (route.remainingCourses === 0) {
+      push('bot', <p>¡Ya tienes toda tu malla cursada! No te queda nada por delante. 🎓</p>);
+      return;
+    }
+    if (route.semesters.length === 0) {
+      push(
+        'bot',
+        <p>
+          No pude proyectar tu ruta: no encuentro ramos que puedas tomar todavía. Pregúntame por un
+          ramo puntual para ver qué te falta.
+        </p>,
+      );
+      return;
+    }
+    const años = Math.ceil(route.totalSemesters / 2);
+    push(
+      'bot',
+      <div>
+        <p>
+          Te quedan <span className="font-medium text-text-primary">{route.remainingCourses} ramos</span>. Proyectando
+          una carga de hasta 30 SCT por semestre, te titulas en{' '}
+          <span className="font-medium text-text-primary">
+            {route.totalSemesters} {route.totalSemesters === 1 ? 'semestre' : 'semestres'}
+          </span>{' '}
+          (~{años} {años === 1 ? 'año' : 'años'}):
+        </p>
+        <div className="mt-3 flex flex-col gap-2">
+          {route.semesters.map((s) => (
+            <div key={s.index} className="rounded-btn border border-border bg-white px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-medium text-text-primary">
+                  Semestre {s.index} · {ordinal(s.term)} sem
+                </p>
+                <span className="shrink-0 rounded-full bg-accent-light px-2.5 py-1 text-[11px] font-medium text-accent-hover">
+                  {s.totalSct} SCT
+                </span>
+              </div>
+              <ul className="mt-1.5 flex flex-col gap-0.5">
+                {s.courses.map((c) => (
+                  <li key={c.id} className="text-xs text-text-secondary">
+                    {c.name}
+                    <span className="text-text-tertiary"> · {c.credits} SCT</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        {route.unplaceable.length > 0 && (
+          <p className="mt-3 text-sm text-text-secondary">
+            No pude ubicar {route.unplaceable.length}{' '}
+            {route.unplaceable.length === 1 ? 'ramo' : 'ramos'}:{' '}
+            {route.unplaceable.map((c) => c.name).join(', ')}. Puede que dependan de requisitos que
+            aún no tengo o de cupos que se definen más adelante.
+          </p>
+        )}
+        <p className="mt-3 text-xs text-text-secondary">
+          Es una proyección: asume que apruebas todo y que los ramos se siguen dictando en el mismo
+          semestre. Sirve para orientarte, no es oficial.
+        </p>
+      </div>,
+    );
+  };
+
   const answerBuildSchedule = () => {
     push(
       'bot',
@@ -862,6 +929,9 @@ export function Advisor() {
       case 'list_electives':
         answerElectives(ctx.electiveCategory ?? 'Electivo');
         break;
+      case 'graduation_path':
+        answerGraduationPath();
+        break;
       case 'build_schedule':
         answerBuildSchedule();
         break;
@@ -894,6 +964,7 @@ export function Advisor() {
       case 'course_professor': return name ? `Profesor de ${name}` : null;
       case 'professor_courses': return ctx.professor ? `Ramos de ${prettyProfessor(ctx.professor)}` : null;
       case 'list_electives': return 'Ver mis electivos';
+      case 'graduation_path': return 'Mi ruta a titularme';
       case 'build_schedule': return 'Ármame el horario';
       case 'help': return 'Qué puedes hacer';
       default: return null;
@@ -968,6 +1039,7 @@ export function Advisor() {
     { label: '¿Qué ya puedo tomar?', icon: Check, run: () => handleText('¿Qué puedo tomar?') },
     { label: '¿Cómo voy?', icon: TrendingUp, run: () => handleText('¿Cómo voy?') },
     { label: '¿Qué priorizo?', icon: Lightbulb, run: () => handleText('¿Qué me conviene priorizar?') },
+    { label: 'Ruta a titularme', icon: GraduationCap, run: () => handleText('¿Cuándo me titulo?') },
     { label: 'Ármame el horario', icon: CalendarDays, run: () => handleText('Ármame el horario') },
   ];
 

@@ -162,6 +162,93 @@ export function collectMissing(
   return [...missing.values()].sort((a, b) => a.semester - b.semester || a.id.localeCompare(b.id));
 }
 
+// ─── Ruta a titularte (planificación multi-semestre) ─────────────
+
+export interface PlannedSemester {
+  /** 1 = el próximo semestre, 2 = el siguiente… */
+  index: number;
+  term: Term;
+  courses: Course[];
+  totalSct: number;
+}
+
+export interface GraduationPlan {
+  semesters: PlannedSemester[];
+  /** Total de semestres que faltan para titularse. */
+  totalSemesters: number;
+  /** Ramos que no se lograron ubicar (datos incompletos o requisitos imposibles). */
+  unplaceable: Course[];
+  /** Ramos pendientes al empezar la proyección. */
+  remainingCourses: number;
+}
+
+/**
+ * Proyecta TODOS los semestres que faltan hasta titularse.
+ *
+ * Simula la malla hacia adelante: en cada semestre toma los ramos elegibles
+ * (prerrequisitos cumplidos, créditos suficientes y que se dicten ese semestre)
+ * priorizando los que más desbloquean, los marca como cursados y avanza al
+ * semestre siguiente alternando 1.º/2.º. Es la misma lógica de elegibilidad que
+ * usa el resto del asistente, así que la proyección nunca viola un requisito.
+ *
+ * Los ramos "en curso" se cuentan como aprobados: terminan este semestre.
+ */
+export function planToGraduation(
+  plan: Plan,
+  progress: Record<string, CourseStatus>,
+  startTerm: Term,
+  maxSct = 30,
+  maxCourses = 6,
+  maxSemesters = 20,
+): GraduationPlan {
+  // Estado simulado: lo cursado y lo que está por terminar cuentan como listo.
+  const sim: Record<string, CourseStatus> = {};
+  for (const c of plan.courses) {
+    const st = progress[c.id];
+    if (st === 'completed' || st === 'in-progress') sim[c.id] = 'completed';
+  }
+
+  const pendingAtStart = plan.courses.filter((c) => sim[c.id] !== 'completed');
+  const semesters: PlannedSemester[] = [];
+  let term = startTerm;
+
+  for (let index = 1; index <= maxSemesters; index++) {
+    if (plan.courses.every((c) => sim[c.id] === 'completed')) break;
+
+    const picks: Course[] = [];
+    let totalSct = 0;
+    for (const a of eligibleCourses(analyzePlan(plan, sim, term))) {
+      if (picks.length >= maxCourses) break;
+      if (totalSct + a.course.credits > maxSct) continue;
+      picks.push(a.course);
+      totalSct += a.course.credits;
+    }
+
+    // Sin ramos elegibles: o ya terminó, o lo que queda no se puede ubicar.
+    if (picks.length === 0) {
+      // Puede que este semestre no se dicte nada elegible pero el siguiente sí:
+      // probamos el otro semestre antes de rendirnos.
+      const other = term === 1 ? 2 : 1;
+      const otherPicks = eligibleCourses(analyzePlan(plan, sim, other));
+      if (otherPicks.length === 0) break;
+      term = other;
+      index--;
+      continue;
+    }
+
+    for (const c of picks) sim[c.id] = 'completed';
+    semesters.push({ index: semesters.length + 1, term, courses: picks, totalSct });
+    term = term === 1 ? 2 : 1;
+  }
+
+  return {
+    semesters,
+    totalSemesters: semesters.length,
+    unplaceable: plan.courses.filter((c) => sim[c.id] !== 'completed'),
+    remainingCourses: pendingAtStart.length,
+  };
+}
+
 /** Semestre académico por defecto según la fecha (2.º sem ~ jun-nov en Chile). */
 export function defaultTerm(date = new Date()): Term {
   const m = date.getMonth();
