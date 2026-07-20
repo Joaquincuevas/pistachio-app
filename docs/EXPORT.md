@@ -123,6 +123,7 @@ modelo es "nuestro" —lo entrenamos con nuestros datos— y es chico, rápido y
 | 2   | 412      | 1426     | 82.0 % ± 2.7 % + enmascaramiento de entidades |
 | 3   | 477      | 2411     | **88.9 % ± 3.4 %** + trigramas de caracteres (typos) |
 | 5   | 495 (15 intenciones) | 2498 | 86.9 % ± 3.1 % — baja esperable: entra `graduation_path`, vecina de `progress` |
+| 6   | 497 (15 intenciones) | 2503 | **88.1 % ± 1.8 %** — ciclo de feedback cerrado |
 
 Confusiones típicas hoy: `recommend ↔ eligible`, `offered → course_info`,
 `priority → recommend` — intenciones semánticamente vecinas; se mejoran con
@@ -159,15 +160,33 @@ detectó ningún ramo). Elegir un chip ejecuta la intención al tiro.
 Cada respuesta lleva pulgares. Al calificar se guarda
 `{ts, query, intent, helpful}` en `localStorage` bajo la clave
 `pistachio:export-feedback` (tope 300 registros, solo en el dispositivo del
-alumno — nada viaja al servidor). Para cosecharlo y crecer el dataset:
+alumno — nada viaja al servidor).
 
-```js
-// En la consola del navegador (DevTools):
-copy(localStorage.getItem('pistachio:export-feedback'))
+**El ciclo completo:**
+
+1. El alumno valora respuestas con 👍/👎 mientras usa Export.
+2. En **Perfil → "Ayuda a mejorar a Export"** descarga su feedback como JSON
+   (la tarjeta solo aparece si hay valoraciones).
+3. Ese archivo se ingiere al dataset:
+
+```bash
+npm run feedback:ingest -- ~/Downloads/export-feedback-2026-07-17.json
+npm run train:intent
 ```
 
-Los `helpful: false` son frases mal entendidas → agrégalas a `ml/intents.json`
-con su intención correcta y reentrena.
+El script ([`ml/feedback-to-dataset.ts`](../ml/feedback-to-dataset.ts)):
+
+- **👍** → la intención era correcta, así que la frase es una etiqueta
+  confiable: la enmascara (nombres de ramo → `ramox`, usando el catálogo real)
+  y la agrega al dataset, evitando duplicados.
+- **👎** → la intención fue *incorrecta* y no sabemos cuál era la buena, así que
+  **no se agrega sola**: se lista para que la etiquetes a mano. Estas son las
+  más valiosas.
+
+Para enmascarar sin destruir la frase, solo considera palabras distintivas:
+descarta las que aparecen en 5+ ramos distintos (genéricas como "proyecto" o
+"ingeniería") y una lista de palabras gramaticales que igual salen en algún
+nombre de ramo ("Bases **para** el Estudio…").
 
 ---
 
@@ -245,7 +264,9 @@ se reporta aparte en vez de omitirse en silencio.
 4. ~~Feedback 👍/👎 por respuesta~~ ✅ Día 3: se guarda en localStorage para reentrenar.
 5. ~~Pregunta aclaratoria cuando la confianza es baja~~ ✅ Día 3: chips accionables.
 6. ~~Trigramas de caracteres~~ ✅ Día 3: CV 83.4 % → 88.9 %.
-7. Reentrenar con el feedback recolectado (cerrar el ciclo con datos reales).
+7. ~~Cerrar el ciclo con el feedback recolectado~~ ✅ Día 6: exportación desde
+   Perfil + `npm run feedback:ingest`. Falta lo que no depende del código:
+   **usarlo con alumnos reales** y reentrenar con lo que llegue.
 8. ~~Memoria de conversación~~ ✅ Día 4: recuerda el último ramo/profesor.
 
 **Funciones nuevas**

@@ -12,6 +12,7 @@
     "vercel-build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
     "train:intent": "tsx ml/train-intent.ts",
+    "feedback:ingest": "tsx ml/feedback-to-dataset.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit && tsc -p tsconfig.server.json"
   },
