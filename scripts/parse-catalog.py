@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-Convierte el Catálogo PE 2022 (xlsx) de la Facultad de Ingeniería UANDES
-en server/data/catalog.json, la fuente de verdad que siembra la base de datos.
+Convierte los catálogos (xlsx) de la Facultad de Ingeniería UANDES en
+server/data/catalog.json, la fuente de verdad que siembra la base de datos.
 
 Uso:
+    # Genera el catálogo desde cero con los planes PE 2022
     python3 scripts/parse-catalog.py "/ruta/Catálogo PE 2022 Versión 2023.xlsx"
+
+    # Agrega (o reemplaza) los planes PE 2025 sobre el catalog.json existente
+    python3 scripts/parse-catalog.py \
+        "/ruta/Catálogo PE 2022 y PE 2025 Versión 2025-3.xlsx" --plan pe2025
 
 Fuentes:
 - Hoja "Cursos": metadata de cada ramo (código, horas, SCT, requisitos en texto,
@@ -24,8 +29,23 @@ from pathlib import Path
 
 import pandas as pd
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else "/Users/joaquincuevasmunoz/Downloads/Catálogo PE 2022 Versión 2023.xlsx"
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+SRC = ARGS[0] if ARGS else "/Users/joaquincuevasmunoz/Downloads/Catálogo PE 2022 Versión 2023.xlsx"
 OUT = Path(__file__).resolve().parent.parent / "server" / "data" / "catalog.json"
+
+# Versiones del plan de estudios. "merge": se agrega al catalog.json existente
+# en vez de regenerarlo (el xlsx 2025-3 ya no trae la malla PE 2022 original).
+PLAN_VERSIONS = {
+    "pe2022": {"name": "Plan de Estudios 2022 (rev. 2023)", "icc_ajuste": True, "merge": False},
+    # La malla ICC del catálogo 2025-3 ya incorpora el ajuste 2025 con códigos Banner.
+    "pe2025": {"name": "Plan de Estudios 2025", "icc_ajuste": False, "merge": True},
+}
+PLAN_KEY = sys.argv[sys.argv.index("--plan") + 1] if "--plan" in sys.argv else "pe2022"
+
+# Erratas de la hoja "Cursos" (título tal como viene → título corregido).
+NAME_FIXES = {
+    "Inteligencia Artificicial Aplicada": "Inteligencia Artificial Aplicada",
+}
 
 SPECIALTIES = [
     {"id": "ici", "sheet": "ICI Malla", "tit": "ICI Tit", "name": "Industrial",
@@ -75,8 +95,8 @@ def parse_cursos(xl) -> dict:
             return int(r[col]) if pd.notna(r[col]) else 0
         cursos[norm(r["TITULO"])] = {
             "id": str(r["CODIGO"]).strip(),
-            "name": str(r["TITULO"]).strip(),
-            "credits": int(r["SCT"]) if pd.notna(r["SCT"]) else 0,
+            "name": NAME_FIXES.get(str(r["TITULO"]).strip(), str(r["TITULO"]).strip()),
+            "credits": sct_value(r["SCT"]),
             "hours": {
                 "clases": h("H_CLASES"), "ayudantias": h("H_AYUD"), "laboratorio": h("H_LAB"),
                 "trabajos": h("H_TRAB"), "presentaciones": h("H_PRES"), "lecturas": h("H_LECT"),
@@ -87,6 +107,14 @@ def parse_cursos(xl) -> dict:
             "offered": [s for s, col in [(1, "SEM10"), (2, "SEM20")] if pd.notna(r[col])],
         }
     return cursos
+
+
+def sct_value(v) -> int:
+    """SCT de la hoja Cursos; 0 si la celda está vacía o rota (#REF!)."""
+    try:
+        return int(float(v)) if pd.notna(v) else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 def match_curso(cursos: dict, name: str):
@@ -273,6 +301,9 @@ def build_plan(plan_id: str, plan_name: str, entries: list, cursos: dict, warnin
                 warnings.append(f"[{plan_id}] sin match en catálogo: '{e['name']}'")
                 continue
             course = {**meta, "isSlot": False, "slotCategory": None}
+            # Si la hoja Cursos no trae SCT válido (#REF!), vale el de la malla.
+            if not course["credits"] and e["credits"]:
+                course["credits"] = e["credits"]
         by_num[e["num"]] = {"entry": e, "course": course}
         courses.append({"entry": e, "course": course})
 
@@ -381,15 +412,15 @@ def parse_tit(xl, sheet: str, cursos: dict):
 
 
 def build_mencion_plans(spec_id: str, base_entries: list, tit_menciones: list,
-                        cursos: dict, warnings: list):
+                        cursos: dict, warnings: list, plan_key: str = "pe2022"):
     """Construye un plan completo por mención (semestres 1-8 base + años 5-6 mención)."""
     base_1_8 = [e for e in base_entries if e["num"] < 48]
     plans = []
     for men in tit_menciones:
         combined = base_1_8 + men["entries"]
         plan = build_plan(
-            f"{spec_id}-pe2022-{men['id']}", f"Mención {men['name']}",
-            combined, cursos, warnings, mention_of=f"{spec_id}-pe2022",
+            f"{spec_id}-{plan_key}-{men['id']}", f"Mención {men['name']}",
+            combined, cursos, warnings, mention_of=f"{spec_id}-{plan_key}",
         )
         plans.append(plan)
     return plans
@@ -448,24 +479,38 @@ def build_icc_ajuste(base_plan: dict, cursos: dict) -> dict:
 
 
 def main():
+    version = PLAN_VERSIONS[PLAN_KEY]
     xl = pd.ExcelFile(SRC)
     cursos = parse_cursos(xl)
     warnings: list = []
-    out = {"source": Path(SRC).name, "specialties": []}
+
+    existing = {}
+    if version["merge"]:
+        # Conserva los planes ya publicados y reemplaza sólo los de esta versión.
+        prev = json.loads(OUT.read_text(encoding="utf-8"))
+        existing = {s["id"]: s for s in prev["specialties"]}
+        sources = [x for x in prev["source"].split(" + ") if x != Path(SRC).name]
+        out = {"source": " + ".join(sources + [Path(SRC).name]), "specialties": []}
+    else:
+        out = {"source": Path(SRC).name, "specialties": []}
 
     for spec in SPECIALTIES:
+        base_id = f"{spec['id']}-{PLAN_KEY}"
         entries = parse_malla(xl, spec["sheet"], cursos)
-        plan = build_plan(f"{spec['id']}-pe2022", "Plan de Estudios 2022 (rev. 2023)", entries, cursos, warnings)
+        plan = build_plan(base_id, version["name"], entries, cursos, warnings)
         plans = [plan]
-        if spec["id"] == "icc":
+        if spec["id"] == "icc" and version["icc_ajuste"]:
             plans.append(build_icc_ajuste(plan, cursos))
         # Menciones: planes completos que resuelven los cupos "Mención" de los años 5-6.
         if spec.get("tit"):
             tit_menciones = parse_tit(xl, spec["tit"], cursos)
-            plans.extend(build_mencion_plans(spec["id"], entries, tit_menciones, cursos, warnings))
+            plans.extend(build_mencion_plans(spec["id"], entries, tit_menciones, cursos,
+                                             warnings, PLAN_KEY))
+        kept = [p for p in existing.get(spec["id"], {}).get("plans", [])
+                if p["id"] != base_id and p.get("mentionOf") != base_id]
         out["specialties"].append({
             "id": spec["id"], "name": spec["name"], "fullName": spec["fullName"],
-            "icon": spec["icon"], "tagline": spec["tagline"], "plans": plans,
+            "icon": spec["icon"], "tagline": spec["tagline"], "plans": kept + plans,
         })
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

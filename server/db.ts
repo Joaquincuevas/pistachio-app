@@ -222,18 +222,18 @@ async function seedCatalog(): Promise<void> {
     spec.plans.forEach((plan, pi) => {
       planRows.push([plan.id, spec.id, plan.name, pi, plan.mentionOf ?? null]);
       for (const course of plan.courses) {
-        if (!courseById.has(course.id)) {
-          courseById.set(course.id, [
-            course.id,
-            course.name,
-            course.isSlot ? 1 : 0,
-            course.slotCategory,
-            course.hours ? JSON.stringify(course.hours) : null,
-            course.reqText,
-            course.skills,
-            JSON.stringify(course.offered),
-          ]);
-        }
+        // Un ramo compartido entre planes usa la ficha del plan más reciente
+        // (los planes vienen ordenados de más antiguo a más nuevo).
+        courseById.set(course.id, [
+          course.id,
+          course.name,
+          course.isSlot ? 1 : 0,
+          course.slotCategory,
+          course.hours ? JSON.stringify(course.hours) : null,
+          course.reqText,
+          course.skills,
+          JSON.stringify(course.offered),
+        ]);
         planCourseRows.push([plan.id, course.id, course.semester, course.credits, course.creditReq]);
         for (const prereq of course.prerequisites) {
           const key = `${plan.id}:${course.id}:${prereq.id}`;

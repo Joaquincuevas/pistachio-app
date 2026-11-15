@@ -19,7 +19,7 @@ const features = [
     icon: Network,
     title: 'Malla interactiva',
     description:
-      'Explora el Plan de Estudios 2022 completo como grid por semestre o como grafo de dependencias con zoom y pan.',
+      'Explora tu Plan de Estudios (2022 o 2025) completo como grid por semestre o como grafo de dependencias con zoom y pan.',
   },
   {
     icon: GitBranch,
@@ -163,7 +163,7 @@ export function Landing() {
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary">
             Plan común de 4 semestres y luego tu especialidad: 60 ramos y 11 semestres según el
-            Plan de Estudios 2022.
+            Plan de Estudios 2022 o 2025.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-2.5">
             {specialties.length === 0

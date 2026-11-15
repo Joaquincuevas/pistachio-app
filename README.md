@@ -2,7 +2,7 @@
 
 **Tu malla curricular, al alcance.**
 
-Plataforma para estudiantes de Ingeniería de la Universidad de los Andes (Chile): crea tu cuenta con correo institucional, elige tu especialidad y explora tu **Plan de Estudios 2022 oficial** de forma interactiva — como grid por semestre o como grafo de dependencias. Tu progreso se guarda en tu cuenta (base de datos real), no solo en el navegador.
+Plataforma para estudiantes de Ingeniería de la Universidad de los Andes (Chile): crea tu cuenta con correo institucional, elige tu especialidad y explora tu **Plan de Estudios oficial (2022 o 2025)** de forma interactiva — como grid por semestre o como grafo de dependencias. Tu progreso se guarda en tu cuenta (base de datos real), no solo en el navegador.
 
 ## Instalación
 
@@ -29,7 +29,8 @@ El catálogo se genera desde las planillas oficiales de la Facultad:
 
 - **`scripts/parse-catalog.py`** lee `Catálogo PE 2022 Versión 2023.xlsx` (hojas `Cursos` y `<ESP> Malla`) y produce `server/data/catalog.json`.
 - Las 5 especialidades reales: **Industrial (ICI), Obras Civiles (IOC), Eléctrica (ICE), Computación (ICC) y Química (ICA)** — 60 ramos y ~330 SCT en 11 semestres cada una, incluyendo slots de Teología, Minor, Optativos, Concentración Tecnológica y Electivos.
-- Computación tiene **dos versiones de plan**: PE 2022 (rev. 2023) y **PE 2022 · Ajuste 2025** (según la presentación de la Facultad de oct. 2024: entran Fundamentos de Ciberseguridad e Inteligencia Artificial Aplicada; salen Autómatas y Computabilidad y Diseño de Software Verificable; se adelantan BD, Web Technologies, AI, Almacenamiento y Sistemas Embebidos).
+- Cada especialidad tiene además el **Plan de Estudios 2025**, generado con `--plan pe2025` desde `Catálogo PE 2022 y PE 2025 Versión 2025-3.xlsx` (se agrega al `catalog.json` existente, con sus menciones en ICI e IOC).
+- Computación tiene además **dos versiones del PE 2022**: PE 2022 (rev. 2023) y **PE 2022 · Ajuste 2025** (según la presentación de la Facultad de oct. 2024: entran Fundamentos de Ciberseguridad e Inteligencia Artificial Aplicada; salen Autómatas y Computabilidad y Diseño de Software Verificable; se adelantan BD, Web Technologies, AI, Almacenamiento y Sistemas Embebidos).
 - Los códigos `ICC-FCS` e `ICC-IAA` son provisorios: la presentación aún no publica códigos Banner.
 
 ## Backend y seguridad

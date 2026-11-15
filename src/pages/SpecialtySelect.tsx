@@ -33,7 +33,7 @@ export function SpecialtySelect() {
   const [saving, setSaving] = useState(false);
 
   const specialty = specialties.find((s) => s.id === selected);
-  // Planes base = versiones del plan de estudios (ICC tiene 2); las menciones cuelgan de uno.
+  // Planes base = versiones del plan de estudios (2022, 2025…); las menciones cuelgan de uno.
   const basePlans = specialty?.plans.filter((p) => !p.mentionOf) ?? [];
   const effectiveBasePlanId =
     basePlans.length === 1
@@ -79,7 +79,7 @@ export function SpecialtySelect() {
           Elige tu especialidad
         </h1>
         <p className="mt-2 max-w-md text-sm text-text-secondary">
-          Cargaremos tu malla completa del Plan de Estudios 2022. Podrás cambiarla después desde
+          Cargaremos tu malla completa del Plan de Estudios 2022 o 2025. Podrás cambiarla después desde
           tu perfil sin perder tu progreso.
         </p>
 
@@ -124,11 +124,15 @@ export function SpecialtySelect() {
                     <span className="mt-2 block text-xs text-text-secondary">
                       {spec.plans[0]?.courses.length ?? 0} ramos
                       {(() => {
-                        const men = spec.plans.filter((p) => p.mentionOf).length;
-                        const versions = spec.plans.filter((p) => !p.mentionOf).length;
-                        if (men > 0) return ` · ${men} menciones`;
-                        if (versions > 1) return ` · ${versions} versiones`;
-                        return '';
+                        // Las menciones se repiten por versión del plan: se cuentan
+                        // las de la versión más reciente.
+                        const bases = spec.plans.filter((p) => !p.mentionOf);
+                        const latestId = bases[bases.length - 1]?.id;
+                        const men = spec.plans.filter((p) => p.mentionOf === latestId).length;
+                        return (
+                          (men > 0 ? ` · ${men} menciones` : '') +
+                          (bases.length > 1 ? ` · ${bases.length} versiones` : '')
+                        );
                       })()}
                     </span>
                   </span>
