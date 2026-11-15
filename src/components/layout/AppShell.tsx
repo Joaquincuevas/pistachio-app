@@ -4,6 +4,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { CourseDetail } from '@/components/malla/CourseDetail';
 import { StatusMenu } from '@/components/malla/StatusMenu';
+import { WelcomeGuide } from '@/components/malla/WelcomeGuide';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 
 /**
@@ -32,6 +33,7 @@ export function AppShell() {
       {/* Overlays compartidos entre Malla y Búsqueda */}
       <CourseDetail />
       <StatusMenu />
+      <WelcomeGuide />
     </div>
   );
 }
