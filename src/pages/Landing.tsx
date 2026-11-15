@@ -83,7 +83,7 @@ export function Landing() {
             <h1 className="font-display text-[clamp(2.375rem,11.5vw,2.875rem)] font-semibold leading-[1.04] tracking-tighter text-text-primary md:text-[72px]">
               Tu malla curricular,
               <br />
-              <span className="text-accent">al alcance.</span>
+              <span className="font-extrabold text-accent">al alcance.</span>
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed md:mt-6 text-text-secondary md:mx-0 md:text-xl">
               Planifica tu 2027 antes de la toma de ramos: revisa tu malla, tus
