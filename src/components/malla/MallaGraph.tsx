@@ -13,7 +13,7 @@ import {
   type NodeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { GitBranch, Info } from 'lucide-react';
+import { Check, Clock3, GitBranch, Info } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { StatusBadge } from '@/components/ui/Badge';
 import {
@@ -44,33 +44,66 @@ const NODE_WIDTH = 208;
 const EMPTY_PROGRESS: Record<string, never> = {};
 
 const highlightClasses: Record<Highlight, string> = {
-  none: 'border-border',
+  none: '',
   selected: 'border-accent ring-2 ring-accent shadow-raised',
   prereq: 'border-status-completed ring-2 ring-status-completed',
   unlocks: 'border-status-progress ring-2 ring-status-progress',
-  dimmed: 'border-border opacity-30',
+  dimmed: 'opacity-30',
 };
 
-/** Nodo del grafo: mini card del ramo con color de estado. */
+/** Relleno y borde por estado: legibles incluso con el grafo muy alejado. */
+const statusClasses: Record<CourseStatus, string> = {
+  completed: 'border-status-completed bg-[#DDF0E1]',
+  'in-progress': 'border-status-progress bg-[#DDEBFB]',
+  pending: 'border-border bg-white',
+};
+
+/** Nodo del grafo: card del ramo con relleno, borde e icono según su estado. */
 const CourseNode = memo(function CourseNode(props: NodeProps) {
   const { course, status, highlight } = props.data as CourseNodeData;
+  const done = status === 'completed';
+  const doing = status === 'in-progress';
   return (
     <div
       className={cn(
-        'rounded-xl border border-l-4 bg-white p-3 shadow-subtle transition-all duration-200',
-        highlightClasses[highlight],
-        course.isSlot && 'border-dashed bg-surface',
+        'relative rounded-xl border-2 border-l-[7px] p-3 pr-8 shadow-subtle transition-all duration-200',
+        statusClasses[status],
+        course.isSlot && !done && !doing && 'border-dashed bg-surface',
+        highlight !== 'none' && highlightClasses[highlight],
       )}
       style={{ width: NODE_WIDTH, borderLeftColor: STATUS_COLORS[status] }}
     >
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} isConnectable={false} />
-      <p className="line-clamp-2 text-xs font-medium leading-snug text-text-primary">
+      {(done || doing) && (
+        <span
+          className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-white"
+          style={{ backgroundColor: STATUS_COLORS[status] }}
+          aria-hidden
+        >
+          {done ? (
+            <Check className="h-3.5 w-3.5" strokeWidth={3.5} />
+          ) : (
+            <Clock3 className="h-3.5 w-3.5" strokeWidth={2.5} />
+          )}
+        </span>
+      )}
+      <p
+        className={cn(
+          'line-clamp-2 text-xs font-semibold leading-snug',
+          status === 'pending' ? 'text-text-secondary' : 'text-text-primary',
+        )}
+      >
         {course.name}
       </p>
       <p className="mt-1 text-[10px] text-text-secondary">
         {course.isSlot ? course.slotCategory : course.id} · {course.credits} SCT
       </p>
-      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} isConnectable={false} />
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ opacity: 0 }}
+        isConnectable={false}
+      />
     </div>
   );
 });
@@ -198,10 +231,17 @@ export function MallaGraph({ plan }: { plan: Plan }) {
     const result: Edge[] = [];
     for (const course of plan.courses) {
       for (const prereq of course.prerequisites) {
-        let stroke = '#C9C9C6';
-        let opacity = 0.85;
+        // Sin selección: la arista toma el color del avance del requisito.
+        const sourceStatus = statuses[prereq.id];
+        let stroke =
+          sourceStatus === 'completed'
+            ? STATUS_COLORS.completed
+            : sourceStatus === 'in-progress'
+              ? STATUS_COLORS['in-progress']
+              : '#B9B9B5';
+        let opacity = sourceStatus === 'completed' || sourceStatus === 'in-progress' ? 0.9 : 0.7;
         let animated = false;
-        let width = 1.5;
+        let width = sourceStatus === 'completed' || sourceStatus === 'in-progress' ? 2 : 1.5;
 
         if (selectedId) {
           const targetInChain = course.id === selectedId || prereqSet.has(course.id);
@@ -238,7 +278,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
       }
     }
     return result;
-  }, [plan, selectedId, prereqSet, unlockSet]);
+  }, [plan, statuses, selectedId, prereqSet, unlockSet]);
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node) => {
@@ -262,9 +302,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
     [openStatusMenu],
   );
 
-  const selectedCourse = selectedId
-    ? plan.courses.find((c) => c.id === selectedId)
-    : undefined;
+  const selectedCourse = selectedId ? plan.courses.find((c) => c.id === selectedId) : undefined;
 
   return (
     <div className="h-full w-full" role="application" aria-label="Grafo de la malla curricular">
@@ -274,7 +312,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.15 }}
+        fitViewOptions={{ padding: 0.04 }}
         minZoom={0.2}
         maxZoom={1.6}
         nodesConnectable={false}
@@ -286,6 +324,32 @@ export function MallaGraph({ plan }: { plan: Plan }) {
       >
         <Background variant={BackgroundVariant.Dots} gap={26} size={1.4} color="#E3E3E0" />
         {isDesktop && <Controls showInteractive={false} />}
+
+        {/* Leyenda de estados */}
+        <Panel position="top-left" className="!m-3 hidden sm:block">
+          <ul className="flex items-center gap-3 rounded-full border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
+            {(
+              [
+                ['completed', 'Cursado'],
+                ['in-progress', 'En progreso'],
+                ['pending', 'Pendiente'],
+              ] as const
+            ).map(([key, label]) => (
+              <li key={key} className="flex items-center gap-1.5">
+                <span
+                  className="h-3 w-3 rounded-[4px] border-2"
+                  style={{
+                    borderColor: STATUS_COLORS[key],
+                    backgroundColor:
+                      key === 'completed' ? '#DDF0E1' : key === 'in-progress' ? '#DDEBFB' : '#fff',
+                  }}
+                  aria-hidden
+                />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </Panel>
 
         {/* Hint de uso cuando no hay selección */}
         {!selectedId && (
