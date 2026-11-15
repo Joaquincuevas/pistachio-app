@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Inicio de la Toma de Ramos del 2.º semestre 2026: lunes 20 de julio.
- * Hora de Chile continental (UTC-4 en invierno). Cambia aquí la fecha del evento.
+ * Inicio de la Toma de Ramos 2027: lunes 14 de diciembre de 2026, 08:30.
+ * Hora de Chile continental (UTC-3 en verano). Cambia aquí la fecha del evento.
  */
-const TARGET = new Date('2026-07-20T08:00:00-04:00');
-export const EVENT_LABEL = 'Lunes 20 de julio · 2.º semestre 2026';
+const TARGET = new Date('2026-12-14T08:30:00-03:00');
+export const EVENT_LABEL = 'Lunes 14 de diciembre · 08:30 h · Toma de ramos 2027';
 
 interface Remaining {
   days: number;

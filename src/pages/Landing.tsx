@@ -87,7 +87,7 @@ export function Landing() {
               <span className="text-accent">al alcance.</span>
             </h1>
             <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed md:mt-6 text-text-secondary md:mx-0 md:text-xl">
-              Planifica tu segundo semestre antes de la toma de ramos: revisa tu malla, tus
+              Planifica tu 2027 antes de la toma de ramos: revisa tu malla, tus
               prerrequisitos y tu avance, todo en un lugar.
             </p>
             <div className="mx-auto mt-7 flex max-w-sm flex-col md:mt-9 gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
