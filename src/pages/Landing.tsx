@@ -99,7 +99,11 @@ export function Landing() {
               ) : (
                 <>
                   <Link to="/register" className="sm:w-auto">
-                    <Button size="lg" fullWidth className="h-14 px-8 text-lg md:h-16 md:px-9">
+                    <Button
+                      size="lg"
+                      fullWidth
+                      className="h-14 px-8 text-lg shadow-[0_8px_24px_-6px_rgba(74,124,89,0.55)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_-8px_rgba(74,124,89,0.65)] active:translate-y-0 active:scale-[0.98] active:shadow-[0_4px_12px_-4px_rgba(74,124,89,0.5)] motion-reduce:transform-none md:h-16 md:px-9"
+                    >
                       Crear cuenta
                     </Button>
                   </Link>
@@ -180,7 +184,7 @@ export function Landing() {
       </section>
 
       {/* Footer con easter egg */}
-      <footer className="border-t border-white/60 py-8 pb-safe">
+      <footer className="border-t border-white/60 pb-safe pt-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 text-center">
           <button
             type="button"
@@ -193,7 +197,7 @@ export function Landing() {
           <p className="text-xs text-text-secondary">
             Pistachio · Hecho para estudiantes de Ingeniería U. Andes
           </p>
-          <p className="text-xs font-medium text-text-tertiary">By Ocaoj</p>
+          <p className="pb-14 text-xs font-medium text-text-tertiary">By Ocaoj</p>
         </div>
       </footer>
     </PageTransition>
