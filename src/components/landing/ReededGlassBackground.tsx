@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useRef, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
- * Bowl de pistachos visto a través de vidrio acanalado (reeded glass).
+ * Fondo de página: bowl de pistachos tras vidrio acanalado (reeded glass).
+ * Ocupa todo el viewport (fixed) y el contenido de la landing pasa por encima.
  * La escena se dibuja en un canvas oculto y cada "caña" del vidrio muestra
  * una franja comprimida e invertida de ella, como una lente cilíndrica real.
  */
@@ -10,7 +11,7 @@ import { cn } from '@/lib/utils';
 const PAD = 80; // margen extra de escena para que las cañas del borde tengan qué refractar
 const SCENE_SCALE = 0.28; // escena a baja resolución = desenfoque suave y barato
 const LENS = 1.9; // cuánta escena comprime cada caña
-const RIB_TARGET = 18; // ancho aproximado de cada caña (px CSS)
+const RIB_TARGET = 22; // ancho aproximado de cada caña (px CSS)
 
 /** PRNG determinista: la pila de pistachos es idéntica en cada render. */
 function mulberry32(seed: number) {
@@ -77,12 +78,23 @@ function drawNut(
   ctx.restore();
 }
 
+interface BowlLayout {
+  cx: number; // centro horizontal (px de página)
+  rimY: number; // borde del bowl (px de página)
+  u: number; // escala
+}
+
 /** Dibuja la escena (fondo, bowl y pistachos) en coordenadas CSS, con margen PAD. */
-function drawScene(ctx: CanvasRenderingContext2D, W: number, H: number) {
+function drawScene(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  sceneH: number,
+  bowl: BowlLayout,
+) {
   const full = W + PAD * 2;
-  const u = Math.min(W / 480, H / 380);
-  const cx = PAD + W / 2;
-  const rimY = H * 0.56;
+  const { u, rimY } = bowl;
+  const cx = PAD + bowl.cx;
   const R = 158 * u;
   const depth = 92 * u;
   const baseR = 46 * u;
@@ -93,8 +105,8 @@ function drawScene(ctx: CanvasRenderingContext2D, W: number, H: number) {
   bg.addColorStop(0, '#F1F6F2');
   bg.addColorStop(1, '#DCE9E1');
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, full, H);
-  const glow = ctx.createRadialGradient(cx - R, H * 0.15, 0, cx - R, H * 0.15, R * 2.4);
+  ctx.fillRect(0, 0, full, sceneH);
+  const glow = ctx.createRadialGradient(cx - R, H * 0.15, 0, cx - R, H * 0.15, H * 0.5);
   glow.addColorStop(0, 'rgba(255,255,255,0.9)');
   glow.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = glow;
@@ -177,12 +189,12 @@ function buildRibShading(W: number, H: number, ribs: number, dpr: number) {
   for (let i = 0; i < ribs; i++) {
     const x = i * rw;
     const g = ctx.createLinearGradient(x, 0, x + rw, 0);
-    g.addColorStop(0, 'rgba(18, 38, 28, 0.16)');
-    g.addColorStop(0.07, 'rgba(255, 255, 255, 0.55)');
+    g.addColorStop(0, 'rgba(18, 38, 28, 0.10)');
+    g.addColorStop(0.07, 'rgba(255, 255, 255, 0.50)');
     g.addColorStop(0.22, 'rgba(255, 255, 255, 0.10)');
     g.addColorStop(0.55, 'rgba(255, 255, 255, 0)');
     g.addColorStop(0.9, 'rgba(18, 38, 28, 0.05)');
-    g.addColorStop(1, 'rgba(18, 38, 28, 0.14)');
+    g.addColorStop(1, 'rgba(18, 38, 28, 0.09)');
     ctx.fillStyle = g;
     ctx.fillRect(x, 0, rw + 0.5, H);
   }
@@ -196,7 +208,7 @@ function buildRibShading(W: number, H: number, ribs: number, dpr: number) {
   return c;
 }
 
-export function ReededGlassBowl({ className }: { className?: string }) {
+export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTMLElement> }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -213,18 +225,21 @@ export function ReededGlassBowl({ className }: { className?: string }) {
     let H = 0;
     let ribs = 1;
     let dpr = 1;
+    let u = 1;
+    let maxScroll = 0;
     let raf = 0;
-    let visible = true;
     let pointer = 0; // -1..1, objetivo
     let eased = 0;
 
     const render = (time: number) => {
       if (!W || !H) return;
       const rw = W / ribs;
-      const u = Math.min(W / 480, H / 380);
       eased += (pointer - eased) * 0.06;
       const drift = reduceMotion ? 0 : Math.sin(time / 4200) * 9 * u + eased * 16 * u;
       const srcW = rw * LENS * SCENE_SCALE;
+      // El vidrio es fijo; la escena se desplaza con la página
+      const sy = Math.min(Math.max(window.scrollY, 0), maxScroll) * SCENE_SCALE;
+      const srcH = H * SCENE_SCALE;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingQuality = 'high';
@@ -233,7 +248,7 @@ export function ReededGlassBowl({ className }: { className?: string }) {
         const sx = (PAD + x0 + rw / 2 + drift) * SCENE_SCALE - srcW / 2;
         // Lente cilíndrica: la franja se ve invertida horizontalmente
         ctx.setTransform(-dpr, 0, 0, dpr, (x0 + rw) * dpr, 0);
-        ctx.drawImage(scene, sx, 0, srcW, scene.height, -0.5, 0, rw + 1, H);
+        ctx.drawImage(scene, sx, sy, srcW, srcH, -0.5, 0, rw + 1, H);
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       if (shading) ctx.drawImage(shading, 0, 0);
@@ -241,7 +256,7 @@ export function ReededGlassBowl({ className }: { className?: string }) {
 
     const loop = (time: number) => {
       render(time);
-      if (visible && !reduceMotion) raf = requestAnimationFrame(loop);
+      if (!reduceMotion) raf = requestAnimationFrame(loop);
     };
 
     const start = () => {
@@ -259,12 +274,22 @@ export function ReededGlassBowl({ className }: { className?: string }) {
       canvas.height = Math.round(H * dpr);
       ribs = Math.max(8, Math.round(W / RIB_TARGET));
 
+      // El bowl se encaja en el ancla del hero (coordenadas de página)
+      const a = anchorRef.current?.getBoundingClientRect();
+      const aw = a?.width || W;
+      const ah = a?.height || H * 0.4;
+      const top = (a ? a.top + window.scrollY : H * 0.55);
+      u = Math.min(aw / 430, ah / 245);
+      const bowl = { cx: (a ? a.left : 0) + aw / 2, rimY: top + ah / 2 + 8 * u, u };
+      maxScroll = Math.ceil(top + ah);
+      const sceneH = maxScroll + H;
+
       scene.width = Math.round((W + PAD * 2) * SCENE_SCALE);
-      scene.height = Math.round(H * SCENE_SCALE);
+      scene.height = Math.round(sceneH * SCENE_SCALE);
       const sctx = scene.getContext('2d');
       if (sctx) {
         sctx.setTransform(SCENE_SCALE, 0, 0, SCENE_SCALE, 0, 0);
-        drawScene(sctx, W, H);
+        drawScene(sctx, W, H, sceneH, bowl);
       }
       shading = buildRibShading(W, H, ribs, dpr);
       start();
@@ -280,36 +305,28 @@ export function ReededGlassBowl({ className }: { className?: string }) {
 
     const ro = new ResizeObserver(resize);
     ro.observe(wrap);
-    const io = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible) start();
-    });
-    io.observe(wrap);
-    wrap.addEventListener('pointermove', onPointer);
-    wrap.addEventListener('pointerleave', onLeave);
+    if (anchorRef.current) ro.observe(anchorRef.current);
+    const onScroll = () => {
+      if (reduceMotion) render(0);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('pointermove', onPointer);
+    document.addEventListener('pointerleave', onLeave);
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      io.disconnect();
-      wrap.removeEventListener('pointermove', onPointer);
-      wrap.removeEventListener('pointerleave', onLeave);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('pointermove', onPointer);
+      document.removeEventListener('pointerleave', onLeave);
     };
-  }, []);
+  }, [anchorRef]);
 
-  return (
-    <div
-      ref={wrapRef}
-      role="img"
-      aria-label="Bowl de pistachos visto a través de vidrio acanalado"
-      className={cn(
-        'relative overflow-hidden rounded-card border border-border bg-[#E6EFEA] shadow-raised',
-        className,
-      )}
-    >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden />
-      {/* Canto interior del vidrio */}
-      <div className="pointer-events-none absolute inset-0 rounded-card ring-1 ring-inset ring-white/70" />
-    </div>
+  // Portal a <body>: la transición de página usa transform y rompería el position: fixed.
+  return createPortal(
+    <div ref={wrapRef} aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#E6EFEA]">
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
+    </div>,
+    document.body,
   );
 }

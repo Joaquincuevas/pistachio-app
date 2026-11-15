@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GitBranch, Network, Nut, TrendingUp } from 'lucide-react';
 import { CountdownTimer } from '@/components/landing/CountdownTimer';
-import { ReededGlassBowl } from '@/components/landing/ReededGlassBowl';
+import { ReededGlassBackground } from '@/components/landing/ReededGlassBackground';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
@@ -41,6 +41,7 @@ export function Landing() {
   const show = useToastStore((s) => s.show);
 
   // Easter egg: 3 taps seguidos en el 🥜 del footer muestran el dato botánico.
+  const bowlAnchor = useRef<HTMLDivElement>(null);
   const taps = useRef(0);
   const resetTimer = useRef<number | null>(null);
   const handleNutTap = () => {
@@ -57,7 +58,8 @@ export function Landing() {
   };
 
   return (
-    <PageTransition className="min-h-dvh bg-background">
+    <PageTransition className="relative isolate min-h-dvh">
+      <ReededGlassBackground anchorRef={bowlAnchor} />
       {/* Nav */}
       <header className="pt-safe">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
@@ -76,7 +78,7 @@ export function Landing() {
 
       {/* Hero: mensaje + CTA a la izquierda, cuenta regresiva a la derecha */}
       <section className="mx-auto max-w-5xl px-5 pb-16 pt-12 md:pt-20">
-        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-12">
+        <div className="grid items-start gap-10 md:grid-cols-2 md:gap-12">
           {/* Columna de mensaje */}
           <div className="text-center md:text-left">
             <h1 className="font-display text-[40px] font-semibold leading-[1.06] tracking-tighter text-text-primary md:text-[56px]">
@@ -112,18 +114,19 @@ export function Landing() {
             </div>
           </div>
 
-          {/* Columna visual: bowl tras vidrio acanalado + cuenta regresiva */}
-          <div className="flex flex-col gap-4">
-            <ReededGlassBowl className="aspect-[4/3] w-full" />
-            <div className="rounded-card border border-border bg-white p-6 shadow-subtle sm:p-7">
+          {/* Columna de la cuenta regresiva (el bowl del fondo queda debajo) */}
+          <div className="flex flex-col gap-6">
+            <div className="rounded-card border border-white/70 bg-white/70 p-6 shadow-raised backdrop-blur-md sm:p-7">
               <CountdownTimer />
             </div>
+            {/* Hueco donde el fondo dibuja el bowl */}
+            <div ref={bowlAnchor} aria-hidden className="h-56 md:h-80" />
           </div>
         </div>
       </section>
 
       {/* ¿Qué es Pistachio? */}
-      <section className="bg-surface py-16">
+      <section className="py-16">
         <div className="mx-auto max-w-5xl px-5">
           <h2 className="text-center font-display text-3xl font-semibold tracking-tight text-text-primary">
             ¿Qué es Pistachio?
@@ -134,7 +137,7 @@ export function Landing() {
           </p>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {features.map(({ icon: Icon, title, description }) => (
-              <Card key={title} className="p-6">
+              <Card key={title} className="border-white/70 bg-white/75 p-6 backdrop-blur-md">
                 <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-accent-light">
                   <Icon className="h-5 w-5 text-accent" aria-hidden />
                 </div>
@@ -164,7 +167,7 @@ export function Landing() {
               : specialties.map((specialty) => (
                   <span
                     key={specialty.id}
-                    className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-subtle"
+                    className="flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-4 py-2 text-sm font-medium text-text-primary shadow-subtle backdrop-blur-md"
                   >
                     <SpecialtyIcon icon={specialty.icon} className="h-4 w-4 text-accent" />
                     {specialty.name}
@@ -175,7 +178,7 @@ export function Landing() {
       </section>
 
       {/* Footer con easter egg */}
-      <footer className="border-t border-border py-8 pb-safe">
+      <footer className="border-t border-white/60 py-8 pb-safe">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 text-center">
           <button
             type="button"
