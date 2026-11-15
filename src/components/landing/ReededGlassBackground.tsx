@@ -12,6 +12,7 @@ const PAD = 80; // margen extra de escena para que las cañas del borde tengan q
 const SCENE_SCALE = 0.28; // escena a baja resolución = desenfoque suave y barato
 const LENS = 1.9; // cuánta escena comprime cada caña
 const RIB_TARGET = 22; // ancho aproximado de cada caña (px CSS)
+const RIB_TARGET_MOBILE = 17;
 
 /** PRNG determinista: la pila de pistachos es idéntica en cada render. */
 function mulberry32(seed: number) {
@@ -227,6 +228,7 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
     let dpr = 1;
     let u = 1;
     let maxScroll = 0;
+    let drawnPast = false;
     let raf = 0;
     let pointer = 0; // -1..1, objetivo
     let eased = 0;
@@ -255,7 +257,10 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
     };
 
     const loop = (time: number) => {
-      render(time);
+      // Con el bowl fuera de pantalla el fondo es estático: no se redibuja (ahorra batería)
+      const past = window.scrollY >= maxScroll;
+      if (!past || !drawnPast) render(time);
+      drawnPast = past;
       if (!reduceMotion) raf = requestAnimationFrame(loop);
     };
 
@@ -272,14 +277,15 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
-      ribs = Math.max(8, Math.round(W / RIB_TARGET));
+      ribs = Math.max(8, Math.round(W / (W < 640 ? RIB_TARGET_MOBILE : RIB_TARGET)));
+      drawnPast = false;
 
       // El bowl se encaja en el ancla del hero (coordenadas de página)
       const a = anchorRef.current?.getBoundingClientRect();
       const aw = a?.width || W;
       const ah = a?.height || H * 0.4;
       const top = (a ? a.top + window.scrollY : H * 0.55);
-      u = Math.min(aw / 430, ah / 245);
+      u = Math.min(aw / (W < 640 ? 380 : 430), ah / 245);
       const bowl = { cx: (a ? a.left : 0) + aw / 2, rimY: top + ah / 2 + 8 * u, u };
       maxScroll = Math.ceil(top + ah);
       const sceneH = maxScroll + H;
@@ -296,6 +302,7 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
     };
 
     const onPointer = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return; // en táctil el arrastre es scroll, no parallax
       const rect = wrap.getBoundingClientRect();
       pointer = Math.max(-1, Math.min(1, ((e.clientX - rect.left) / rect.width) * 2 - 1));
     };
@@ -307,7 +314,10 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
     ro.observe(wrap);
     if (anchorRef.current) ro.observe(anchorRef.current);
     const onScroll = () => {
-      if (reduceMotion) render(0);
+      if (reduceMotion) {
+        drawnPast = false;
+        render(0);
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointermove', onPointer);
@@ -324,7 +334,7 @@ export function ReededGlassBackground({ anchorRef }: { anchorRef: RefObject<HTML
 
   // Portal a <body>: la transición de página usa transform y rompería el position: fixed.
   return createPortal(
-    <div ref={wrapRef} aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#E6EFEA]">
+    <div ref={wrapRef} aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-screen bg-[#E6EFEA] supports-[height:100lvh]:h-[100lvh]">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>,
     document.body,

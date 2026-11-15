@@ -69,7 +69,7 @@ export function Landing() {
           </div>
           <Link
             to={user ? '/malla' : '/login'}
-            className="rounded-btn px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+            className="-mr-3 flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
           >
             {user ? 'Ir a mi malla' : 'Iniciar sesión'}
           </Link>
@@ -77,20 +77,20 @@ export function Landing() {
       </header>
 
       {/* Hero: mensaje + CTA a la izquierda, cuenta regresiva a la derecha */}
-      <section className="mx-auto max-w-5xl px-5 pb-16 pt-12 md:pt-20">
-        <div className="grid items-start gap-10 md:grid-cols-2 md:gap-12">
+      <section className="mx-auto max-w-5xl px-5 pb-10 pt-6 md:pb-16 md:pt-20">
+        <div className="grid items-start gap-6 md:grid-cols-2 md:gap-12">
           {/* Columna de mensaje */}
           <div className="text-center md:text-left">
-            <h1 className="font-display text-[46px] font-semibold leading-[1.04] tracking-tighter text-text-primary md:text-[72px]">
+            <h1 className="font-display text-[clamp(2.375rem,11.5vw,2.875rem)] font-semibold leading-[1.04] tracking-tighter text-text-primary md:text-[72px]">
               Tu malla curricular,
               <br />
               <span className="text-accent">al alcance.</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-text-secondary md:mx-0 md:text-xl">
+            <p className="mx-auto mt-4 max-w-lg text-[17px] leading-relaxed md:mt-6 text-text-secondary md:mx-0 md:text-xl">
               Planifica tu segundo semestre antes de la toma de ramos: revisa tu malla, tus
               prerrequisitos y tu avance, todo en un lugar.
             </p>
-            <div className="mx-auto mt-9 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
+            <div className="mx-auto mt-7 flex max-w-sm flex-col md:mt-9 gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
               {user ? (
                 <Link to="/malla">
                   <Button size="lg" fullWidth className="h-14 px-8 text-lg md:h-16 md:px-9">
@@ -115,34 +115,41 @@ export function Landing() {
           </div>
 
           {/* Columna de la cuenta regresiva (el bowl del fondo queda debajo) */}
-          <div className="flex flex-col gap-6">
-            <div className="rounded-card border border-white/70 bg-white/70 p-6 shadow-raised backdrop-blur-md sm:p-7">
+          <div className="flex flex-col gap-4 md:gap-6">
+            <div className="rounded-card border border-white/70 bg-white/85 p-5 shadow-raised sm:p-7 md:bg-white/70 md:backdrop-blur-md">
               <CountdownTimer />
             </div>
-            {/* Hueco donde el fondo dibuja el bowl */}
-            <div ref={bowlAnchor} aria-hidden className="h-56 md:h-80" />
+            {/* Hueco donde el fondo dibuja el bowl (en móvil va antes de la cuenta regresiva) */}
+            <div ref={bowlAnchor} aria-hidden className="order-first h-52 md:order-last md:h-80" />
           </div>
         </div>
       </section>
 
       {/* ¿Qué es Pistachio? */}
-      <section className="py-16">
+      <section className="py-12 md:py-16">
         <div className="mx-auto max-w-5xl px-5">
-          <h2 className="text-center font-display text-3xl font-semibold tracking-tight text-text-primary">
+          <h2 className="text-center font-display text-[28px] font-semibold tracking-tight text-text-primary md:text-3xl">
             ¿Qué es Pistachio?
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-sm text-text-secondary">
             Una plataforma para estudiantes de Ingeniería U. Andes que convierte el PDF de tu
             malla en una experiencia interactiva, con los planes de estudio oficiales.
           </p>
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-7 grid gap-3 md:mt-10 md:grid-cols-3 md:gap-4">
             {features.map(({ icon: Icon, title, description }) => (
-              <Card key={title} className="border-white/70 bg-white/75 p-6 backdrop-blur-md">
-                <div className="flex h-11 w-11 items-center justify-center rounded-btn bg-accent-light">
+              <Card
+                key={title}
+                className="flex gap-4 border-white/70 bg-white/85 p-5 md:block md:bg-white/75 md:p-6 md:backdrop-blur-md"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-accent-light">
                   <Icon className="h-5 w-5 text-accent" aria-hidden />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-text-primary">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">{description}</p>
+                <div>
+                  <h3 className="text-base font-semibold text-text-primary md:mt-4">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-text-secondary md:mt-1.5">
+                    {description}
+                  </p>
+                </div>
               </Card>
             ))}
           </div>
@@ -150,7 +157,7 @@ export function Landing() {
       </section>
 
       {/* Especialidades */}
-      <section className="py-16">
+      <section className="py-12 md:py-16">
         <div className="mx-auto max-w-5xl px-5 text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-text-primary">
             Cinco especialidades
@@ -167,7 +174,7 @@ export function Landing() {
               : specialties.map((specialty) => (
                   <span
                     key={specialty.id}
-                    className="flex items-center gap-2 rounded-full border border-white/70 bg-white/75 px-4 py-2 text-sm font-medium text-text-primary shadow-subtle backdrop-blur-md"
+                    className="flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-sm font-medium text-text-primary shadow-subtle md:bg-white/75 md:backdrop-blur-md"
                   >
                     <SpecialtyIcon icon={specialty.icon} className="h-4 w-4 text-accent" />
                     {specialty.name}
