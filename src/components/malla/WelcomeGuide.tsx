@@ -206,7 +206,7 @@ export function WelcomeGuide() {
         {/* Botón siempre visible, aunque el contenido haga scroll en pantallas chicas */}
         <div className="sticky bottom-0 border-t border-border bg-white/95 px-6 py-4 backdrop-blur sm:px-9">
           <Button size="lg" fullWidth className="h-14 text-base" onClick={close}>
-            Entendido, empezar
+            Comenzar
           </Button>
         </div>
       </div>
