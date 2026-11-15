@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { GitBranch, Network, Nut, TrendingUp } from 'lucide-react';
 import { CountdownTimer } from '@/components/landing/CountdownTimer';
+import { ReededGlassBowl } from '@/components/landing/ReededGlassBowl';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
@@ -111,9 +112,12 @@ export function Landing() {
             </div>
           </div>
 
-          {/* Columna de la cuenta regresiva */}
-          <div className="rounded-card border border-border bg-white p-6 shadow-subtle sm:p-7">
-            <CountdownTimer />
+          {/* Columna visual: bowl tras vidrio acanalado + cuenta regresiva */}
+          <div className="flex flex-col gap-4">
+            <ReededGlassBowl className="aspect-[4/3] w-full" />
+            <div className="rounded-card border border-border bg-white p-6 shadow-subtle sm:p-7">
+              <CountdownTimer />
+            </div>
           </div>
         </div>
       </section>
