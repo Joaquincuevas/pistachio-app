@@ -81,31 +81,31 @@ export function Landing() {
         <div className="grid items-start gap-10 md:grid-cols-2 md:gap-12">
           {/* Columna de mensaje */}
           <div className="text-center md:text-left">
-            <h1 className="font-display text-[40px] font-semibold leading-[1.06] tracking-tighter text-text-primary md:text-[56px]">
+            <h1 className="font-display text-[46px] font-semibold leading-[1.04] tracking-tighter text-text-primary md:text-[72px]">
               Tu malla curricular,
               <br />
               <span className="text-accent">al alcance.</span>
             </h1>
-            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-text-secondary md:mx-0">
+            <p className="mx-auto mt-6 max-w-lg text-lg leading-relaxed text-text-secondary md:mx-0 md:text-xl">
               Planifica tu segundo semestre antes de la toma de ramos: revisa tu malla, tus
               prerrequisitos y tu avance, todo en un lugar.
             </p>
-            <div className="mx-auto mt-8 flex max-w-xs flex-col gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
+            <div className="mx-auto mt-9 flex max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row md:mx-0 md:justify-start">
               {user ? (
                 <Link to="/malla">
-                  <Button size="lg" fullWidth>
+                  <Button size="lg" fullWidth className="h-14 px-8 text-lg md:h-16 md:px-9">
                     Ir a mi malla
                   </Button>
                 </Link>
               ) : (
                 <>
                   <Link to="/register" className="sm:w-auto">
-                    <Button size="lg" fullWidth>
+                    <Button size="lg" fullWidth className="h-14 px-8 text-lg md:h-16 md:px-9">
                       Crear cuenta
                     </Button>
                   </Link>
                   <Link to="/login" className="sm:w-auto">
-                    <Button size="lg" variant="secondary" fullWidth>
+                    <Button size="lg" variant="secondary" fullWidth className="h-14 px-8 text-lg md:h-16 md:px-9">
                       Ya tengo cuenta
                     </Button>
                   </Link>
