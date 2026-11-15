@@ -28,7 +28,7 @@ npm run typecheck  # typecheck de frontend y servidor
 El catálogo se genera desde las planillas oficiales de la Facultad:
 
 - **`scripts/parse-catalog.py`** lee `Catálogo PE 2022 Versión 2023.xlsx` (hojas `Cursos` y `<ESP> Malla`) y produce `server/data/catalog.json`.
-- Las 5 especialidades reales: **Industrial (ICI), Obras Civiles (IOC), Eléctrica (ICE), Computación (ICC) y Ambiental (ICA)** — 60 ramos y ~330 SCT en 11 semestres cada una, incluyendo slots de Teología, Minor, Optativos, Concentración Tecnológica y Electivos.
+- Las 5 especialidades reales: **Industrial (ICI), Obras Civiles (IOC), Eléctrica (ICE), Computación (ICC) y Química (ICA)** — 60 ramos y ~330 SCT en 11 semestres cada una, incluyendo slots de Teología, Minor, Optativos, Concentración Tecnológica y Electivos.
 - Computación tiene **dos versiones de plan**: PE 2022 (rev. 2023) y **PE 2022 · Ajuste 2025** (según la presentación de la Facultad de oct. 2024: entran Fundamentos de Ciberseguridad e Inteligencia Artificial Aplicada; salen Autómatas y Computabilidad y Diseño de Software Verificable; se adelantan BD, Web Technologies, AI, Almacenamiento y Sistemas Embebidos).
 - Los códigos `ICC-FCS` e `ICC-IAA` son provisorios: la presentación aún no publica códigos Banner.
 

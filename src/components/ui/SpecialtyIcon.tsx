@@ -1,4 +1,4 @@
-import { Building2, Cpu, Factory, GraduationCap, Leaf, Zap, type LucideIcon } from 'lucide-react';
+import { Building2, Cpu, Factory, FlaskConical, GraduationCap, Leaf, Zap, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const icons: Record<string, LucideIcon> = {
@@ -7,6 +7,7 @@ const icons: Record<string, LucideIcon> = {
   zap: Zap,
   cpu: Cpu,
   leaf: Leaf,
+  flask: FlaskConical,
 };
 
 interface SpecialtyIconProps {

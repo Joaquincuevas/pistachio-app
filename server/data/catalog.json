@@ -17429,9 +17429,9 @@
     },
     {
       "id": "ica",
-      "name": "Ambiental",
+      "name": "Química",
       "fullName": "Ingeniería Civil en Medio Ambiente",
-      "icon": "leaf",
+      "icon": "flask",
       "tagline": "Procesos sustentables para el cuidado del medio ambiente.",
       "plans": [
         {

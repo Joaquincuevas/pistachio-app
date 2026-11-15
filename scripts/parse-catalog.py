@@ -40,8 +40,8 @@ SPECIALTIES = [
     {"id": "icc", "sheet": "ICC Malla", "name": "Computación",
      "fullName": "Ingeniería Civil en Ciencias de la Computación", "icon": "cpu",
      "tagline": "Software, datos e inteligencia artificial para resolver problemas reales."},
-    {"id": "ica", "sheet": "ICA Malla", "name": "Ambiental",
-     "fullName": "Ingeniería Civil en Medio Ambiente", "icon": "leaf",
+    {"id": "ica", "sheet": "ICA Malla", "name": "Química",
+     "fullName": "Ingeniería Civil en Medio Ambiente", "icon": "flask",
      "tagline": "Procesos sustentables para el cuidado del medio ambiente."},
 ]
 

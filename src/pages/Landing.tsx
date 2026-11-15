@@ -41,7 +41,6 @@ export function Landing() {
   const show = useToastStore((s) => s.show);
 
   // Easter egg: 3 taps seguidos en el 🥜 del footer muestran el dato botánico.
-  const bowlAnchor = useRef<HTMLDivElement>(null);
   const taps = useRef(0);
   const resetTimer = useRef<number | null>(null);
   const handleNutTap = () => {
@@ -59,7 +58,7 @@ export function Landing() {
 
   return (
     <PageTransition className="relative isolate min-h-dvh">
-      <ReededGlassBackground anchorRef={bowlAnchor} />
+      <ReededGlassBackground />
       {/* Nav */}
       <header className="pt-safe">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
@@ -77,8 +76,8 @@ export function Landing() {
       </header>
 
       {/* Hero: mensaje + CTA a la izquierda, cuenta regresiva a la derecha */}
-      <section className="mx-auto max-w-5xl px-5 pb-10 pt-6 md:pb-16 md:pt-20">
-        <div className="grid items-start gap-6 md:grid-cols-2 md:gap-12">
+      <section className="mx-auto max-w-5xl px-5 pb-10 pt-6 md:pb-20 md:pt-20">
+        <div className="grid items-center gap-8 md:grid-cols-2 md:gap-12">
           {/* Columna de mensaje */}
           <div className="text-center md:text-left">
             <h1 className="font-display text-[clamp(2.375rem,11.5vw,2.875rem)] font-semibold leading-[1.04] tracking-tighter text-text-primary md:text-[72px]">
@@ -114,13 +113,9 @@ export function Landing() {
             </div>
           </div>
 
-          {/* Columna de la cuenta regresiva (el bowl del fondo queda debajo) */}
-          <div className="flex flex-col gap-4 md:gap-6">
-            <div className="rounded-card border border-white/70 bg-white/85 p-5 shadow-raised sm:p-7 md:bg-white/70 md:backdrop-blur-md">
-              <CountdownTimer />
-            </div>
-            {/* Hueco donde el fondo dibuja el bowl (en móvil va antes de la cuenta regresiva) */}
-            <div ref={bowlAnchor} aria-hidden className="order-first h-52 md:order-last md:h-80" />
+          {/* Columna de la cuenta regresiva */}
+          <div className="rounded-card border border-white/70 bg-white/85 p-5 shadow-raised sm:p-7 md:bg-white/70 md:backdrop-blur-md">
+            <CountdownTimer />
           </div>
         </div>
       </section>
@@ -198,6 +193,7 @@ export function Landing() {
           <p className="text-xs text-text-secondary">
             Pistachio · Hecho para estudiantes de Ingeniería U. Andes
           </p>
+          <p className="text-xs font-medium text-text-tertiary">By Ocaoj</p>
         </div>
       </footer>
     </PageTransition>
