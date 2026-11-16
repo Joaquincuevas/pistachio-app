@@ -11,7 +11,7 @@ const sizeClasses = {
   lg: 'h-16 w-16',
 };
 
-/** Marca de Pistachio: la cara de Pisti, la mascota, en una insignia redonda. */
+/** Marca de Pistachio: Pisti, la mascota, tal cual. */
 export function Logo({ size = 'md', className }: LogoProps) {
   return (
     <img
