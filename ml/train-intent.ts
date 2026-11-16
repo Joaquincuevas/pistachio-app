@@ -1,5 +1,5 @@
 /**
- * Entrenamiento del clasificador de intención de Export.
+ * Entrenamiento del clasificador de intención de Pisti.
  *
  * Modelo: regresión logística multinomial (softmax) sobre features de texto,
  * entrenada con descenso de gradiente estocástico. Sin librerías, sin API:

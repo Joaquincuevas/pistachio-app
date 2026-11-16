@@ -1,6 +1,6 @@
-# Export — el asistente de Pistachio
+# Pisti — el asistente de Pistachio
 
-**Export** es el asistente de malla de Pistachio: ayuda a los alumnos a decidir
+**Pisti** es el asistente de malla de Pistachio: ayuda a los alumnos a decidir
 qué ramos tomar, cruzando su avance en la malla con los prerrequisitos y con el
 horario oficial de la Facultad. Corre **100 % en el navegador**, sin API ni
 servicios de IA externos: la "inteligencia" es un motor de reglas determinístico
@@ -131,7 +131,7 @@ más frases que marquen la diferencia.
 
 ### Memoria conversacional
 
-Export recuerda el último ramo/profesor del que se habló, así que se puede
+Pisti recuerda el último ramo/profesor del que se habló, así que se puede
 conversar sin repetir el nombre:
 
 > — ¿Puedo tomar Hidráulica?
@@ -150,7 +150,7 @@ inventar.
 
 ### Cuando el modelo duda, pregunta
 
-Si ninguna intención supera el umbral de confianza (0.5), Export **no adivina**:
+Si ninguna intención supera el umbral de confianza (0.5), Pisti **no adivina**:
 muestra "¿Te refieres a algo de esto?" con las hipótesis del modelo como chips
 accionables (filtradas por entidades — no ofrece "créditos de un ramo" si no
 detectó ningún ramo). Elegir un chip ejecuta la intención al tiro.
@@ -164,8 +164,8 @@ alumno — nada viaja al servidor).
 
 **El ciclo completo:**
 
-1. El alumno valora respuestas con 👍/👎 mientras usa Export.
-2. En **Perfil → "Ayuda a mejorar a Export"** descarga su feedback como JSON
+1. El alumno valora respuestas con 👍/👎 mientras usa Pisti.
+2. En **Perfil → "Ayuda a mejorar a Pisti"** descarga su feedback como JSON
    (la tarjeta solo aparece si hay valoraciones).
 3. Ese archivo se ingiere al dataset:
 
@@ -190,7 +190,7 @@ nombre de ramo ("Bases **para** el Estudio…").
 
 ---
 
-## 3. El loop diario (cómo mejorar a Export)
+## 3. El loop diario (cómo mejorar a Pisti)
 
 El proyecto está pensado para avanzar **un poco cada día**:
 
@@ -250,7 +250,7 @@ se reporta aparte en vez de omitirse en silencio.
   base de datos; el asistente lo recibe vía `/api/catalog`.
 - **Horario:** lo sube el propio alumno; se procesa **solo en su navegador** y
   se guarda en `localStorage`. No viaja a ningún servidor.
-- **Modelo:** los pesos son estáticos y públicos; la inferencia es local. Export
+- **Modelo:** los pesos son estáticos y públicos; la inferencia es local. Pisti
   no envía las preguntas del alumno a ningún lado.
 
 ---

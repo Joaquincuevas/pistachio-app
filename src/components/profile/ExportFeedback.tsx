@@ -5,7 +5,7 @@ import { downloadText } from '@/lib/scheduleExport';
 import { useToastStore } from '@/stores/useToastStore';
 
 /**
- * Exportar el feedback que el alumno dio a las respuestas de Export (👍/👎).
+ * Exportar el feedback que el alumno dio a las respuestas de Pisti (👍/👎).
  *
  * Los registros viven SOLO en este dispositivo (localStorage): nunca se envían
  * a un servidor. Esta tarjeta permite descargarlos para alimentar el dataset de
@@ -46,7 +46,7 @@ export function ExportFeedback() {
   const handleDownload = () => {
     const date = new Date().toISOString().slice(0, 10);
     downloadText(`export-feedback-${date}.json`, JSON.stringify(entries, null, 2), 'application/json');
-    show('Feedback descargado. ¡Gracias por ayudar a mejorar a Export!', 'success');
+    show('Feedback descargado. ¡Gracias por ayudar a mejorar a Pisti!', 'success');
   };
 
   const handleClear = () => {
@@ -57,7 +57,7 @@ export function ExportFeedback() {
 
   return (
     <Card className="p-4">
-      <h3 className="text-sm font-semibold text-text-primary">Ayuda a mejorar a Export</h3>
+      <h3 className="text-sm font-semibold text-text-primary">Ayuda a mejorar a Pisti</h3>
       <p className="mt-1 text-xs text-text-secondary">
         Guardaste {entries.length} {entries.length === 1 ? 'valoración' : 'valoraciones'} de las
         respuestas del asistente

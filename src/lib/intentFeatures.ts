@@ -1,5 +1,5 @@
 /**
- * Featurizador de texto para el clasificador de intención de Export.
+ * Featurizador de texto para el clasificador de intención de Pisti.
  *
  * Es el corazón "aprendible" del asistente: convierte una frase en una lista de
  * features (n-gramas de palabras) que el modelo entrenado pondera. Vive aparte

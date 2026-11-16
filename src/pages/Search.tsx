@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search as SearchIcon, SearchX, X } from 'lucide-react';
+import { Search as SearchIcon, X } from 'lucide-react';
 import { CourseCard } from '@/components/malla/CourseCard';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -173,9 +173,13 @@ export function Search() {
 
       {results.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-3 py-10 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
-            <SearchX className="h-6 w-6 text-text-secondary" aria-hidden />
-          </div>
+          <img
+            src="/pisti-read.png"
+            alt=""
+            aria-hidden
+            draggable={false}
+            className="h-32 w-auto select-none"
+          />
           <p className="text-sm font-medium text-text-primary">Sin resultados</p>
           <p className="max-w-xs text-sm text-text-secondary">
             Prueba con otro nombre o código, o quita algunos filtros.

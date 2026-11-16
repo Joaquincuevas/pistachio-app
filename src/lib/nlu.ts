@@ -441,7 +441,7 @@ function resolveIntent(
   }
 
   // Capa aprendida: si las reglas no reconocieron la frase, consultamos el
-  // modelo entrenado (Export). Antes de clasificar se enmascaran las entidades
+  // modelo entrenado (Pisti). Antes de clasificar se enmascaran las entidades
   // detectadas (ramo → 'ramox', profesor → 'profex'), igual que en el dataset
   // de entrenamiento. Se respetan las condiciones de entidad para no inventar
   // respuestas (p. ej. "cuántos créditos" sin ramo detectado).

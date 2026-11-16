@@ -1,8 +1,8 @@
 /**
  * Ingesta del feedback real de los alumnos al dataset de entrenamiento.
  *
- * Los 👍/👎 que los alumnos dan a las respuestas de Export se guardan en su
- * navegador y se exportan desde Perfil → "Ayuda a mejorar a Export". Este
+ * Los 👍/👎 que los alumnos dan a las respuestas de Pisti se guardan en su
+ * navegador y se exportan desde Perfil → "Ayuda a mejorar a Pisti". Este
  * script toma ese JSON y:
  *
  *  - 👍  la intención era correcta → la frase es una etiqueta confiable y se

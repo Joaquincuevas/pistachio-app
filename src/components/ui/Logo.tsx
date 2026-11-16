@@ -6,9 +6,9 @@ interface LogoProps {
 }
 
 const sizeClasses = {
-  sm: 'h-8 w-8',
-  md: 'h-10 w-10',
-  lg: 'h-14 w-14',
+  sm: 'h-9 w-9',
+  md: 'h-11 w-11',
+  lg: 'h-16 w-16',
 };
 
 /** Marca de Pistachio: la cara de Pisti, la mascota, en una insignia redonda. */

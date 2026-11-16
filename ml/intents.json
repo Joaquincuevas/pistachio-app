@@ -1,5 +1,5 @@
 {
-  "_comment": "Dataset de entrenamiento de Export. Cada clave es una intención y su valor son frases de ejemplo (como las escribiría un alumno). CONVENCIÓN DE ENMASCARAMIENTO: escribe 'ramox' donde iría el nombre de un ramo y 'profex' donde iría el nombre/apellido de un profesor — así el modelo aprende la FORMA de la pregunta y no ramos puntuales (en inferencia, nlu.ts reemplaza el ramo/profesor detectado por estos mismos tokens). Para mejorar el modelo: agrega frases variadas y coloquiales aquí y corre npm run train:intent.",
+  "_comment": "Dataset de entrenamiento de Pisti. Cada clave es una intención y su valor son frases de ejemplo (como las escribiría un alumno). CONVENCIÓN DE ENMASCARAMIENTO: escribe 'ramox' donde iría el nombre de un ramo y 'profex' donde iría el nombre/apellido de un profesor — así el modelo aprende la FORMA de la pregunta y no ramos puntuales (en inferencia, nlu.ts reemplaza el ramo/profesor detectado por estos mismos tokens). Para mejorar el modelo: agrega frases variadas y coloquiales aquí y corre npm run train:intent.",
   "recommend": [
     "que ramos tomo el proximo semestre",
     "que me recomiendas tomar",

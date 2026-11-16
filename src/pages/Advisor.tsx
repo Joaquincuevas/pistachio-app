@@ -40,7 +40,7 @@ interface Message {
 }
 
 /**
- * Feedback local del alumno sobre las respuestas de Export. Se guarda SOLO en
+ * Feedback local del alumno sobre las respuestas de Pisti. Se guarda SOLO en
  * este dispositivo (localStorage): sirve para recolectar frases reales con las
  * que crecer ml/intents.json. Los 👎 son oro: son frases mal entendidas.
  */
@@ -172,7 +172,7 @@ export function Advisor() {
     }
     setRated((prev) => ({ ...prev, [m.id]: helpful }));
     showToast(
-      helpful ? '¡Gracias por tu feedback!' : 'Gracias — esto ayuda a entrenar a Export.',
+      helpful ? '¡Gracias por tu feedback!' : 'Gracias — esto ayuda a entrenar a Pisti.',
       'success',
     );
   };
@@ -853,7 +853,7 @@ export function Advisor() {
     push(
       'bot',
       <div>
-        <p>Soy Export, tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
+        <p>Soy Pisti, tu asistente de malla. Cruzo tus ramos cursados con los prerrequisitos (y con el horario oficial, si lo subes) para ayudarte a decidir. Puedo:</p>
         <ul className="mt-2 list-inside list-disc text-sm text-text-secondary">
           <li>Recomendarte qué ramos tomar el próximo semestre, sin topes de horario.</li>
           <li>Decirte si puedes tomar un ramo puntual y, si no, qué te falta.</li>
@@ -973,7 +973,7 @@ export function Advisor() {
 
   /**
    * Confianza media del modelo: en vez de adivinar (y responder cualquier
-   * cosa), Export pregunta. Cada opción es un chip que ejecuta la intención.
+   * cosa), Pisti pregunta. Cada opción es un chip que ejecuta la intención.
    */
   const answerClarify = (result: NluResult, query: string) => {
     const options = result.modelGuesses
@@ -1050,13 +1050,13 @@ export function Advisor() {
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <img
-              src="/assistant-mascot.jpg"
+              src="/pisti-chat.png"
               alt=""
               aria-hidden
-              className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+              className="h-11 w-11 shrink-0 rounded-full border border-border object-cover"
             />
             <div>
-              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Export</h1>
+              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Pisti</h1>
               <p className="text-xs text-text-secondary">
                 {stats.completedCourses}/{stats.totalCourses} ramos · {credits} SCT
               </p>
@@ -1088,7 +1088,7 @@ export function Advisor() {
           {/* Saludo inicial */}
           <BotBubble>
             <p>
-              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy Export, tu asistente de malla. Escríbeme
+              Hola{user ? ` ${user.name.split(' ')[0]}` : ''}, soy Pisti, tu asistente de malla. Escríbeme
               lo que necesites: qué ramos tomar, si puedes tomar uno puntual, qué te falta para
               otro, o pídeme armar tu horario para la toma de ramos.
             </p>
@@ -1105,7 +1105,7 @@ export function Advisor() {
               <div key={m.id}>
                 <BotBubble>{m.node}</BotBubble>
                 {m.meta && (
-                  <div className="mt-1.5 flex items-center gap-0.5 pl-[38px]">
+                  <div className="mt-1.5 flex items-center gap-0.5 pl-[42px]">
                     {rated[m.id] !== undefined ? (
                       <span className="text-[11px] text-text-tertiary">
                         Gracias por tu feedback
@@ -1196,10 +1196,10 @@ function BotBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2.5">
       <img
-        src="/assistant-mascot.jpg"
+        src="/pisti-chat.png"
         alt=""
         aria-hidden
-        className="mt-0.5 h-7 w-7 shrink-0 rounded-full border border-border object-cover"
+        className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-border object-cover"
       />
       <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border bg-white px-4 py-3 text-sm leading-relaxed text-text-primary">
         {children}

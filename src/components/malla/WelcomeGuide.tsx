@@ -166,16 +166,28 @@ export function WelcomeGuide() {
     <Modal open={open} onClose={close} title="Bienvenida a Pistachio" className="max-w-2xl">
       <div>
         <div className="p-6 pb-2 sm:p-9 sm:pb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-            Bienvenido a Pistachio
-          </p>
-          <h2 className="mt-2 pr-8 font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary sm:text-[32px]">
-            Marca los ramos que ya diste
-          </h2>
-          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-text-secondary sm:text-base">
-            Para que tu malla refleje tu avance real, marca los ramos que ya cursaste. No tienes que
-            hacerlo uno por uno: se van marcando hacia atrás según la malla.
-          </p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-7">
+            <img
+              src="/pisti-walk.png"
+              alt="Pisti, la mascota de Pistachio, saludando"
+              width={409}
+              height={640}
+              className="h-28 w-auto shrink-0 select-none sm:h-44"
+              draggable={false}
+            />
+            <div className="self-stretch">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                Bienvenido a Pistachio
+              </p>
+              <h2 className="mt-2 pr-8 font-display text-2xl font-semibold leading-tight tracking-tight text-text-primary sm:text-[32px]">
+                Marca los ramos que ya diste
+              </h2>
+              <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-text-secondary sm:text-base">
+                Para que tu malla refleje tu avance real, marca los ramos que ya cursaste. No
+                tienes que hacerlo uno por uno: se van marcando hacia atrás según la malla.
+              </p>
+            </div>
+          </div>
 
           <div className="mt-6 rounded-card border border-border bg-surface p-4 sm:p-5">
             <CascadeDemo />

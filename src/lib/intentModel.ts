@@ -1,7 +1,7 @@
 import { featurize } from './intentFeatures';
 
 /**
- * Inferencia del clasificador de intención de Export (el modelo entrenado en
+ * Inferencia del clasificador de intención de Pisti (el modelo entrenado en
  * ml/train-intent.ts). Carga los pesos de forma diferida —así no engordan el
  * bundle inicial— y predice la intención con su confianza. Es determinístico:
  * el mismo featurizado que en el entrenamiento.
