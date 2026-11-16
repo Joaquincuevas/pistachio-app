@@ -131,6 +131,10 @@ const SCHEMA_STATEMENTS = [
   )`,
   // Menciones: un plan de mención referencia su plan base (NULL = plan base).
   `ALTER TABLE plans ADD COLUMN IF NOT EXISTS mention_of TEXT`,
+  // Nombre de la especialidad según la versión del plan (p. ej. ICA: Ambiental en PE 2022,
+  // Química en PE 2025). NULL = el nombre de la especialidad.
+  `ALTER TABLE plans ADD COLUMN IF NOT EXISTS specialty_name TEXT`,
+  `ALTER TABLE plans ADD COLUMN IF NOT EXISTS specialty_full_name TEXT`,
   `CREATE TABLE IF NOT EXISTS courses (
     id            TEXT PRIMARY KEY,
     name          TEXT NOT NULL,
@@ -195,7 +199,14 @@ interface Catalog {
     fullName: string;
     icon: string;
     tagline: string;
-    plans: { id: string; name: string; mentionOf?: string | null; courses: CatalogCourse[] }[];
+    plans: {
+      id: string;
+      name: string;
+      mentionOf?: string | null;
+      specialtyName?: string | null;
+      specialtyFullName?: string | null;
+      courses: CatalogCourse[];
+    }[];
   }[];
 }
 
@@ -220,7 +231,15 @@ async function seedCatalog(): Promise<void> {
   data.specialties.forEach((spec, si) => {
     specRows.push([spec.id, spec.name, spec.fullName, spec.icon, spec.tagline, si]);
     spec.plans.forEach((plan, pi) => {
-      planRows.push([plan.id, spec.id, plan.name, pi, plan.mentionOf ?? null]);
+      planRows.push([
+        plan.id,
+        spec.id,
+        plan.name,
+        pi,
+        plan.mentionOf ?? null,
+        plan.specialtyName ?? null,
+        plan.specialtyFullName ?? null,
+      ]);
       for (const course of plan.courses) {
         // Un ramo compartido entre planes usa la ficha del plan más reciente
         // (los planes vienen ordenados de más antiguo a más nuevo).
@@ -247,7 +266,11 @@ async function seedCatalog(): Promise<void> {
   });
 
   await insertRows('specialties', ['id', 'name', 'full_name', 'icon', 'tagline', 'sort'], specRows);
-  await insertRows('plans', ['id', 'specialty_id', 'name', 'sort', 'mention_of'], planRows);
+  await insertRows(
+    'plans',
+    ['id', 'specialty_id', 'name', 'sort', 'mention_of', 'specialty_name', 'specialty_full_name'],
+    planRows,
+  );
   await insertRows(
     'courses',
     ['id', 'name', 'is_slot', 'slot_category', 'hours_json', 'req_text', 'skills', 'offered'],

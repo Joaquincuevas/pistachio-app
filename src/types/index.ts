@@ -48,6 +48,9 @@ export interface Plan {
   name: string;
   /** Si es un plan de mención, el id del plan base al que pertenece; null/undefined si es base. */
   mentionOf?: string | null;
+  /** Nombre de la especialidad en esta versión del plan, si difiere (ICA: Ambiental en 2022). */
+  specialtyName?: string | null;
+  specialtyFullName?: string | null;
   courses: Course[];
 }
 

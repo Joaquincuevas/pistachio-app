@@ -457,8 +457,12 @@ app.get('/api/catalog', async (_req, res) => {
       id: string; name: string; full_name: string; icon: string; tagline: string;
     }>(`SELECT id, name, full_name, icon, tagline FROM specialties ORDER BY sort`);
 
-    const plans = await all<{ id: string; specialty_id: string; name: string; mention_of: string | null }>(
-      `SELECT id, specialty_id, name, mention_of FROM plans ORDER BY sort`,
+    const plans = await all<{
+      id: string; specialty_id: string; name: string; mention_of: string | null;
+      specialty_name: string | null; specialty_full_name: string | null;
+    }>(
+      `SELECT id, specialty_id, name, mention_of, specialty_name, specialty_full_name
+       FROM plans ORDER BY sort`,
     );
 
     const courseRows = await all<{
@@ -516,6 +520,8 @@ app.get('/api/catalog', async (_req, res) => {
             id: p.id,
             name: p.name,
             mentionOf: p.mention_of,
+            specialtyName: p.specialty_name,
+            specialtyFullName: p.specialty_full_name,
             courses: coursesByPlan.get(p.id) ?? [],
           })),
       })),

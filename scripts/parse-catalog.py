@@ -42,6 +42,13 @@ PLAN_VERSIONS = {
 }
 PLAN_KEY = sys.argv[sys.argv.index("--plan") + 1] if "--plan" in sys.argv else "pe2022"
 
+# Nombre de la especialidad en versiones antiguas del plan (por especialidad y versión).
+# ICA pasó de "Ambiental" (PE 2022) a "Química" (PE 2025).
+SPECIALTY_NAME_BY_VERSION = {
+    ("ica", "pe2022"): {"specialtyName": "Ambiental",
+                        "specialtyFullName": "Ingeniería Civil en Medio Ambiente"},
+}
+
 # Erratas de la hoja "Cursos" (título tal como viene → título corregido).
 NAME_FIXES = {
     "Inteligencia Artificicial Aplicada": "Inteligencia Artificial Aplicada",
@@ -61,8 +68,8 @@ SPECIALTIES = [
      "fullName": "Ingeniería Civil en Ciencias de la Computación", "icon": "cpu",
      "tagline": "Software, datos e inteligencia artificial para resolver problemas reales."},
     {"id": "ica", "sheet": "ICA Malla", "name": "Química",
-     "fullName": "Ingeniería Civil en Medio Ambiente", "icon": "flask",
-     "tagline": "Procesos sustentables para el cuidado del medio ambiente."},
+     "fullName": "Ingeniería Civil Química", "icon": "flask",
+     "tagline": "Procesos químicos y sustentables para la industria y el medio ambiente."},
 ]
 
 # Slots de la malla que no son cursos del catálogo (formación general / electivos).
@@ -506,6 +513,8 @@ def main():
             tit_menciones = parse_tit(xl, spec["tit"], cursos)
             plans.extend(build_mencion_plans(spec["id"], entries, tit_menciones, cursos,
                                              warnings, PLAN_KEY))
+        for p in plans:
+            p.update(SPECIALTY_NAME_BY_VERSION.get((spec["id"], PLAN_KEY), {}))
         kept = [p for p in existing.get(spec["id"], {}).get("plans", [])
                 if p["id"] != base_id and p.get("mentionOf") != base_id]
         out["specialties"].append({

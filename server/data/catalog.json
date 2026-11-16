@@ -33106,9 +33106,9 @@
     {
       "id": "ica",
       "name": "Química",
-      "fullName": "Ingeniería Civil en Medio Ambiente",
+      "fullName": "Ingeniería Civil Química",
       "icon": "flask",
-      "tagline": "Procesos sustentables para el cuidado del medio ambiente.",
+      "tagline": "Procesos químicos y sustentables para la industria y el medio ambiente.",
       "plans": [
         {
           "id": "ica-pe2022",
@@ -34883,7 +34883,9 @@
               "prerequisites": [],
               "creditReq": 282
             }
-          ]
+          ],
+          "specialtyName": "Ambiental",
+          "specialtyFullName": "Ingeniería Civil en Medio Ambiente"
         },
         {
           "id": "ica-pe2025",

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useCatalogStore } from '@/stores/useCatalogStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import type { Plan, Specialty } from '@/types';
@@ -16,8 +17,21 @@ export function useActivePlan(): ActivePlan {
   const specialties = useCatalogStore((s) => s.specialties);
   const status = useCatalogStore((s) => s.status);
 
-  const specialty = specialties.find((s) => s.id === specialtyId);
-  const plan = specialty?.plans.find((p) => p.id === planId);
+  const base = specialties.find((s) => s.id === specialtyId);
+  const plan = base?.plans.find((p) => p.id === planId);
+  // El nombre de la especialidad puede cambiar entre versiones del plan
+  // (ICA se llama Ambiental en PE 2022 y Química en PE 2025).
+  const specialty = useMemo(
+    () =>
+      base && plan && (plan.specialtyName || plan.specialtyFullName)
+        ? {
+            ...base,
+            name: plan.specialtyName ?? base.name,
+            fullName: plan.specialtyFullName ?? base.fullName,
+          }
+        : base,
+    [base, plan],
+  );
 
   return { specialty, plan, loading: status === 'idle' || status === 'loading' };
 }

@@ -190,7 +190,15 @@ export function SpecialtySelect() {
                           : 'border-border hover:border-accent/40',
                       )}
                     >
-                      <span className="text-sm font-medium text-text-primary">{plan.name}</span>
+                      <span className="text-sm font-medium text-text-primary">
+                        {plan.name}
+                        {plan.specialtyName && (
+                          <span className="font-normal text-text-secondary">
+                            {' '}
+                            · {plan.specialtyName}
+                          </span>
+                        )}
+                      </span>
                       <span className="flex items-center gap-2">
                         {isLatest && (
                           <span className="rounded-full bg-accent-light px-2.5 py-0.5 text-[11px] font-medium text-accent-hover">
