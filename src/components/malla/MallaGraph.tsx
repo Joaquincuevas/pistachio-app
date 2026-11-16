@@ -37,9 +37,12 @@ interface CourseNodeData {
   [key: string]: unknown;
 }
 
-const COL_WIDTH = 250;
-const ROW_HEIGHT = 96;
-const NODE_WIDTH = 208;
+// Tarjetas de alto fijo y con aire entre ellas: así las columnas quedan alineadas
+// y las aristas tienen espacio para pasar entre semestres.
+const COL_WIDTH = 292;
+const ROW_HEIGHT = 116;
+const NODE_WIDTH = 216;
+const NODE_HEIGHT = 84;
 
 const EMPTY_PROGRESS: Record<string, never> = {};
 
@@ -66,12 +69,12 @@ const CourseNode = memo(function CourseNode(props: NodeProps) {
   return (
     <div
       className={cn(
-        'relative rounded-xl border-2 border-l-[7px] p-3 pr-8 shadow-subtle transition-all duration-200',
+        'relative flex flex-col justify-between rounded-xl border-2 border-l-[7px] p-3 pr-8 shadow-subtle transition-all duration-200',
         statusClasses[status],
         course.isSlot && !done && !doing && 'border-dashed bg-surface',
         highlight !== 'none' && highlightClasses[highlight],
       )}
-      style={{ width: NODE_WIDTH, borderLeftColor: STATUS_COLORS[status] }}
+      style={{ width: NODE_WIDTH, height: NODE_HEIGHT, borderLeftColor: STATUS_COLORS[status] }}
     >
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} isConnectable={false} />
       {(done || doing) && (
@@ -95,7 +98,7 @@ const CourseNode = memo(function CourseNode(props: NodeProps) {
       >
         {course.name}
       </p>
-      <p className="mt-1 text-[10px] text-text-secondary">
+      <p className="truncate text-[10px] text-text-secondary">
         {course.isSlot ? course.slotCategory : course.id} · {course.credits} SCT
       </p>
       <Handle
@@ -118,9 +121,22 @@ const SemesterLabelNode = memo(function SemesterLabelNode(props: NodeProps) {
   );
 });
 
+/** Línea suave que separa la grilla de semestres de la fila de prácticas. */
+const DividerNode = memo(function DividerNode(props: NodeProps) {
+  const { width } = props.data as { width: number };
+  return (
+    <div
+      className="pointer-events-none h-px bg-gradient-to-r from-transparent via-border-strong to-transparent"
+      style={{ width }}
+      aria-hidden
+    />
+  );
+});
+
 const nodeTypes: NodeTypes = {
   course: CourseNode,
   semesterLabel: SemesterLabelNode,
+  divider: DividerNode,
 };
 
 /**
@@ -197,23 +213,37 @@ export function MallaGraph({ plan }: { plan: Plan }) {
       });
     });
 
-    // Prácticas: fila propia bajo la grilla, alineadas a su semestre.
+    // Prácticas: fila propia bajo la grilla, separada por una línea suave. Cada una
+    // va entre el semestre anterior y el suyo (Pre-Profesional entre 6 y 7,
+    // Profesional entre 10 y 11), porque se hacen en el receso entre ambos.
     if (practices.length > 0) {
-      const bottomY = maxRows * ROW_HEIGHT + 48;
+      const gridBottom = (maxRows - 1) * ROW_HEIGHT + NODE_HEIGHT;
+      const dividerY = gridBottom + 44;
+      const bottomY = dividerY + 64;
+      result.push({
+        id: 'practices-divider',
+        type: 'divider',
+        position: { x: -24, y: dividerY },
+        data: { width: (semesters.length - 1) * COL_WIDTH + NODE_WIDTH + 48 },
+        draggable: false,
+        selectable: false,
+      });
       result.push({
         id: 'practices-label',
         type: 'semesterLabel',
-        position: { x: 24, y: bottomY - 30 },
+        position: { x: 24, y: dividerY + 18 },
         data: { label: 'Prácticas' },
         draggable: false,
         selectable: false,
       });
       for (const course of practices) {
         const col = semesterToCol.get(course.semester) ?? semesters.length - 1;
+        const prevCol = semesterToCol.get(course.semester - 1);
+        const x = prevCol !== undefined ? ((prevCol + col) / 2) * COL_WIDTH : col * COL_WIDTH;
         result.push({
           id: course.id,
           type: 'course',
-          position: { x: col * COL_WIDTH, y: bottomY },
+          position: { x, y: bottomY },
           data: {
             course,
             status: statuses[course.id] ?? 'pending',
@@ -326,8 +356,9 @@ export function MallaGraph({ plan }: { plan: Plan }) {
         {isDesktop && <Controls showInteractive={false} />}
 
         {/* Leyenda de estados */}
-        <Panel position="top-left" className="!m-3 hidden sm:block">
-          <ul className="flex items-center gap-3 rounded-full border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
+        {/* Leyenda y ayuda apiladas a la izquierda para que nunca se tapen entre sí */}
+        <Panel position="top-left" className="!m-3 flex flex-col items-start gap-2">
+          <ul className="hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl sm:flex border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
             {(
               [
                 ['completed', 'Cursado'],
@@ -348,18 +379,36 @@ export function MallaGraph({ plan }: { plan: Plan }) {
                 {label}
               </li>
             ))}
+            <li className="ml-1 flex items-center gap-1.5 border-l border-border pl-3">
+              <svg width="22" height="6" aria-hidden>
+                <line x1="0" y1="3" x2="22" y2="3" stroke="#9C9C96" strokeWidth="2" />
+              </svg>
+              Requisito
+            </li>
+            <li className="flex items-center gap-1.5">
+              <svg width="22" height="6" aria-hidden>
+                <line
+                  x1="0"
+                  y1="3"
+                  x2="22"
+                  y2="3"
+                  stroke="#9C9C96"
+                  strokeWidth="2"
+                  strokeDasharray="5 3"
+                />
+              </svg>
+              Se puede cursar en paralelo
+            </li>
           </ul>
-        </Panel>
-
-        {/* Hint de uso cuando no hay selección */}
-        {!selectedId && (
-          <Panel position="top-center">
+          {/* Hint de uso cuando no hay selección */}
+          {!selectedId && (
             <div className="flex items-center gap-2 rounded-full border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
               <Info className="h-3.5 w-3.5" aria-hidden />
               Toca un ramo para ver sus dependencias
             </div>
-          </Panel>
-        )}
+          )}
+        </Panel>
+
 
         {/* Panel de acción del nodo seleccionado */}
         {selectedCourse && (
