@@ -11,12 +11,12 @@ const sizeClasses = {
   lg: 'h-14 w-14',
 };
 
-/** Marca de Pistachio: la semilla del pistacho emergiendo de su cáscara. */
+/** Marca de Pistachio: la cara de Pisti, la mascota, en una insignia redonda. */
 export function Logo({ size = 'md', className }: LogoProps) {
   return (
     <img
       src="/logo.png"
-      alt="Pistachio"
+      alt="Pisti, la mascota de Pistachio"
       className={cn('shrink-0 object-contain', sizeClasses[size], className)}
     />
   );

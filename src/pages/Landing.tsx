@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { GitBranch, Network, Nut, TrendingUp } from 'lucide-react';
+import { GitBranch, Network, TrendingUp } from 'lucide-react';
 import { CountdownTimer } from '@/components/landing/CountdownTimer';
 import { ReededGlassBackground } from '@/components/landing/ReededGlassBackground';
 import { Button } from '@/components/ui/Button';
@@ -40,7 +40,7 @@ export function Landing() {
   const specialties = useCatalogStore((s) => s.specialties);
   const show = useToastStore((s) => s.show);
 
-  // Easter egg: 3 taps seguidos en el 🥜 del footer muestran el dato botánico.
+  // Easter egg: 3 taps seguidos en Pisti (footer) muestran el dato botánico.
   const taps = useRef(0);
   const resetTimer = useRef<number | null>(null);
   const handleNutTap = () => {
@@ -189,10 +189,18 @@ export function Landing() {
           <button
             type="button"
             onClick={handleNutTap}
-            aria-label="Un pistacho misterioso"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-all hover:scale-110 hover:text-accent active:scale-95"
+            aria-label="Pisti, la mascota de Pistachio"
+            className="mb-1 rounded-2xl transition-transform duration-200 hover:-rotate-3 hover:scale-105 active:scale-95 motion-reduce:transform-none"
           >
-            <Nut className="h-5 w-5" aria-hidden />
+            <img
+              src="/pisti.png"
+              alt=""
+              width={383}
+              height={720}
+              loading="lazy"
+              draggable={false}
+              className="h-32 w-auto select-none drop-shadow-[0_10px_14px_rgba(25,50,35,0.18)] md:h-40"
+            />
           </button>
           <p className="text-xs text-text-secondary">
             Pistachio · Hecho para estudiantes de Ingeniería U. Andes
