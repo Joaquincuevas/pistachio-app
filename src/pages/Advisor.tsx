@@ -25,6 +25,7 @@ import { SUGGESTIONS, understand, type Intent, type NluResult } from '@/lib/nlu'
 import { loadIntentModel } from '@/lib/intentModel';
 import { buildAutoSchedule, DAYS_SHORT, minutesToHHMM, type Section } from '@/lib/schedule';
 import { buildNrcCsv, copyToClipboard, type ScheduleItem } from '@/lib/scheduleExport';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { cn, computeProgress } from '@/lib/utils';
 import type { Course } from '@/types';
 
@@ -37,6 +38,11 @@ interface Message {
   node: React.ReactNode;
   /** Consulta e intención que generaron esta respuesta (habilita el 👍/👎). */
   meta?: { query: string; intent: string };
+}
+
+/** Avatar de Pisti con fondo claro u oscuro según el tema activo. */
+function usePistiAvatar() {
+  return useThemeStore((s) => s.resolved) === 'dark' ? '/pisti-chat-dark.png' : '/pisti-chat.png';
 }
 
 /**
@@ -120,6 +126,7 @@ const prettyProfessor = (raw: string): string =>
     .join(' ');
 
 export function Advisor() {
+  const pistiAvatar = usePistiAvatar();
   const { plan, loading } = useActivePlan();
   const user = useAuthStore((s) => s.user);
   const progressMap = useCurriculumStore((s) => s.progress);
@@ -1050,7 +1057,7 @@ export function Advisor() {
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <img
-              src="/pisti-chat.png"
+              src={pistiAvatar}
               alt=""
               aria-hidden
               className="h-11 w-11 shrink-0 rounded-full border border-border object-cover"
@@ -1193,10 +1200,11 @@ export function Advisor() {
 
 /** Burbuja del asistente con avatar. */
 function BotBubble({ children }: { children: React.ReactNode }) {
+  const pistiAvatar = usePistiAvatar();
   return (
     <div className="flex gap-2.5">
       <img
-        src="/pisti-chat.png"
+        src={pistiAvatar}
         alt=""
         aria-hidden
         className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-border object-cover"
