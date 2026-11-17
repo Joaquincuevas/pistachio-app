@@ -126,7 +126,6 @@ const prettyProfessor = (raw: string): string =>
     .join(' ');
 
 export function Advisor() {
-  const pistiAvatar = usePistiAvatar();
   const { plan, loading } = useActivePlan();
   const user = useAuthStore((s) => s.user);
   const progressMap = useCurriculumStore((s) => s.progress);
@@ -1053,21 +1052,14 @@ export function Advisor() {
   return (
     <PageTransition className="flex h-full flex-col">
       {/* Encabezado */}
-      <div className="shrink-0 border-b border-border bg-card px-4 py-4 md:px-8">
+      {/* Sin avatar: Pisti ya aparece en el logo y en cada mensaje; aquí solo el contexto. */}
+      <div className="shrink-0 border-b border-border bg-card px-4 py-3 md:px-8 md:py-4">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <img
-              src={pistiAvatar}
-              alt=""
-              aria-hidden
-              className="h-11 w-11 shrink-0 rounded-full border border-border object-cover"
-            />
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight text-text-primary">Pisti</h1>
-              <p className="text-xs text-text-secondary">
-                {stats.completedCourses}/{stats.totalCourses} ramos · {credits} SCT
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold tracking-tight text-text-primary">Pisti</h1>
+            <p className="truncate text-xs text-text-secondary">
+              Tu asistente · {stats.completedCourses}/{stats.totalCourses} ramos · {credits} SCT
+            </p>
           </div>
           {/* Selector de semestre */}
           <div role="group" aria-label="Semestre" className="flex rounded-btn border border-border bg-card p-1">
