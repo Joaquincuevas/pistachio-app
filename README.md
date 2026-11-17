@@ -83,6 +83,15 @@ Sin estas variables el flujo sigue funcionando, pero en vez de enviar el correo 
 servidor **imprime el enlace de recuperación en la consola** (útil en desarrollo).
 El token es de un solo uso y expira en 1 hora.
 
+### Feedback anónimo
+
+En **Perfil → Configuración → Enviar feedback** los alumnos escriben un título y un
+mensaje. Llega por correo usando la misma configuración SMTP, **sin nombre, correo ni
+id** de quien lo envía (la sesión solo se usa para frenar spam: máx. 8 mensajes cada
+10 minutos por cuenta).
+
+- `FEEDBACK_TO` = correo que recibe el feedback (si falta, se usa `SMTP_USER`).
+
 ### Alternativa: Railway / Render / Fly (un solo proceso)
 
 También corre como proceso Node con `npm start` (Express sirve API + estáticos). Usa `railway.json` (incluido) y la misma `DATABASE_URL` de Supabase, o cualquier Postgres. Healthcheck en `/api/health`.

@@ -19,7 +19,7 @@ import {
   verifyPassword,
   type SessionUser,
 } from './auth.js';
-import { sendPasswordResetEmail } from './mailer.js';
+import { sendFeedbackEmail, sendPasswordResetEmail } from './mailer.js';
 import { generateTotpSecret, otpauthUri, verifyTotp } from './totp.js';
 import { clientIp, securityHeaders } from './security.js';
 
@@ -451,6 +451,37 @@ app.delete('/api/me', requireAuth, async (req: AuthedRequest, res) => {
   await run(`DELETE FROM users WHERE id = ?`, [user.id]);
   res.clearCookie(COOKIE, { path: '/' });
   res.status(204).end();
+});
+
+// ─── Feedback anónimo ───────────────────────────────────────────
+// Requiere sesión solo para frenar spam; el correo NO lleva datos de quien escribe.
+
+const feedbackSchema = z.object({
+  title: z.string().trim().min(3, 'Escribe un título').max(100, 'Máximo 100 caracteres'),
+  message: z.string().trim().min(10, 'Cuéntanos un poco más').max(2000, 'Máximo 2000 caracteres'),
+});
+
+app.post('/api/feedback', requireAuth, async (req: AuthedRequest, res) => {
+  const parsed = feedbackSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Datos inválidos' });
+    return;
+  }
+  // Máx. 8 mensajes cada 10 minutos por cuenta (mismo limitador que el login).
+  const key = `feedback:${req.sessionUser!.id}`;
+  if (!loginAllowed(key)) {
+    res.status(429).json({ error: 'Enviaste varios mensajes seguidos. Intenta en unos minutos.' });
+    return;
+  }
+  registerFailedLogin(key);
+  try {
+    await sendFeedbackEmail(parsed.data.title, parsed.data.message);
+  } catch (err) {
+    console.error('[mailer] no se pudo enviar el feedback', err);
+    res.status(502).json({ error: 'No se pudo enviar. Intenta de nuevo más tarde.' });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 // ─── Catálogo (público) ─────────────────────────────────────────

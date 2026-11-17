@@ -72,3 +72,41 @@ export async function sendPasswordResetEmail(to: string, link: string): Promise<
       </div>`,
   });
 }
+
+/** Escapa texto del usuario antes de meterlo en el HTML del correo. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Feedback anónimo de los alumnos. Se envía a FEEDBACK_TO (o, si falta, a la
+ * misma casilla SMTP_USER). Nunca incluye nombre, correo ni id de quien escribe.
+ */
+export async function sendFeedbackEmail(title: string, message: string): Promise<void> {
+  const to = process.env.FEEDBACK_TO ?? process.env.SMTP_USER;
+  const tx = getTransporter();
+  if (!tx || !to) {
+    console.log(`[mailer] (sin SMTP) feedback anónimo:\n  ${title}\n  ${message}`);
+    return;
+  }
+  const from = process.env.SMTP_FROM ?? `Pistachio <${process.env.SMTP_USER}>`;
+  const date = new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' });
+  await tx.sendMail({
+    from,
+    to,
+    subject: `Feedback Pistachio: ${title.replace(/[\r\n]+/g, ' ')}`,
+    text: `${title}\n\n${message}\n\n— Enviado de forma anónima desde Pistachio (${date})`,
+    html: `
+      <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#1c1c1a">
+        <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4A7C59;margin:0 0 8px">Feedback anónimo</p>
+        <h2 style="font-size:18px;margin:0 0 14px">${escapeHtml(title)}</h2>
+        <p style="font-size:14px;line-height:1.6;color:#33332f;white-space:pre-wrap;margin:0">${escapeHtml(message)}</p>
+        <p style="font-size:12px;color:#9c9c96;margin-top:24px">Enviado desde Pistachio · ${date}</p>
+      </div>`,
+  });
+}

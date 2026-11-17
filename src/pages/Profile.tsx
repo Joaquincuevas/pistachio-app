@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Clock, GraduationCap, LogOut, Moon, RefreshCw, Sun } from 'lucide-react';
 import { AccountSecurity } from '@/components/account/AccountSecurity';
 import { ExportFeedback } from '@/components/profile/ExportFeedback';
+import { FeedbackRow } from '@/components/profile/FeedbackForm';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -112,6 +113,7 @@ export function Profile() {
           </div>
           <ThemeSwitch />
         </div>
+        <FeedbackRow />
       </Card>
 
       <Card className="mt-3 p-6">

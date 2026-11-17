@@ -116,6 +116,12 @@ export const api = {
       body: JSON.stringify({ confirm }),
     }),
 
+  sendFeedback: (title: string, message: string) =>
+    request<{ ok: boolean }>('/api/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ title, message }),
+    }),
+
   catalog: () => request<{ specialties: Specialty[] }>('/api/catalog'),
 
   setPlan: (specialtyId: string, planId: string) =>
