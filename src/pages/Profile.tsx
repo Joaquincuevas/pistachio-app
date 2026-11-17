@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Clock, GraduationCap, LogOut, RefreshCw } from 'lucide-react';
+import { BookOpen, Clock, GraduationCap, LogOut, Moon, RefreshCw, Sun } from 'lucide-react';
 import { AccountSecurity } from '@/components/account/AccountSecurity';
 import { ExportFeedback } from '@/components/profile/ExportFeedback';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,8 @@ import { PageTransition } from '@/components/ui/PageTransition';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
-import { ThemeSelector } from '@/components/ui/ThemeToggle';
+import { ThemeSwitch } from '@/components/ui/ThemeToggle';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { useActivePlan } from '@/hooks/useActivePlan';
 import { computeProgress } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -18,6 +19,7 @@ import { useToastStore } from '@/stores/useToastStore';
 
 export function Profile() {
   const user = useAuthStore((s) => s.user);
+  const resolvedTheme = useThemeStore((s) => s.resolved);
   const { specialty, plan, loading } = useActivePlan();
   const progressMap = useCurriculumStore((s) => s.progress);
   const show = useToastStore((s) => s.show);
@@ -70,34 +72,45 @@ export function Profile() {
         </div>
       </Card>
 
-      {/* Especialidad y plan */}
-      <Card className="mt-3 flex items-center gap-4 p-5">
-        <span
-          aria-hidden
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-btn bg-accent-light"
-        >
-          <SpecialtyIcon icon={specialty.icon} className="h-6 w-6 text-accent" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-text-secondary">Especialidad</p>
-          <h2 className="truncate text-base font-semibold text-text-primary">{specialty.name}</h2>
-          <p className="truncate text-xs text-text-secondary">{plan.name}</p>
+      {/* Configuración: especialidad y apariencia en una sola tarjeta compacta */}
+      <h2 className="mb-3 mt-8 text-xs font-medium uppercase tracking-[0.08em] text-text-tertiary">
+        Configuración
+      </h2>
+      <Card className="divide-y divide-border">
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <span
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-accent-light"
+          >
+            <SpecialtyIcon icon={specialty.icon} className="h-5 w-5 text-accent" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-text-primary">{specialty.name}</p>
+            <p className="truncate text-xs text-text-secondary">{plan.name}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/specialty')}>
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+            Cambiar
+          </Button>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => navigate('/specialty')}>
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-          Cambiar
-        </Button>
-      </Card>
-
-      {/* Estadísticas */}
-      {/* Apariencia: claro / oscuro / sistema */}
-      <Card className="mt-3 p-5">
-        <h3 className="text-sm font-semibold text-text-primary">Apariencia</h3>
-        <p className="mt-0.5 text-xs text-text-secondary">
-          «Sistema» sigue el modo de tu teléfono o computador.
-        </p>
-        <div className="mt-3">
-          <ThemeSelector />
+        <div className="flex items-center gap-3 px-4 py-3">
+          <span
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-btn bg-accent-light"
+          >
+            {resolvedTheme === 'dark' ? (
+              <Moon className="h-5 w-5 text-accent" />
+            ) : (
+              <Sun className="h-5 w-5 text-accent" />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-text-primary">Apariencia</p>
+            <p className="text-xs text-text-secondary">
+              {resolvedTheme === 'dark' ? 'Modo oscuro' : 'Modo claro'}
+            </p>
+          </div>
+          <ThemeSwitch />
         </div>
       </Card>
 

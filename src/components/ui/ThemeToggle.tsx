@@ -1,6 +1,6 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useThemeStore, type ThemeMode } from '@/stores/useThemeStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 
 /** Botón redondo que alterna claro ↔ oscuro (landing y headers). */
 export function ThemeToggleButton({ className }: { className?: string }) {
@@ -23,40 +23,42 @@ export function ThemeToggleButton({ className }: { className?: string }) {
   );
 }
 
-const OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { value: 'light', label: 'Claro', icon: Sun },
-  { value: 'dark', label: 'Oscuro', icon: Moon },
-  { value: 'system', label: 'Sistema', icon: Monitor },
-];
-
-/** Selector de 3 opciones para Perfil → Apariencia. Ocupa todo el ancho en el teléfono. */
-export function ThemeSelector() {
-  const mode = useThemeStore((s) => s.mode);
+/**
+ * Interruptor compacto sol / luna para Configuración.
+ * Mientras el usuario no elija, sigue el modo del sistema; al tocar, fija el elegido.
+ */
+export function ThemeSwitch() {
+  const resolved = useThemeStore((s) => s.resolved);
   const setMode = useThemeStore((s) => s.setMode);
+  const options = [
+    { value: 'light' as const, label: 'Modo claro', icon: Sun },
+    { value: 'dark' as const, label: 'Modo oscuro', icon: Moon },
+  ];
   return (
     <div
       role="radiogroup"
       aria-label="Tema de la app"
-      className="grid grid-cols-3 gap-1 rounded-btn border border-border bg-surface p-1"
+      className="flex shrink-0 rounded-full border border-border bg-surface p-1"
     >
-      {OPTIONS.map(({ value, label, icon: Icon }) => {
-        const active = mode === value;
+      {options.map(({ value, label, icon: Icon }) => {
+        const active = resolved === value;
         return (
           <button
             key={value}
             type="button"
             role="radio"
             aria-checked={active}
+            aria-label={label}
+            title={label}
             onClick={() => setMode(value)}
             className={cn(
-              'flex min-h-[44px] items-center justify-center gap-2 rounded-[9px] px-2 text-sm font-medium transition-colors',
+              'flex h-9 w-9 items-center justify-center rounded-full transition-all',
               active
                 ? 'bg-card text-text-primary shadow-subtle ring-1 ring-border-strong'
-                : 'text-text-secondary hover:text-text-primary',
+                : 'text-text-tertiary hover:text-text-primary',
             )}
           >
             <Icon className="h-4 w-4" aria-hidden />
-            {label}
           </button>
         );
       })}
