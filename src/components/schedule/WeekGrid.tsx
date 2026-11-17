@@ -81,7 +81,7 @@ export function WeekGrid({ items }: { items: GridItem[] }) {
               {label}
             </div>
             <div
-              className="relative rounded-lg border border-border bg-white"
+              className="relative rounded-lg border border-border bg-card"
               style={{ height }}
             >
               {HOURS.map((h) => (
@@ -105,9 +105,9 @@ export function WeekGrid({ items }: { items: GridItem[] }) {
                       style={{
                         top,
                         height: h,
-                        background: b.conflict ? '#FBEDEB' : c.bg,
-                        color: b.conflict ? '#A6291B' : c.tx,
-                        border: `1px solid ${b.conflict ? '#D14434' : c.bd}`,
+                        background: b.conflict ? 'rgb(var(--c-danger-light))' : c.bg,
+                        color: b.conflict ? 'rgb(var(--c-danger))' : c.tx,
+                        border: `1px solid ${b.conflict ? 'rgb(var(--c-danger))' : c.bd}`,
                       }}
                       title={`${b.short} · ${meetingTypeLabel(b.type)} · ${minutesToHHMM(b.start)}-${minutesToHHMM(b.end)}${b.room ? ` · ${b.room}` : ''}`}
                     >

@@ -39,7 +39,7 @@ export const CourseCard = memo(function CourseCard({
           onOpen(course.id);
         }
       }}
-      className="press-target min-h-[44px] cursor-pointer touch-pan-y rounded-card border border-border border-l-4 bg-white p-4 shadow-subtle transition-all duration-150 hover:border-accent/40 hover:shadow-raised active:scale-[0.99]"
+      className="press-target min-h-[44px] cursor-pointer touch-pan-y rounded-card border border-border border-l-4 bg-card p-4 shadow-subtle transition-all duration-150 hover:border-accent/40 hover:shadow-raised active:scale-[0.99]"
       style={{ borderLeftColor: STATUS_COLORS[status] }}
       {...pressHandlers}
     >

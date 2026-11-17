@@ -40,7 +40,7 @@ export function ScheduleUpload({ compact = false }: { compact?: boolean }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-btn border border-border bg-card px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Upload className="h-4 w-4" aria-hidden />}
           {loading ? 'Leyendo…' : 'Subir horario'}
@@ -50,7 +50,7 @@ export function ScheduleUpload({ compact = false }: { compact?: boolean }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={loading}
-          className="flex w-full flex-col items-center gap-3 rounded-card border border-dashed border-border-strong bg-white px-6 py-10 text-center transition-colors hover:border-accent/50 disabled:opacity-60"
+          className="flex w-full flex-col items-center gap-3 rounded-card border border-dashed border-border-strong bg-card px-6 py-10 text-center transition-colors hover:border-accent/50 disabled:opacity-60"
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-btn bg-accent-light">
             {loading ? (

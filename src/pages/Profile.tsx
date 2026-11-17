@@ -9,6 +9,7 @@ import { PageTransition } from '@/components/ui/PageTransition';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
+import { ThemeSelector } from '@/components/ui/ThemeToggle';
 import { useActivePlan } from '@/hooks/useActivePlan';
 import { computeProgress } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -89,6 +90,17 @@ export function Profile() {
       </Card>
 
       {/* Estadísticas */}
+      {/* Apariencia: claro / oscuro / sistema */}
+      <Card className="mt-3 p-5">
+        <h3 className="text-sm font-semibold text-text-primary">Apariencia</h3>
+        <p className="mt-0.5 text-xs text-text-secondary">
+          «Sistema» sigue el modo de tu teléfono o computador.
+        </p>
+        <div className="mt-3">
+          <ThemeSelector />
+        </div>
+      </Card>
+
       <Card className="mt-3 p-6">
         <h2 className="text-sm font-semibold text-text-primary">Tu avance</h2>
         <div className="mt-5 flex flex-col items-center gap-6 sm:flex-row sm:justify-around">

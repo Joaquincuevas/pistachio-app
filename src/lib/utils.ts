@@ -14,9 +14,9 @@ export const STATUS_LABELS: Record<CourseStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<CourseStatus, string> = {
-  completed: '#6BA876',
-  'in-progress': '#4A90E2',
-  pending: '#C9C9C6',
+  completed: 'rgb(var(--c-status-completed))',
+  'in-progress': 'rgb(var(--c-status-progress))',
+  pending: 'rgb(var(--c-status-pending))',
 };
 
 export function computeProgress(

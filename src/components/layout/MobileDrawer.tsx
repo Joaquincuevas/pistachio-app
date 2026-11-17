@@ -3,6 +3,7 @@ import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LogOut, X } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { ThemeToggleButton } from '@/components/ui/ThemeToggle';
 import { NAV_LINKS } from './navLinks';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -51,7 +52,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
           <motion.button
             type="button"
             aria-label="Cerrar menú"
-            className="absolute inset-0 bg-text-primary/30"
+            className="absolute inset-0 bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -63,7 +64,7 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
             role="dialog"
             aria-modal="true"
             aria-label="Menú de navegación"
-            className="absolute inset-y-0 left-0 flex w-[78vw] max-w-[300px] flex-col bg-white pt-safe shadow-sheet"
+            className="absolute inset-y-0 left-0 flex w-[78vw] max-w-[300px] flex-col bg-card pt-safe shadow-sheet"
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
@@ -80,14 +81,18 @@ export function MobileDrawer({ open, onClose }: MobileDrawerProps) {
                   Pistachio
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar menú"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
-              >
-                <X className="h-4 w-4" aria-hidden />
-              </button>
+              <div className="-mr-2 flex items-center">
+                {/* En el teléfono el modo oscuro queda a un toque, sin ir a Perfil */}
+                <ThemeToggleButton />
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Cerrar menú"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
+                >
+                  <X className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
             </div>
 
             <nav aria-label="Navegación principal" className="flex flex-1 flex-col gap-1 px-3">

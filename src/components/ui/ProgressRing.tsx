@@ -26,7 +26,7 @@ export function ProgressRing({ value, size = 148, strokeWidth = 11 }: ProgressRi
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#ECECEA"
+          style={{ stroke: "rgb(var(--c-border))" }}
           strokeWidth={strokeWidth}
         />
         <motion.circle
@@ -34,7 +34,7 @@ export function ProgressRing({ value, size = 148, strokeWidth = 11 }: ProgressRi
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#4A7C59"
+          style={{ stroke: "rgb(var(--c-accent))" }}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}

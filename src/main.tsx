@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
+// Registra el tema (claro/oscuro/sistema) y escucha los cambios del sistema.
+import './stores/useThemeStore';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

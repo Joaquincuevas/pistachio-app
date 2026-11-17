@@ -14,12 +14,12 @@ const statusOptions: { value: CourseStatus; icon: typeof Circle; activeClass: st
   {
     value: 'completed',
     icon: CheckCircle2,
-    activeClass: 'bg-status-completed/15 border-status-completed text-[#3F7A4C]',
+    activeClass: 'bg-status-completed/15 border-status-completed text-status-completed-text',
   },
   {
     value: 'in-progress',
     icon: Clock,
-    activeClass: 'bg-status-progress/15 border-status-progress text-[#2D6FBF]',
+    activeClass: 'bg-status-progress/15 border-status-progress text-status-progress-text',
   },
   {
     value: 'pending',
@@ -196,7 +196,7 @@ function CourseDetailContent({ course, plan }: { course: Course; plan: Plan }) {
                 'flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-btn border px-2 py-2.5 text-xs font-medium transition-all',
                 status === value
                   ? activeClass
-                  : 'border-border bg-white text-text-secondary hover:bg-surface',
+                  : 'border-border bg-card text-text-secondary hover:bg-surface',
               )}
             >
               <Icon className="h-4 w-4" aria-hidden />

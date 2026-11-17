@@ -76,7 +76,7 @@ export function ExportFeedback() {
         <button
           type="button"
           onClick={handleClear}
-          className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-danger/40 hover:text-danger"
+          className="inline-flex items-center gap-2 rounded-btn border border-border bg-card px-3.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-danger/40 hover:text-danger"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
           Borrar

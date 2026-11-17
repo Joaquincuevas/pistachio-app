@@ -33,7 +33,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
           <motion.button
             type="button"
             aria-label="Cerrar"
-            className="absolute inset-0 cursor-default bg-text-primary/30"
+            className="absolute inset-0 cursor-default bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             aria-label={title}
             tabIndex={-1}
             className={cn(
-              'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-white shadow-modal outline-none',
+              'relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-card shadow-modal outline-none',
               className,
             )}
             initial={{ opacity: 0, y: 16, scale: 0.98 }}

@@ -28,7 +28,7 @@ function FilterChip({
         'h-9 shrink-0 rounded-full border px-3.5 text-xs font-medium transition-colors',
         active
           ? 'border-accent bg-accent-light text-accent-hover'
-          : 'border-border bg-white text-text-secondary hover:border-accent/40 hover:text-text-primary',
+          : 'border-border bg-card text-text-secondary hover:border-accent/40 hover:text-text-primary',
       )}
     >
       {children}
@@ -115,7 +115,7 @@ export function Search() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Nombre o código, ej: Cálculo o ING1202"
           aria-label="Buscar ramos por nombre o código"
-          className="h-12 w-full rounded-input border border-border bg-white pl-10 pr-10 text-base text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="h-12 w-full rounded-input border border-border bg-card pl-10 pr-10 text-base text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
         />
         {query && (
           <button

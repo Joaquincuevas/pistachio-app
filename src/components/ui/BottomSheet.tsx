@@ -33,7 +33,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
           <motion.button
             type="button"
             aria-label="Cerrar"
-            className="absolute inset-0 bg-text-primary/30"
+            className="absolute inset-0 bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -45,7 +45,7 @@ export function BottomSheet({ open, onClose, title, children }: BottomSheetProps
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-[20px] bg-white pb-safe shadow-sheet"
+            className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-[20px] bg-card pb-safe shadow-sheet"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

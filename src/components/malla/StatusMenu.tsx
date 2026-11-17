@@ -71,7 +71,7 @@ export function StatusMenu() {
           <motion.button
             type="button"
             aria-label="Cerrar menú"
-            className={cn('absolute inset-0', !isDesktop && 'bg-text-primary/25')}
+            className={cn('absolute inset-0', !isDesktop && 'bg-black/40')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -81,7 +81,7 @@ export function StatusMenu() {
           />
           {isDesktop ? (
             <motion.div
-              className="absolute w-56 rounded-card border border-border bg-white p-1.5 shadow-modal"
+              className="absolute w-56 rounded-card border border-border bg-card p-1.5 shadow-modal"
               style={{
                 left: Math.min(menu.x, window.innerWidth - MENU_WIDTH - 16),
                 top: Math.min(menu.y, window.innerHeight - 220),
@@ -98,7 +98,7 @@ export function StatusMenu() {
             </motion.div>
           ) : (
             <motion.div
-              className="absolute inset-x-3 bottom-3 rounded-card border border-border bg-white p-2 pb-safe shadow-modal"
+              className="absolute inset-x-3 bottom-3 rounded-card border border-border bg-card p-2 pb-safe shadow-modal"
               initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 24 }}

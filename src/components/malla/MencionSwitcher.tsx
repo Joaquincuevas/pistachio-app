@@ -52,7 +52,7 @@ export function MencionSwitcher() {
           onChange={onChange}
           disabled={saving}
           aria-label="Cambiar mención"
-          className="appearance-none rounded-btn border border-border bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-text-primary shadow-subtle transition-colors hover:border-accent/40 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-60"
+          className="appearance-none rounded-btn border border-border bg-card py-1.5 pl-3 pr-8 text-xs font-medium text-text-primary shadow-subtle transition-colors hover:border-accent/40 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-60"
         >
           {options.map((opt) => (
             <option key={opt.id} value={opt.id}>

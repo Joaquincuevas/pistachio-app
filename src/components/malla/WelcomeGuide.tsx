@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { cn } from '@/lib/utils';
+import { cn, STATUS_COLORS } from '@/lib/utils';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 
@@ -79,11 +79,11 @@ function CascadeDemo() {
               className={cn(
                 'relative min-w-0 flex-1 rounded-xl border-2 border-l-[7px] px-3 py-3 pr-8 text-xs font-semibold leading-snug transition-colors duration-300',
                 done
-                  ? 'border-status-completed bg-[#DDF0E1] text-text-primary'
-                  : 'border-border bg-white text-text-secondary',
+                  ? 'border-status-completed bg-status-completed-bg text-text-primary'
+                  : 'border-border bg-card text-text-secondary',
                 tapped && 'ring-2 ring-accent',
               )}
-              style={done ? { borderLeftColor: '#6BA876' } : { borderLeftColor: '#C9C9C6' }}
+              style={done ? { borderLeftColor: STATUS_COLORS.completed } : { borderLeftColor: STATUS_COLORS.pending }}
             >
               {name}
               <span
@@ -216,7 +216,7 @@ export function WelcomeGuide() {
         </div>
 
         {/* Botón siempre visible, aunque el contenido haga scroll en pantallas chicas */}
-        <div className="sticky bottom-0 border-t border-border bg-white/95 px-6 py-4 backdrop-blur sm:px-9">
+        <div className="sticky bottom-0 border-t border-border bg-card/95 px-6 py-4 backdrop-blur sm:px-9">
           <Button size="lg" fullWidth className="h-14 text-base" onClick={close}>
             Comenzar
           </Button>

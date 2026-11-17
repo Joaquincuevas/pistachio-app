@@ -11,7 +11,7 @@ export function Header() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <header className="border-b border-border bg-white pt-safe md:hidden">
+    <header className="border-b border-border bg-card pt-safe md:hidden">
       <div className="flex h-14 items-center justify-between px-3">
         <div className="flex items-center gap-1">
           <button

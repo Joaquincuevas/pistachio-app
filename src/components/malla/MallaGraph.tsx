@@ -26,6 +26,7 @@ import {
 } from '@/lib/utils';
 import { useCurriculumStore } from '@/stores/useCurriculumStore';
 import { useIsDesktop } from '@/hooks/useMediaQuery';
+import { useThemeStore } from '@/stores/useThemeStore';
 import type { Course, CourseStatus, Plan } from '@/types';
 
 type Highlight = 'none' | 'selected' | 'prereq' | 'unlocks' | 'dimmed';
@@ -56,9 +57,9 @@ const highlightClasses: Record<Highlight, string> = {
 
 /** Relleno y borde por estado: legibles incluso con el grafo muy alejado. */
 const statusClasses: Record<CourseStatus, string> = {
-  completed: 'border-status-completed bg-[#DDF0E1]',
-  'in-progress': 'border-status-progress bg-[#DDEBFB]',
-  pending: 'border-border bg-white',
+  completed: 'border-status-completed bg-status-completed-bg',
+  'in-progress': 'border-status-progress bg-status-progress-bg',
+  pending: 'border-border bg-card',
 };
 
 /** Nodo del grafo: card del ramo con relleno, borde e icono según su estado. */
@@ -151,6 +152,8 @@ export function MallaGraph({ plan }: { plan: Plan }) {
   const selectCourse = useCurriculumStore((s) => s.selectCourse);
   const openStatusMenu = useCurriculumStore((s) => s.openStatusMenu);
   const isDesktop = useIsDesktop();
+  // Controles, minimapa y atribución de React Flow siguen el tema de la app.
+  const colorMode = useThemeStore((s) => s.resolved);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const statuses = progressMap[plan.id] ?? EMPTY_PROGRESS;
@@ -268,7 +271,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
             ? STATUS_COLORS.completed
             : sourceStatus === 'in-progress'
               ? STATUS_COLORS['in-progress']
-              : '#B9B9B5';
+              : 'rgb(var(--c-graph-edge))';
         let opacity = sourceStatus === 'completed' || sourceStatus === 'in-progress' ? 0.9 : 0.7;
         let animated = false;
         let width = sourceStatus === 'completed' || sourceStatus === 'in-progress' ? 2 : 1.5;
@@ -280,11 +283,11 @@ export function MallaGraph({ plan }: { plan: Plan }) {
             (prereq.id === selectedId || unlockSet.has(prereq.id)) && unlockSet.has(course.id);
 
           if (backward) {
-            stroke = '#6BA876';
+            stroke = STATUS_COLORS.completed;
             animated = true;
             width = 2;
           } else if (forward) {
-            stroke = '#4A90E2';
+            stroke = STATUS_COLORS['in-progress'];
             animated = true;
             width = 2;
           } else {
@@ -341,6 +344,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        colorMode={colorMode}
         fitView
         fitViewOptions={{ padding: 0.04 }}
         minZoom={0.2}
@@ -352,13 +356,13 @@ export function MallaGraph({ plan }: { plan: Plan }) {
         onPaneClick={() => setSelectedId(null)}
         proOptions={{ hideAttribution: false }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={26} size={1.4} color="#E3E3E0" />
+        <Background variant={BackgroundVariant.Dots} gap={26} size={1.4} color="rgb(var(--c-graph-dots))" />
         {isDesktop && <Controls showInteractive={false} />}
 
         {/* Leyenda de estados */}
         {/* Leyenda y ayuda apiladas a la izquierda para que nunca se tapen entre sí */}
         <Panel position="top-left" className="!m-3 flex flex-col items-start gap-2">
-          <ul className="hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl sm:flex border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
+          <ul className="hidden flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl sm:flex border border-border bg-card/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
             {(
               [
                 ['completed', 'Cursado'],
@@ -372,7 +376,11 @@ export function MallaGraph({ plan }: { plan: Plan }) {
                   style={{
                     borderColor: STATUS_COLORS[key],
                     backgroundColor:
-                      key === 'completed' ? '#DDF0E1' : key === 'in-progress' ? '#DDEBFB' : '#fff',
+                      key === 'completed'
+                        ? 'rgb(var(--c-status-completed-bg))'
+                        : key === 'in-progress'
+                          ? 'rgb(var(--c-status-progress-bg))'
+                          : 'rgb(var(--c-card))',
                   }}
                   aria-hidden
                 />
@@ -381,7 +389,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
             ))}
             <li className="ml-1 flex items-center gap-1.5 border-l border-border pl-3">
               <svg width="22" height="6" aria-hidden>
-                <line x1="0" y1="3" x2="22" y2="3" stroke="#9C9C96" strokeWidth="2" />
+                <line x1="0" y1="3" x2="22" y2="3" stroke="currentColor" strokeWidth="2" />
               </svg>
               Requisito
             </li>
@@ -392,7 +400,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
                   y1="3"
                   x2="22"
                   y2="3"
-                  stroke="#9C9C96"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeDasharray="5 3"
                 />
@@ -402,7 +410,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
           </ul>
           {/* Hint de uso cuando no hay selección */}
           {!selectedId && (
-            <div className="flex items-center gap-2 rounded-full border border-border bg-white/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-card/90 px-3.5 py-1.5 text-xs text-text-secondary shadow-subtle backdrop-blur">
               <Info className="h-3.5 w-3.5" aria-hidden />
               Toca un ramo para ver sus dependencias
             </div>
@@ -413,7 +421,7 @@ export function MallaGraph({ plan }: { plan: Plan }) {
         {/* Panel de acción del nodo seleccionado */}
         {selectedCourse && (
           <Panel position="bottom-center" className="!m-3 w-[calc(100%-24px)] max-w-md">
-            <div className="rounded-card border border-border bg-white p-3.5 shadow-modal">
+            <div className="rounded-card border border-border bg-card p-3.5 shadow-modal">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text-primary">

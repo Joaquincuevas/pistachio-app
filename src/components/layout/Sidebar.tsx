@@ -19,7 +19,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-white md:flex">
+    <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card md:flex">
       <div className="flex items-center gap-2.5 px-5 py-6">
         <Logo size="sm" />
         <span className="font-display text-2xl font-semibold tracking-tight">Pistachio</span>

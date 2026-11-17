@@ -234,7 +234,7 @@ export function Horario() {
       </div>
 
       {/* Resumen + acciones */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-white px-4 py-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-border bg-card px-4 py-3">
         <div className="text-sm">
           <span className="font-semibold text-text-primary">{selected.length} ramos</span>
           <span className="text-text-secondary"> · {totalSct} SCT</span>
@@ -270,7 +270,7 @@ export function Horario() {
           <button
             type="button"
             onClick={copyAllNrcs}
-            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-card px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
           >
             <Copy className="h-3.5 w-3.5" aria-hidden />
             Copiar NRC
@@ -278,7 +278,7 @@ export function Horario() {
           <button
             type="button"
             onClick={downloadIcs}
-            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-card px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
           >
             <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
             Calendario (.ics)
@@ -286,7 +286,7 @@ export function Horario() {
           <button
             type="button"
             onClick={downloadImage}
-            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
+            className="inline-flex items-center gap-1.5 rounded-btn border border-border bg-card px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent/40 hover:text-text-primary"
           >
             <ImageDown className="h-3.5 w-3.5" aria-hidden />
             Imagen
@@ -314,7 +314,7 @@ export function Horario() {
             <div
               key={c.code}
               className={cn(
-                'rounded-card border bg-white p-4',
+                'rounded-card border bg-card p-4',
                 conflict ? 'border-danger/50' : 'border-border',
               )}
             >
@@ -354,7 +354,7 @@ export function Horario() {
                   value={c.section.nrc}
                   onChange={(e) => pickSection(c.code, e.target.value)}
                   aria-label={`Cambiar sección de ${c.title}`}
-                  className="mt-3 w-full rounded-btn border border-border bg-white px-3 py-2 text-xs text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  className="mt-3 w-full rounded-btn border border-border bg-card px-3 py-2 text-xs text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 >
                   {c.options.map((s) => (
                     <option key={s.nrc} value={s.nrc}>
@@ -374,13 +374,13 @@ export function Horario() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40"
+            className="inline-flex items-center gap-2 rounded-btn border border-border bg-card px-3.5 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Agregar ramo {addable.length > 0 && `(${addable.length} sugeridos)`}
           </button>
         ) : (
-          <div className="rounded-card border border-border bg-white p-3">
+          <div className="rounded-card border border-border bg-card p-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-medium text-text-secondary">Agregar ramo</p>
               <button
@@ -449,7 +449,7 @@ export function Horario() {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Nombre o código, ej: Electivo, Minor, IOC4101"
                   aria-label="Buscar cualquier ramo del horario"
-                  className="h-10 w-full rounded-btn border border-border bg-white pl-9 pr-3 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+                  className="h-10 w-full rounded-btn border border-border bg-card pl-9 pr-3 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
               </div>
               <div className="mt-1 flex max-h-64 flex-col gap-1 overflow-y-auto">

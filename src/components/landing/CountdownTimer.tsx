@@ -33,7 +33,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 /** Tarjeta estilo flip-clock: número arriba, etiqueta en la franja inferior. */
 function Unit({ value, label }: { value: string; label: string }) {
   return (
-    <div className="relative flex-1 overflow-hidden rounded-2xl bg-text-primary shadow-raised">
+    <div className="relative flex-1 overflow-hidden rounded-2xl bg-[#1B1D1C] shadow-raised dark:bg-[#0B0D0C] dark:ring-1 dark:ring-white/10">
       {/* Costura central que evoca el reloj de solapas. */}
       <div className="absolute inset-x-0 top-1/2 z-10 h-px -translate-y-[9px] bg-black/40" aria-hidden />
       <div className="px-1 pb-2.5 pt-4">

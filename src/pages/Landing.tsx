@@ -6,6 +6,7 @@ import { ReededGlassBackground } from '@/components/landing/ReededGlassBackgroun
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Logo } from '@/components/ui/Logo';
+import { ThemeToggleButton } from '@/components/ui/ThemeToggle';
 import { PageTransition } from '@/components/ui/PageTransition';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SpecialtyIcon } from '@/components/ui/SpecialtyIcon';
@@ -66,12 +67,15 @@ export function Landing() {
             <Logo size="sm" />
             <span className="font-display text-2xl font-semibold tracking-tight">Pistachio</span>
           </div>
-          <Link
-            to={user ? '/malla' : '/login'}
-            className="-mr-3 flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
-          >
-            {user ? 'Ir a mi malla' : 'Iniciar sesión'}
-          </Link>
+          <div className="-mr-3 flex items-center gap-1">
+            <ThemeToggleButton />
+            <Link
+              to={user ? '/malla' : '/login'}
+              className="flex min-h-11 items-center rounded-btn px-3 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
+            >
+              {user ? 'Ir a mi malla' : 'Iniciar sesión'}
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -118,7 +122,7 @@ export function Landing() {
           </div>
 
           {/* Columna de la cuenta regresiva */}
-          <div className="rounded-card border border-white/70 bg-white/85 p-5 shadow-raised sm:p-7 md:bg-white/70 md:backdrop-blur-md">
+          <div className="rounded-card border border-card/70 bg-card/85 p-5 shadow-raised sm:p-7 md:bg-card/70 md:backdrop-blur-md">
             <CountdownTimer />
           </div>
         </div>
@@ -138,7 +142,7 @@ export function Landing() {
             {features.map(({ icon: Icon, title, description }) => (
               <Card
                 key={title}
-                className="flex gap-4 border-white/70 bg-white/85 p-5 md:block md:bg-white/75 md:p-6 md:backdrop-blur-md"
+                className="flex gap-4 border-card/70 bg-card/85 p-5 md:block md:bg-card/75 md:p-6 md:backdrop-blur-md"
               >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-btn bg-accent-light">
                   <Icon className="h-5 w-5 text-accent" aria-hidden />
@@ -173,7 +177,7 @@ export function Landing() {
               : specialties.map((specialty) => (
                   <span
                     key={specialty.id}
-                    className="flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-sm font-medium text-text-primary shadow-subtle md:bg-white/75 md:backdrop-blur-md"
+                    className="flex items-center gap-2 rounded-full border border-card/70 bg-card/85 px-4 py-2 text-sm font-medium text-text-primary shadow-subtle md:bg-card/75 md:backdrop-blur-md"
                   >
                     <SpecialtyIcon icon={specialty.icon} className="h-4 w-4 text-accent" />
                     {specialty.name}
@@ -184,7 +188,7 @@ export function Landing() {
       </section>
 
       {/* Footer con easter egg */}
-      <footer className="border-t border-white/60 pb-safe pt-8">
+      <footer className="border-t border-card/60 pb-safe pt-8">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-5 text-center">
           <button
             type="button"

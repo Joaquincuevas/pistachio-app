@@ -102,7 +102,7 @@ export function SpecialtySelect() {
                   onClick={() => pick(spec.id)}
                   whileTap={{ scale: 0.98 }}
                   className={cn(
-                    'relative flex items-start gap-4 rounded-card border bg-white p-5 text-left shadow-subtle transition-colors duration-150',
+                    'relative flex items-start gap-4 rounded-card border bg-card p-5 text-left shadow-subtle transition-colors duration-150',
                     isSelected
                       ? 'border-accent ring-2 ring-accent'
                       : 'border-border hover:border-accent/40',
@@ -184,7 +184,7 @@ export function SpecialtySelect() {
                         setSelectedMencionId(null);
                       }}
                       className={cn(
-                        'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-white px-4 py-3 text-left transition-colors',
+                        'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-card px-4 py-3 text-left transition-colors',
                         isActive
                           ? 'border-accent ring-2 ring-accent'
                           : 'border-border hover:border-accent/40',
@@ -245,7 +245,7 @@ export function SpecialtySelect() {
                       aria-checked={isActive}
                       onClick={() => setSelectedMencionId(opt.id)}
                       className={cn(
-                        'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-white px-4 py-3 text-left transition-colors',
+                        'flex min-h-[52px] items-center justify-between gap-3 rounded-card border bg-card px-4 py-3 text-left transition-colors',
                         isActive
                           ? 'border-accent ring-2 ring-accent'
                           : 'border-border hover:border-accent/40',
@@ -263,7 +263,7 @@ export function SpecialtySelect() {
       </div>
 
       {/* Barra de confirmación fija */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-white/95 pb-safe backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-card/95 pb-safe backdrop-blur">
         <div className="mx-auto max-w-3xl px-5 py-4">
           <Button size="lg" fullWidth disabled={!effectivePlanId} loading={saving} onClick={confirm}>
             {specialty && effectivePlanId

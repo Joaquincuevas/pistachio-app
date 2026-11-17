@@ -12,8 +12,8 @@ const variantClasses: Record<BadgeVariant, string> = {
   default: 'bg-surface text-text-secondary border border-border',
   accent: 'bg-accent-light text-accent-hover',
   beige: 'bg-beige-light text-text-primary',
-  completed: 'bg-status-completed/15 text-[#3F7A4C]',
-  'in-progress': 'bg-status-progress/15 text-[#2D6FBF]',
+  completed: 'bg-status-completed/15 text-status-completed-text',
+  'in-progress': 'bg-status-progress/15 text-status-progress-text',
   pending: 'bg-surface text-text-secondary border border-border',
 };
 

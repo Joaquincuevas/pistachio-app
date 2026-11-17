@@ -14,7 +14,7 @@ export function MallaProgress({ plan }: { plan: Plan }) {
   );
 
   return (
-    <div className="rounded-card border border-border bg-white p-5 shadow-subtle">
+    <div className="rounded-card border border-border bg-card p-5 shadow-subtle">
       <div className="flex items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-text-tertiary">

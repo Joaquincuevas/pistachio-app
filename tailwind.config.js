@@ -1,37 +1,49 @@
+/** Color del tema leído desde una variable CSS con canales RGB (ver src/index.css). */
+const c = (name) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
+  // Modo oscuro por clase: la app decide (claro / oscuro / sistema) y pone `dark` en <html>.
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      // Colores del tema como variables CSS (canales RGB): cambian solos con la clase
+      // `dark` en <html> y mantienen el soporte de opacidad (bg-card/80, etc.).
       colors: {
-        background: '#FFFFFF',
-        surface: '#FAFAF9',
+        background: c('background'),
+        surface: c('surface'),
+        card: c('card'),
         border: {
-          DEFAULT: '#ECEBE8',
-          strong: '#DEDCD7',
+          DEFAULT: c('border'),
+          strong: c('border-strong'),
         },
         text: {
-          primary: '#191917',
-          secondary: '#6B6B66',
-          tertiary: '#9C9C96',
+          primary: c('text-primary'),
+          secondary: c('text-secondary'),
+          tertiary: c('text-tertiary'),
         },
         accent: {
-          DEFAULT: '#4A7C59',
-          hover: '#3D6749',
-          light: '#EAF2ED',
+          DEFAULT: c('accent'),
+          hover: c('accent-hover'),
+          light: c('accent-light'),
         },
         beige: {
-          DEFAULT: '#E8DCC4',
-          light: '#F5EFE3',
+          DEFAULT: c('beige'),
+          light: c('beige-light'),
         },
         status: {
-          completed: '#6BA876',
-          progress: '#4A90E2',
-          pending: '#C9C9C6',
+          completed: c('status-completed'),
+          progress: c('status-progress'),
+          pending: c('status-pending'),
+          'completed-bg': c('status-completed-bg'),
+          'progress-bg': c('status-progress-bg'),
+          'completed-text': c('status-completed-text'),
+          'progress-text': c('status-progress-text'),
         },
         danger: {
-          DEFAULT: '#D14434',
-          light: '#FBEDEB',
+          DEFAULT: c('danger'),
+          light: c('danger-light'),
         },
       },
       fontFamily: {

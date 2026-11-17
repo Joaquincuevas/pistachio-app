@@ -58,7 +58,7 @@ export function Dashboard() {
         <div
           role="group"
           aria-label="Modo de visualización"
-          className="flex shrink-0 rounded-btn border border-border bg-white p-1 shadow-subtle"
+          className="flex shrink-0 rounded-btn border border-border bg-card p-1 shadow-subtle"
         >
           {modes.map(({ value, label, icon: Icon }) => (
             <button

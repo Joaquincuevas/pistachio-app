@@ -55,7 +55,7 @@ const COURSE_INTENTS: ReadonlySet<Intent> = new Set([
 /** Línea compacta de un ramo dentro de una respuesta del asistente. */
 function CourseLine({ course, reason }: { course: Course; reason?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-btn border border-border bg-white px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-btn border border-border bg-card px-3 py-2">
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-text-primary">{course.name}</p>
         <p className="text-xs text-text-secondary">
@@ -87,7 +87,7 @@ function ScheduledLine({
   section: Section;
 }) {
   return (
-    <div className="rounded-btn border border-border bg-white px-3 py-2">
+    <div className="rounded-btn border border-border bg-card px-3 py-2">
       <div className="flex items-center justify-between gap-3">
         <p className="min-w-0 truncate text-sm font-medium text-text-primary">{title}</p>
         <span className="shrink-0 rounded-full bg-accent-light px-2.5 py-1 text-[11px] font-medium text-accent-hover">
@@ -244,7 +244,7 @@ export function Advisor() {
               <button
                 type="button"
                 onClick={() => copyNrcs(items)}
-                className="inline-flex items-center gap-2 rounded-btn border border-border bg-white px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+                className="inline-flex items-center gap-2 rounded-btn border border-border bg-card px-3 py-2 text-sm font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
               >
                 <Copy className="h-4 w-4" aria-hidden />
                 Copiar NRC
@@ -412,7 +412,7 @@ export function Advisor() {
               </p>
               <div className="mt-2 flex flex-col gap-2">
                 {sections.map((s) => (
-                  <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+                  <div key={s.nrc} className="rounded-btn border border-border bg-card px-3 py-2">
                     <p className="text-sm font-medium text-text-primary">
                       Sección {s.section} · NRC {s.nrc}
                     </p>
@@ -572,7 +572,7 @@ export function Advisor() {
         </p>
         <div className="mt-3 flex flex-col gap-2">
           {sections.map((s) => (
-            <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+            <div key={s.nrc} className="rounded-btn border border-border bg-card px-3 py-2">
               <p className="text-sm font-medium text-text-primary">
                 Sección {s.section} · NRC {s.nrc}
               </p>
@@ -665,7 +665,7 @@ export function Advisor() {
         </p>
         <div className="mt-3 flex flex-col gap-2">
           {withProf.map((s) => (
-            <div key={s.nrc} className="rounded-btn border border-border bg-white px-3 py-2">
+            <div key={s.nrc} className="rounded-btn border border-border bg-card px-3 py-2">
               <p className="text-sm font-medium text-text-primary">{prettyProfessor(s.professor)}</p>
               <p className="text-xs text-text-secondary">
                 Sección {s.section} · NRC {s.nrc}
@@ -703,7 +703,7 @@ export function Advisor() {
         </p>
         <div className="mt-3 flex flex-col gap-2">
           {[...byCode.entries()].map(([code, { title, sections: secs }]) => (
-            <div key={code} className="rounded-btn border border-border bg-white px-3 py-2">
+            <div key={code} className="rounded-btn border border-border bg-card px-3 py-2">
               <p className="text-sm font-medium text-text-primary">{title}</p>
               <p className="text-xs text-text-secondary">
                 {code} · {secs.map((s) => `Sección ${s.section} (NRC ${s.nrc})`).join(' · ')}
@@ -793,7 +793,7 @@ export function Advisor() {
         </p>
         <div className="mt-3 flex flex-col gap-2">
           {route.semesters.map((s) => (
-            <div key={s.index} className="rounded-btn border border-border bg-white px-3 py-2">
+            <div key={s.index} className="rounded-btn border border-border bg-card px-3 py-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-text-primary">
                   Semestre {s.index} · {ordinal(s.term)} sem
@@ -997,7 +997,7 @@ export function Advisor() {
                 pendingMeta.current = { query, intent: o.intent };
                 runIntent(o.intent, result);
               }}
-              className="rounded-full border border-border bg-white px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
             >
               {o.label}
             </button>
@@ -1046,7 +1046,7 @@ export function Advisor() {
   return (
     <PageTransition className="flex h-full flex-col">
       {/* Encabezado */}
-      <div className="shrink-0 border-b border-border bg-white px-4 py-4 md:px-8">
+      <div className="shrink-0 border-b border-border bg-card px-4 py-4 md:px-8">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <img
@@ -1063,7 +1063,7 @@ export function Advisor() {
             </div>
           </div>
           {/* Selector de semestre */}
-          <div role="group" aria-label="Semestre" className="flex rounded-btn border border-border bg-white p-1">
+          <div role="group" aria-label="Semestre" className="flex rounded-btn border border-border bg-card p-1">
             {([1, 2] as Term[]).map((t) => (
               <button
                 key={t}
@@ -1146,7 +1146,7 @@ export function Advisor() {
       </div>
 
       {/* Respuestas rápidas + entrada de texto */}
-      <div className="shrink-0 border-t border-border bg-white px-4 pb-safe pt-3 md:px-8">
+      <div className="shrink-0 border-t border-border bg-card px-4 pb-safe pt-3 md:px-8">
         <div className="mx-auto max-w-2xl">
           <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2">
             {quickActions.map(({ label, icon: Icon, run }) => (
@@ -1154,7 +1154,7 @@ export function Advisor() {
                 key={label}
                 type="button"
                 onClick={run}
-                className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
+                className="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-text-primary transition-colors hover:border-accent/40 hover:text-accent-hover"
               >
                 <Icon className="h-3.5 w-3.5" aria-hidden />
                 {label}
@@ -1174,7 +1174,7 @@ export function Advisor() {
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Escríbeme, ej: ¿puedo tomar Hidráulica?"
               aria-label="Pregúntale al asistente"
-              className="h-11 min-w-0 flex-1 rounded-input border border-border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="h-11 min-w-0 flex-1 rounded-input border border-border bg-card px-3.5 text-sm text-text-primary placeholder:text-text-secondary/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
             <button
               type="submit"
@@ -1201,7 +1201,7 @@ function BotBubble({ children }: { children: React.ReactNode }) {
         aria-hidden
         className="mt-0.5 h-8 w-8 shrink-0 rounded-full border border-border object-cover"
       />
-      <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border bg-white px-4 py-3 text-sm leading-relaxed text-text-primary">
+      <div className="max-w-[85%] rounded-2xl rounded-tl-md border border-border bg-card px-4 py-3 text-sm leading-relaxed text-text-primary">
         {children}
       </div>
     </div>

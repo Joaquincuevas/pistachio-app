@@ -40,7 +40,7 @@ export function Toaster() {
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className={cn(
                 'pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-card border border-border',
-                'bg-white px-4 py-3 text-left text-sm text-text-primary shadow-modal',
+                'bg-card px-4 py-3 text-left text-sm text-text-primary shadow-modal',
               )}
             >
               <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', iconColors[toast.type])} aria-hidden />
