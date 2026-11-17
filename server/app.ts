@@ -99,6 +99,14 @@ const passwordConfirmSchema = z.object({
   password: z.string().min(1, 'Ingresa tu contraseña'),
 });
 
+/** Palabra que el alumno debe escribir para eliminar su cuenta. */
+const DELETE_WORD = 'eliminar';
+const deleteAccountSchema = z.object({
+  confirm: z.string().refine((v) => v.trim().toLowerCase() === DELETE_WORD, {
+    message: `Escribe «${DELETE_WORD}» para confirmar`,
+  }),
+});
+
 const totpCodeSchema = z.object({
   code: z.string().min(6).max(7),
 });
@@ -431,17 +439,15 @@ app.post('/api/me/2fa/disable', requireAuth, async (req: AuthedRequest, res) => 
   res.json({ ok: true });
 });
 
+// Elimina la cuenta por completo. Las tablas ligadas al usuario (sesiones, progreso,
+// desafíos 2FA y tokens de recuperación) caen por ON DELETE CASCADE.
 app.delete('/api/me', requireAuth, async (req: AuthedRequest, res) => {
-  const parsed = passwordConfirmSchema.safeParse(req.body);
+  const parsed = deleteAccountSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Ingresa tu contraseña para confirmar' });
+    res.status(400).json({ error: `Escribe «${DELETE_WORD}» para confirmar` });
     return;
   }
   const user = req.sessionUser!;
-  if (!verifyPassword(parsed.data.password, await getPasswordHash(user.id))) {
-    res.status(401).json({ error: 'Contraseña incorrecta.' });
-    return;
-  }
   await run(`DELETE FROM users WHERE id = ?`, [user.id]);
   res.clearCookie(COOKIE, { path: '/' });
   res.status(204).end();

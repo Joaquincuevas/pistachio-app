@@ -110,10 +110,10 @@ export const api = {
       body: JSON.stringify({ password }),
     }),
 
-  deleteAccount: (password: string) =>
+  deleteAccount: (confirm: string) =>
     request<void>('/api/me', {
       method: 'DELETE',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ confirm }),
     }),
 
   catalog: () => request<{ specialties: Specialty[] }>('/api/catalog'),

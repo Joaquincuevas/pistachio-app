@@ -254,11 +254,28 @@ function TwoFactorSection() {
 
 // ─── Eliminar cuenta ──────────────────────────────────────────────
 
+const DELETE_WORD = 'eliminar';
+
+/** Borra lo que la app guardó en este dispositivo para la cuenta (deja solo el tema). */
+function clearLocalData() {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && k.startsWith('pistachio:') && k !== 'pistachio:theme') keys.push(k);
+    }
+    keys.forEach((k) => window.localStorage.removeItem(k));
+  } catch {
+    // Sin acceso a localStorage no hay nada que limpiar.
+  }
+}
+
 function DangerSection() {
   const show = useToastStore((s) => s.show);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [password, setPassword] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+  const matches = confirmText.trim().toLowerCase() === DELETE_WORD;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -266,8 +283,9 @@ function DangerSection() {
     setBusy(true);
     setError(null);
     try {
-      await api.deleteAccount(password);
+      await api.deleteAccount(confirmText);
       await useAuthStore.getState().logout();
+      clearLocalData();
       show('Tu cuenta fue eliminada. Gracias por usar Pistachio.', 'info');
       navigate('/');
     } catch (err) {
@@ -295,39 +313,60 @@ function DangerSection() {
         </Button>
       </Card>
 
-      <Modal open={open} onClose={() => !busy && setOpen(false)} title="Eliminar cuenta">
+      <Modal
+        open={open}
+        onClose={() => {
+          if (busy) return;
+          setOpen(false);
+          setConfirmText('');
+          setError(null);
+        }}
+        title="Eliminar cuenta"
+      >
         <div className="px-6 pb-6 pt-6">
           <h2 className="pr-8 text-2xl font-semibold tracking-tight text-text-primary">
             ¿Eliminar tu cuenta?
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-text-secondary">
-            Esta acción es definitiva: se borra tu cuenta, tu progreso en todos los planes y tus
-            sesiones. No se puede deshacer.
+            Esta acción es definitiva: se borra tu cuenta, tu progreso en todos los planes, tus
+            sesiones abiertas y lo que la app guardó en este dispositivo. No se puede deshacer.
           </p>
-          <div className="mt-5">
+          <form
+            className="mt-5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (matches && !busy) void confirmDelete();
+            }}
+          >
             <Input
-              label="Confirma con tu contraseña"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              label={`Escribe «${DELETE_WORD}» para confirmar`}
+              placeholder={DELETE_WORD}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="done"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
             />
-          </div>
+          </form>
           {error && (
             <p role="alert" className="mt-3 rounded-input bg-danger/10 px-3.5 py-2.5 text-sm text-danger">
               {error}
             </p>
           )}
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="secondary" disabled={busy} onClick={() => setOpen(false)}>
+          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() => {
+                setOpen(false);
+                setConfirmText('');
+              }}
+            >
               Cancelar
             </Button>
-            <Button
-              variant="danger"
-              loading={busy}
-              disabled={password.length === 0}
-              onClick={confirmDelete}
-            >
+            <Button variant="danger" loading={busy} disabled={!matches} onClick={confirmDelete}>
               Eliminar definitivamente
             </Button>
           </div>
