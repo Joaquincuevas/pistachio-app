@@ -1,5 +1,5 @@
 {
-  "source": "Catálogo PE 2022 Versión 2023.xlsx + Catálogo PE 2022 y PE 2025 Versión 2025-3.xlsx + Catálogo PE 2026.xlsx + Catálogo Ing. Civil Química Mención Ambiental.xlsx",
+  "source": "Catálogo PE 2022 Versión 2023.xlsx + Catálogo PE 2022 y PE 2025 Versión 2025-3.xlsx + Catálogo PE 2026.xlsx",
   "specialties": [
     {
       "id": "ici",
@@ -54484,11 +54484,11 @@
       "name": "Química",
       "fullName": "Ingeniería Civil Química",
       "icon": "flask",
-      "tagline": "Procesos químicos y bioprocesos, con mención en medio ambiente.",
+      "tagline": "Procesos químicos y sustentables para la industria y el medio ambiente.",
       "plans": [
         {
           "id": "icq-pe2026",
-          "name": "Plan de Estudios 2026 · Mención Ambiental",
+          "name": "Plan de Estudios 2026",
           "mentionOf": null,
           "courses": [
             {
@@ -54570,8 +54570,8 @@
                 "estudio": 4,
                 "total": 10
               },
-              "reqText": "Programación (ING1103), Álgebra Lineal (PEND ó ING1201), Cálculo I (PEND ó ING1202)",
-              "skills": null,
+              "reqText": "Programación, Álgebra Lineal, Cálculo I",
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -54586,11 +54586,11 @@
                 },
                 {
                   "id": "ING1205",
-                  "concurrent": true
+                  "concurrent": false
                 },
                 {
                   "id": "ING1206",
-                  "concurrent": true
+                  "concurrent": false
                 }
               ],
               "creditReq": null
@@ -54631,8 +54631,8 @@
               "creditReq": null
             },
             {
-              "id": "IOC3103",
-              "name": "Métodos Numéricos",
+              "id": "IOC3205",
+              "name": "Métodos Numéricos (HI)",
               "credits": 6,
               "hours": {
                 "clases": 3,
@@ -54644,10 +54644,11 @@
                 "estudio": 4,
                 "total": 10
               },
-              "reqText": "Programación (ING1103), Cálculo II(ING2102)",
+              "reqText": "Programación, Cálculo II",
               "skills": null,
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
@@ -54665,21 +54666,21 @@
               "creditReq": null
             },
             {
-              "id": "ICQ3201",
-              "name": "Ecología, Medio Ambiente y Energía",
+              "id": "ICA3210",
+              "name": "Transferencia de Masa",
               "credits": 6,
               "hours": {
                 "clases": 3,
-                "ayudantias": 0,
+                "ayudantias": 2,
                 "laboratorio": 0,
-                "trabajos": 2,
-                "presentaciones": 2,
+                "trabajos": 0,
+                "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 2,
+                "estudio": 4,
                 "total": 10
               },
-              "reqText": "Fundamentos de Química",
-              "skills": "Oa",
+              "reqText": "Ecuaciones Diferenciales, Métodos Numéricos",
+              "skills": null,
               "offered": [
                 2
               ],
@@ -54688,27 +54689,31 @@
               "semester": 6,
               "prerequisites": [
                 {
-                  "id": "ING1102",
+                  "id": "ING2101",
+                  "concurrent": false
+                },
+                {
+                  "id": "IOC3205",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ4103",
-              "name": "Química Inorgánica y Orgánica",
+              "id": "ICA4130",
+              "name": "Balances de Materia y Energía",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
                 "laboratorio": 0,
-                "trabajos": 2,
+                "trabajos": 0,
                 "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 2,
+                "estudio": 4,
                 "total": 10
               },
-              "reqText": "Fundamentos de Química",
+              "reqText": "Métodos Numéricos, Transferencia de Calor",
               "skills": "Ia",
               "offered": [
                 1
@@ -54718,28 +54723,32 @@
               "semester": 7,
               "prerequisites": [
                 {
-                  "id": "ING1102",
+                  "id": "IOC3205",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA3220",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ4204",
-              "name": "Process Design and Optimization",
+              "id": "ICA4210",
+              "name": "Diseño y Optimización de Procesos Industriales",
               "credits": 9,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 2,
-                "trabajos": 2,
-                "presentaciones": 0,
-                "lecturas": 2,
-                "estudio": 4,
+                "laboratorio": 0,
+                "trabajos": 6,
+                "presentaciones": 1,
+                "lecturas": 0,
+                "estudio": 3,
                 "total": 15
               },
-              "reqText": "Transferencia de Calor, Transferencia de Masa",
-              "skills": "Ec,Ic(Oa),Ob",
+              "reqText": "Balances de Materia y Energía, Máquinas de Transformación Física y Química, Ecología, Medio Ambiente y Energía",
+              "skills": "Ec",
               "offered": [
                 2
               ],
@@ -54748,31 +54757,35 @@
               "semester": 8,
               "prerequisites": [
                 {
-                  "id": "ICQ3202",
+                  "id": "ICA3130",
                   "concurrent": false
                 },
                 {
-                  "id": "ICQ3203",
+                  "id": "ICA4130",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA4120",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ5101",
-              "name": "Dinamica y Control de Procesos",
+              "id": "ICA5110",
+              "name": "Gestión Residuos Sólidos y Remediación de Suelos",
               "credits": 6,
               "hours": {
                 "clases": 3,
-                "ayudantias": 2,
-                "laboratorio": 2,
+                "ayudantias": 0,
+                "laboratorio": 1,
                 "trabajos": 0,
-                "presentaciones": 0,
-                "lecturas": 0,
-                "estudio": 3,
+                "presentaciones": 1,
+                "lecturas": 1,
+                "estudio": 4,
                 "total": 10
               },
-              "reqText": "Process Design and Optimization",
+              "reqText": "Ingeniería de Bioprocesos Ambientales",
               "skills": "Ec",
               "offered": [
                 1
@@ -54782,45 +54795,58 @@
               "semester": 9,
               "prerequisites": [
                 {
-                  "id": "ICQ4204",
+                  "id": "ICA4230",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ELE2",
-              "name": "Electivo de Especialidad 2",
-              "credits": 6,
-              "isSlot": true,
-              "slotCategory": "Electivo",
-              "hours": null,
-              "reqText": null,
-              "skills": null,
-              "offered": [
-                1,
-                2
-              ],
-              "semester": 10,
-              "prerequisites": [],
-              "creditReq": null
-            },
-            {
-              "id": "ICQ6101",
-              "name": "Legislación Laboral, Seguridad e Impacto Ambiental",
+              "id": "ICA5210",
+              "name": "Wastewater Treatment",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 0,
-                "laboratorio": 0,
-                "trabajos": 3,
-                "presentaciones": 0,
-                "lecturas": 2,
+                "laboratorio": 2,
+                "trabajos": 2,
+                "presentaciones": 1,
+                "lecturas": 0,
                 "estudio": 2,
                 "total": 10
               },
-              "reqText": "Process Design and Optimization",
-              "skills": "Ec,Ob",
+              "reqText": "Obras Civiles Sanitarias",
+              "skills": "Ic(Ob)",
+              "offered": [
+                2
+              ],
+              "isSlot": false,
+              "slotCategory": null,
+              "semester": 10,
+              "prerequisites": [
+                {
+                  "id": "ICA5150",
+                  "concurrent": false
+                }
+              ],
+              "creditReq": null
+            },
+            {
+              "id": "ICA6110",
+              "name": "Gestión Ambiental y Producción Limpia",
+              "credits": 6,
+              "hours": {
+                "clases": 3,
+                "ayudantias": 2,
+                "laboratorio": 0,
+                "trabajos": 1,
+                "presentaciones": 0,
+                "lecturas": 1,
+                "estudio": 3,
+                "total": 10
+              },
+              "reqText": "Legislación y Evaluación de Impacto Ambiental, Economía Ambiental y de los Recursos Naturales",
+              "skills": "Ob",
               "offered": [
                 1
               ],
@@ -54829,7 +54855,11 @@
               "semester": 11,
               "prerequisites": [
                 {
-                  "id": "ICQ4204",
+                  "id": "ICA5130",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA5220",
                   "concurrent": false
                 }
               ],
@@ -54910,8 +54940,8 @@
                 "estudio": 4,
                 "total": 10
               },
-              "reqText": "Programación (ING1103), Cálculo I (PEND ó ING1202)",
-              "skills": null,
+              "reqText": "Programación, Cálculo I",
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -54921,12 +54951,12 @@
               "semester": 3,
               "prerequisites": [
                 {
-                  "id": "ING1103",
+                  "id": "ING1206",
                   "concurrent": false
                 },
                 {
-                  "id": "ING1206",
-                  "concurrent": true
+                  "id": "ING1103",
+                  "concurrent": false
                 }
               ],
               "creditReq": null
@@ -54945,7 +54975,7 @@
                 "estudio": 3,
                 "total": 10
               },
-              "reqText": "Cálculo II (ING2102), Mecánica y Ondas (PEND ó ING2103)",
+              "reqText": "Cálculo II, Mecánica y Ondas",
               "skills": "Eb",
               "offered": [
                 1,
@@ -54961,27 +54991,27 @@
                 },
                 {
                   "id": "ING2105",
-                  "concurrent": true
+                  "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ3101",
-              "name": "Balances de Materia y Energía",
+              "id": "ICA3102",
+              "name": "Termotecnia",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
                 "laboratorio": 0,
-                "trabajos": 0,
+                "trabajos": 1,
                 "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 4,
+                "estudio": 3,
                 "total": 10
               },
-              "reqText": "Álgebra Lineal",
-              "skills": "Ia",
+              "reqText": "Termodinámica",
+              "skills": null,
               "offered": [
                 1
               ],
@@ -54990,27 +55020,27 @@
               "semester": 5,
               "prerequisites": [
                 {
-                  "id": "ING1205",
+                  "id": "ING2207",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ3202",
+              "id": "ICA3220",
               "name": "Transferencia de Calor",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 0,
+                "laboratorio": 2,
                 "trabajos": 0,
                 "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 4,
-                "total": 10
+                "estudio": 3,
+                "total": 11
               },
-              "reqText": "Ecuaciones Diferenciales",
+              "reqText": "Métodos Numéricos, Termotecnia",
               "skills": null,
               "offered": [
                 2
@@ -55020,27 +55050,31 @@
               "semester": 6,
               "prerequisites": [
                 {
-                  "id": "ING2101",
+                  "id": "IOC3205",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA3102",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ4101",
-              "name": "Ingeniería Biológica",
+              "id": "ICA4120",
+              "name": "Máquinas de Transformación Física y Química",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 2,
+                "laboratorio": 0,
                 "trabajos": 0,
                 "presentaciones": 0,
-                "lecturas": 1,
-                "estudio": 2,
+                "lecturas": 0,
+                "estudio": 5,
                 "total": 10
               },
-              "reqText": "Fundamentos de Química",
+              "reqText": "Métodos Numéricos, Transferencia de Calor",
               "skills": null,
               "offered": [
                 1
@@ -55050,27 +55084,31 @@
               "semester": 7,
               "prerequisites": [
                 {
-                  "id": "ING1102",
+                  "id": "IOC3205",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA3220",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ4201",
+              "id": "ICA4110",
               "name": "Cinética y Diseño de Reactores Químicos",
-              "credits": 6,
+              "credits": 7,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 0,
+                "laboratorio": 2,
                 "trabajos": 0,
                 "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 4,
-                "total": 10
+                "estudio": 3,
+                "total": 11
               },
-              "reqText": "Métodos Numéricos, Química Inorganica y Orgánica",
+              "reqText": "Balances de Materia y Energía, Máquinas de Transformación Física y Química",
               "skills": "Ib",
               "offered": [
                 2
@@ -55080,32 +55118,32 @@
               "semester": 8,
               "prerequisites": [
                 {
-                  "id": "IOC3103",
+                  "id": "ICA4130",
                   "concurrent": false
                 },
                 {
-                  "id": "ICQ4103",
+                  "id": "ICA4120",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ5104",
-              "name": "Laboratorio de Procesos",
+              "id": "ICA5120",
+              "name": "Air Quality and Environmental Pollution",
               "credits": 6,
               "hours": {
-                "clases": 0,
+                "clases": 3,
                 "ayudantias": 0,
-                "laboratorio": 4,
-                "trabajos": 2,
-                "presentaciones": 4,
+                "laboratorio": 1,
+                "trabajos": 0,
+                "presentaciones": 1,
                 "lecturas": 0,
-                "estudio": 0,
+                "estudio": 5,
                 "total": 10
               },
-              "reqText": "Máquinas de Transformación, Ingeniería de Bioprocesos",
-              "skills": "Ec",
+              "reqText": "Diseño y Optimización de Procesos Industriales",
+              "skills": "Ic(Oa)",
               "offered": [
                 1
               ],
@@ -55114,32 +55152,28 @@
               "semester": 9,
               "prerequisites": [
                 {
-                  "id": "ICQ4203",
-                  "concurrent": false
-                },
-                {
-                  "id": "ICQ4202",
+                  "id": "ICA4210",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ5202",
-              "name": "Plant Design for Chemical Engineering",
+              "id": "ICA5220",
+              "name": "Economía Ambiental y de los Recursos Naturales",
               "credits": 6,
               "hours": {
-                "clases": 0,
-                "ayudantias": 0,
-                "laboratorio": 4,
-                "trabajos": 2,
-                "presentaciones": 2,
-                "lecturas": 0,
-                "estudio": 2,
+                "clases": 3,
+                "ayudantias": 2,
+                "laboratorio": 0,
+                "trabajos": 1,
+                "presentaciones": 0,
+                "lecturas": 1,
+                "estudio": 3,
                 "total": 10
               },
-              "reqText": "Dinámica y Control de Procesos",
-              "skills": "Ic(Ob)",
+              "reqText": "Evaluación de Proyectos de Ingeniería Ambiental",
+              "skills": null,
               "offered": [
                 2
               ],
@@ -55148,15 +55182,15 @@
               "semester": 10,
               "prerequisites": [
                 {
-                  "id": "ICQ5101",
+                  "id": "ICA5140",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ELE4",
-              "name": "Electivo de Especialidad 4",
+              "id": "ELE3",
+              "name": "Electivo de Especialidad 3",
               "credits": 6,
               "isSlot": true,
               "slotCategory": "Electivo",
@@ -55303,23 +55337,24 @@
               "creditReq": null
             },
             {
-              "id": "ICQ3102",
-              "name": "Termodinámica Aplicada",
+              "id": "ICA3104",
+              "name": "Microbiología Industrial y Ambiental",
               "credits": 6,
               "hours": {
                 "clases": 3,
-                "ayudantias": 2,
-                "laboratorio": 0,
-                "trabajos": 1,
+                "ayudantias": 0,
+                "laboratorio": 1,
+                "trabajos": 2,
                 "presentaciones": 0,
                 "lecturas": 1,
                 "estudio": 3,
                 "total": 10
               },
               "reqText": "Termodinámica",
-              "skills": "Eb",
+              "skills": "Ec",
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
@@ -55346,8 +55381,8 @@
                 "estudio": 4,
                 "total": 10
               },
-              "reqText": "Ecuaciones Diferenciales (ING2101), Estática (ING2204)",
-              "skills": null,
+              "reqText": "Ecuaciones Diferenciales, Estática",
+              "skills": "Ic(Ea)",
               "offered": [
                 1,
                 2
@@ -55368,38 +55403,39 @@
               "creditReq": null
             },
             {
-              "id": "ICQ4102",
-              "name": "Microbiología Industrial",
+              "id": "IOC4103",
+              "name": "Hidráulica",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 2,
-                "trabajos": 0,
+                "laboratorio": 1,
+                "trabajos": 1,
                 "presentaciones": 0,
                 "lecturas": 0,
                 "estudio": 3,
                 "total": 10
               },
-              "reqText": "Ingeniería Biológica (p)",
-              "skills": "Ec",
+              "reqText": "Fluid Mechanics",
+              "skills": null,
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
               "semester": 7,
               "prerequisites": [
                 {
-                  "id": "ICQ4101",
-                  "concurrent": true
+                  "id": "IOC3203",
+                  "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ4203",
-              "name": "Máquinas de Transformación",
+              "id": "IOC4208",
+              "name": "Hidrología",
               "credits": 6,
               "hours": {
                 "clases": 3,
@@ -55407,41 +55443,59 @@
                 "laboratorio": 0,
                 "trabajos": 0,
                 "presentaciones": 0,
-                "lecturas": 0,
-                "estudio": 5,
+                "lecturas": 1,
+                "estudio": 4,
                 "total": 10
               },
-              "reqText": "Balances de Materia y Energía",
+              "reqText": "Probabilidades y Estadística o Estadística Aplicada, Hidraúlica",
               "skills": null,
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
               "semester": 8,
               "prerequisites": [
                 {
-                  "id": "ICQ3101",
+                  "id": "ING2206",
+                  "concurrent": false
+                },
+                {
+                  "id": "IOC4103",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ELE1",
-              "name": "Electivo de Especialidad 1",
+              "id": "ICA5130",
+              "name": "Legislación y Evaluación de Impacto Ambiental",
               "credits": 6,
-              "isSlot": true,
-              "slotCategory": "Electivo",
-              "hours": null,
-              "reqText": null,
-              "skills": null,
+              "hours": {
+                "clases": 3,
+                "ayudantias": 0,
+                "laboratorio": 0,
+                "trabajos": 3,
+                "presentaciones": 1,
+                "lecturas": 1,
+                "estudio": 2,
+                "total": 10
+              },
+              "reqText": "Ingeniería de Bioprocesos Ambientales",
+              "skills": "Oa",
               "offered": [
-                1,
-                2
+                1
               ],
+              "isSlot": false,
+              "slotCategory": null,
               "semester": 9,
-              "prerequisites": [],
+              "prerequisites": [
+                {
+                  "id": "ICA4230",
+                  "concurrent": false
+                }
+              ],
               "creditReq": null
             },
             {
@@ -55458,8 +55512,8 @@
                 "estudio": 0,
                 "total": 7
               },
-              "reqText": "276 SCT",
-              "skills": null,
+              "reqText": "276 SCT Aprobados",
+              "skills": "Ob",
               "offered": [
                 1,
                 2
@@ -55484,8 +55538,8 @@
                 "estudio": 0,
                 "total": 30
               },
-              "reqText": "ING5203 Proyecto de Titulo 1",
-              "skills": null,
+              "reqText": "Proyecto de Titulo 1",
+              "skills": "Ec,Ob",
               "offered": [
                 1,
                 2
@@ -55516,7 +55570,7 @@
                 "total": 9
               },
               "reqText": null,
-              "skills": null,
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -55603,8 +55657,8 @@
                 "estudio": 4,
                 "total": 10
               },
-              "reqText": "Cálculo I (PEND ó ING1202), Mecánica y Ondas (PEND ó ING2103)",
-              "skills": null,
+              "reqText": "Cálculo I , Mecánica y Ondas",
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -55615,18 +55669,18 @@
               "prerequisites": [
                 {
                   "id": "ING1206",
-                  "concurrent": true
+                  "concurrent": false
                 },
                 {
                   "id": "ING2105",
-                  "concurrent": true
+                  "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "HIG1",
-              "name": "Herramienta Interdisciplinar 1",
+              "id": "HI-metodos-estadisticos",
+              "name": "HI: Métodos Estadísticos",
               "credits": 6,
               "isSlot": true,
               "slotCategory": "Herramientas Interdisciplinares",
@@ -55642,21 +55696,21 @@
               "creditReq": null
             },
             {
-              "id": "ICQ3203",
-              "name": "Transferencia de Masa",
+              "id": "ICA3130",
+              "name": "Ecología, Medio Ambiente y Energía",
               "credits": 6,
               "hours": {
                 "clases": 3,
-                "ayudantias": 2,
-                "laboratorio": 0,
-                "trabajos": 0,
-                "presentaciones": 0,
+                "ayudantias": 0,
+                "laboratorio": 1,
+                "trabajos": 2,
+                "presentaciones": 1,
                 "lecturas": 1,
-                "estudio": 4,
+                "estudio": 2,
                 "total": 10
               },
-              "reqText": "Ecuaciones Diferenciales",
-              "skills": "Eb",
+              "reqText": "Microbiología Industrial y Ambiental",
+              "skills": "Ec",
               "offered": [
                 2
               ],
@@ -55665,15 +55719,15 @@
               "semester": 6,
               "prerequisites": [
                 {
-                  "id": "ING2101",
+                  "id": "ICA3104",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "HIG3",
-              "name": "Herramienta Interdisciplinar 3",
+              "id": "HI-diseno-y-desarrollo-de-sistemas-iot",
+              "name": "HI: Diseño y Desarrollo de Sistemas IoT",
               "credits": 6,
               "isSlot": true,
               "slotCategory": "Herramientas Interdisciplinares",
@@ -55689,22 +55743,23 @@
               "creditReq": null
             },
             {
-              "id": "ICQ4202",
-              "name": "Ingeniería de Bioprocesos",
+              "id": "ICA4230",
+              "name": "Ingeniería de Bioprocesos Ambientales",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
-                "laboratorio": 2,
+                "laboratorio": 1,
                 "trabajos": 0,
                 "presentaciones": 0,
                 "lecturas": 1,
-                "estudio": 2,
+                "estudio": 3,
                 "total": 10
               },
-              "reqText": "Microbiología Industrial",
+              "reqText": "Microbiología Industrial y Ambiental, Balances de Materia y Energía",
               "skills": "Ib",
               "offered": [
+                1,
                 2
               ],
               "isSlot": false,
@@ -55712,27 +55767,31 @@
               "semester": 8,
               "prerequisites": [
                 {
-                  "id": "ICQ4102",
+                  "id": "ICA3104",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA4130",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ5103",
-              "name": "Formulación y Evaluación de Proyectos",
+              "id": "ICA5140",
+              "name": "Evaluación de Proyectos de Ingeniería Ambiental",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
                 "laboratorio": 0,
-                "trabajos": 1,
-                "presentaciones": 0,
-                "lecturas": 1,
-                "estudio": 3,
+                "trabajos": 2,
+                "presentaciones": 1,
+                "lecturas": 0,
+                "estudio": 2,
                 "total": 10
               },
-              "reqText": "Process Design and Optimization",
+              "reqText": "Diseño y Optimización de Procesos Industriales, Cinética y Diseño de Reactores Químicos",
               "skills": "Ec,Ob",
               "offered": [
                 1
@@ -55742,40 +55801,31 @@
               "semester": 9,
               "prerequisites": [
                 {
-                  "id": "ICQ4204",
+                  "id": "ICA4210",
+                  "concurrent": false
+                },
+                {
+                  "id": "ICA4110",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ICQ5201",
-              "name": "Gestión y Administración Industrial",
+              "id": "ELE1",
+              "name": "Electivo de Especialidad 1",
               "credits": 6,
-              "hours": {
-                "clases": 3,
-                "ayudantias": 2,
-                "laboratorio": 0,
-                "trabajos": 0,
-                "presentaciones": 0,
-                "lecturas": 2,
-                "estudio": 3,
-                "total": 10
-              },
-              "reqText": "Process Design and Optimization",
-              "skills": "Ec,Ob",
+              "isSlot": true,
+              "slotCategory": "Electivo",
+              "hours": null,
+              "reqText": null,
+              "skills": null,
               "offered": [
+                1,
                 2
               ],
-              "isSlot": false,
-              "slotCategory": null,
               "semester": 10,
-              "prerequisites": [
-                {
-                  "id": "ICQ4204",
-                  "concurrent": false
-                }
-              ],
+              "prerequisites": [],
               "creditReq": null
             },
             {
@@ -55793,9 +55843,10 @@
                 "total": 20
               },
               "reqText": null,
-              "skills": null,
+              "skills": "",
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
@@ -55817,8 +55868,8 @@
                 "estudio": 1,
                 "total": 5
               },
-              "reqText": "Antropología Filosófica (ING1106 ó BIC2600 ó BIC1160)",
-              "skills": null,
+              "reqText": "Antropología Filosófica",
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -55835,8 +55886,8 @@
               "creditReq": null
             },
             {
-              "id": "HIG2",
-              "name": "Herramienta Interdisciplinar 2",
+              "id": "HI-taller-de-diseno-digital-y-fabricacion-3d",
+              "name": "HI: Taller de Diseño Digital y Fabricación 3D",
               "credits": 6,
               "isSlot": true,
               "slotCategory": "Herramientas Interdisciplinares",
@@ -55865,7 +55916,7 @@
                 "estudio": 2,
                 "total": 10
               },
-              "reqText": "150 sct aprobados",
+              "reqText": "150 SCT Aprobados",
               "skills": null,
               "offered": [
                 1,
@@ -55878,21 +55929,21 @@
               "creditReq": 150
             },
             {
-              "id": "ICQ5102",
-              "name": "Diseño de Reactores Avanzados",
+              "id": "ICA5150",
+              "name": "Obras Civiles Sanitarias",
               "credits": 6,
               "hours": {
                 "clases": 3,
                 "ayudantias": 2,
                 "laboratorio": 0,
-                "trabajos": 0,
+                "trabajos": 2,
                 "presentaciones": 0,
-                "lecturas": 1,
-                "estudio": 4,
+                "lecturas": 0,
+                "estudio": 3,
                 "total": 10
               },
-              "reqText": "Cinética y Diseño de Reactores Químicos",
-              "skills": "Ob",
+              "reqText": "Hidrología",
+              "skills": null,
               "offered": [
                 1
               ],
@@ -55901,15 +55952,15 @@
               "semester": 9,
               "prerequisites": [
                 {
-                  "id": "ICQ4201",
+                  "id": "IOC4208",
                   "concurrent": false
                 }
               ],
               "creditReq": null
             },
             {
-              "id": "ELE3",
-              "name": "Electivo de Especialidad 3",
+              "id": "ELE2",
+              "name": "Electivo de Especialidad 2",
               "credits": 6,
               "isSlot": true,
               "slotCategory": "Electivo",
@@ -55939,9 +55990,10 @@
                 "total": 5
               },
               "reqText": null,
-              "skills": null,
+              "skills": "",
               "offered": [
-                1
+                1,
+                2
               ],
               "isSlot": false,
               "slotCategory": null,
@@ -55972,8 +56024,8 @@
               "creditReq": null
             },
             {
-              "id": "OPTTEO1",
-              "name": "Optativo Teológico",
+              "id": "TEO3",
+              "name": "Teología III",
               "credits": 3,
               "isSlot": true,
               "slotCategory": "Formación General",
@@ -56029,7 +56081,7 @@
                 "estudio": 1,
                 "total": 5
               },
-              "reqText": "Ética (ING3104)",
+              "reqText": "Ética",
               "skills": null,
               "offered": [
                 1,
@@ -56077,8 +56129,8 @@
                 "estudio": 0,
                 "total": 4
               },
-              "reqText": "270 SCT",
-              "skills": null,
+              "reqText": "270 SCT Aprobados",
+              "skills": "Ec",
               "offered": [
                 1,
                 2
@@ -56177,7 +56229,7 @@
                 "total": 5
               },
               "reqText": null,
-              "skills": null,
+              "skills": "",
               "offered": [
                 1,
                 2
@@ -56202,8 +56254,8 @@
                 "estudio": 0,
                 "total": 0
               },
-              "reqText": "170 sct aprobados",
-              "skills": null,
+              "reqText": "170 SCT Aprobados",
+              "skills": "Ic(Ea)",
               "offered": [
                 1,
                 2
@@ -56228,8 +56280,8 @@
                 "estudio": 0,
                 "total": 0
               },
-              "reqText": "282 SCT",
-              "skills": null,
+              "reqText": "282 SCT Aprobados",
+              "skills": "Ic(Eb,Ob)",
               "offered": [
                 1,
                 2

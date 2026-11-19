@@ -11,10 +11,8 @@ Uso:
     python3 scripts/parse-catalog.py \
         "/ruta/Catálogo PE 2022 y PE 2025 Versión 2025-3.xlsx" --plan pe2025
 
-    # Agrega los planes PE 2026 (catálogo general + catálogo de Química Mención Ambiental)
-    python3 scripts/parse-catalog.py \
-        "/ruta/Catálogo PE 2026.xlsx" "/ruta/Catálogo Ing. Civil Química Mención Ambiental.xlsx" \
-        --plan pe2026
+    # Agrega los planes PE 2026 (opcional: 2.º libro con la malla propia de Química)
+    python3 scripts/parse-catalog.py "/ruta/Catálogo PE 2026.xlsx" --plan pe2026
 
 Fuentes:
 - Hoja "Cursos": metadata de cada ramo (código, horas, SCT, requisitos en texto,
@@ -34,7 +32,9 @@ from pathlib import Path
 
 import pandas as pd
 
-ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+# Argumentos posicionales (libros): se descarta el valor que sigue a --plan.
+ARGS = [a for i, a in enumerate(sys.argv[1:], 1)
+        if not a.startswith("--") and sys.argv[i - 1] != "--plan"]
 SRC = ARGS[0] if ARGS else "/Users/joaquincuevasmunoz/Downloads/Catálogo PE 2022 Versión 2023.xlsx"
 OUT = Path(__file__).resolve().parent.parent / "server" / "data" / "catalog.json"
 
@@ -83,7 +83,7 @@ SPECIALTIES = [
     # Nueva en el PE 2026: sólo existe en ese plan (sin hoja en los catálogos anteriores).
     {"id": "icq", "name": "Química",
      "fullName": "Ingeniería Civil Química", "icon": "flask",
-     "tagline": "Procesos químicos y bioprocesos, con mención en medio ambiente."},
+     "tagline": "Procesos químicos y sustentables para la industria y el medio ambiente."},
 ]
 
 # Hojas de cada especialidad en el catálogo PE 2026. "src": "icq" = segundo libro.
@@ -93,9 +93,12 @@ SHEETS_2026 = {
     "ice": {"sheet": "ICE Malla"},
     "icc": {"sheet": "ICC Malla"},
     "ica": {"sheet": "ICA Malla"},
-    "icq": {"sheet": "Malla Curricular", "src": "icq"},
+    # Química usa la misma malla que Ambiental 2026 ("like" = especialidad de la que copia
+    # cursos y requisitos). Para volver a la malla propia de Química Mención Ambiental:
+    #   "icq": {"sheet": "Malla Curricular", "src": "icq"}   (+ pasar el segundo libro)
+    "icq": {"sheet": "ICA Malla", "like": "ica"},
 }
-PLAN_NAME_2026 = {"icq": "Plan de Estudios 2026 · Mención Ambiental"}
+PLAN_NAME_2026: dict = {}
 
 # Slots de la malla que no son cursos del catálogo (formación general / electivos).
 SLOT_PATTERNS = [
@@ -725,7 +728,8 @@ def main():
                 book, spec_cursos = xl, cursos
                 entries = parse_malla(xl, cfg["sheet"], cursos)
             plan_name = PLAN_NAME_2026.get(spec["id"], version["name"]) if is2026 else version["name"]
-            plan = build_plan(base_id, plan_name, entries, spec_cursos, warnings, spec=spec["id"])
+            catalog_spec = cfg.get("like", spec["id"])  # fichas del catálogo según esta carrera
+            plan = build_plan(base_id, plan_name, entries, spec_cursos, warnings, spec=catalog_spec)
             plans = [plan]
             if spec["id"] == "icc" and version["icc_ajuste"]:
                 plans.append(build_icc_ajuste(plan, spec_cursos))
