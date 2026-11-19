@@ -15,12 +15,21 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useCatalogStore } from '@/stores/useCatalogStore';
 import { useToastStore } from '@/stores/useToastStore';
 
+/** Cantidad de especialidades en palabras (el catálogo puede crecer). */
+const COUNT_WORDS: Record<number, string> = {
+  4: 'Cuatro',
+  5: 'Cinco',
+  6: 'Seis',
+  7: 'Siete',
+  8: 'Ocho',
+};
+
 const features = [
   {
     icon: Network,
     title: 'Malla interactiva',
     description:
-      'Explora tu Plan de Estudios (2022 o 2025) completo como grid por semestre o como grafo de dependencias con zoom y pan.',
+      'Explora tu Plan de Estudios (2022, 2025 o 2026) completo como grid por semestre o como grafo de dependencias con zoom y pan.',
   },
   {
     icon: GitBranch,
@@ -163,15 +172,16 @@ export function Landing() {
       <section className="py-12 md:py-16">
         <div className="mx-auto max-w-5xl px-5 text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-text-primary">
-            Cinco especialidades
+            {specialties.length > 0 ? COUNT_WORDS[specialties.length] ?? specialties.length : 'Seis'}{' '}
+            especialidades
           </h2>
           <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary">
-            Plan común de 4 semestres y luego tu especialidad: 60 ramos y 11 semestres según el
-            Plan de Estudios 2022 o 2025.
+            Plan común de 4 semestres y luego tu especialidad, en 11 semestres según el Plan de
+            Estudios 2022, 2025 o 2026.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-2.5">
             {specialties.length === 0
-              ? Array.from({ length: 5 }).map((_, i) => (
+              ? Array.from({ length: 6 }).map((_, i) => (
                   <Skeleton key={i} className="h-10 w-32 rounded-full" />
                 ))
               : specialties.map((specialty) => (

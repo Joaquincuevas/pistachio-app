@@ -79,7 +79,7 @@ export function SpecialtySelect() {
           Elige tu especialidad
         </h1>
         <p className="mt-2 max-w-md text-sm text-text-secondary">
-          Cargaremos tu malla completa del Plan de Estudios 2022 o 2025. Podrás cambiarla después desde
+          Cargaremos tu malla completa según el Plan de Estudios que elijas (2022, 2025 o 2026). Podrás cambiarla después desde
           tu perfil sin perder tu progreso.
         </p>
 
@@ -122,14 +122,15 @@ export function SpecialtySelect() {
                       {spec.tagline}
                     </span>
                     <span className="mt-2 block text-xs text-text-secondary">
-                      {spec.plans[0]?.courses.length ?? 0} ramos
                       {(() => {
                         // Las menciones se repiten por versión del plan: se cuentan
                         // las de la versión más reciente.
                         const bases = spec.plans.filter((p) => !p.mentionOf);
                         const latestId = bases[bases.length - 1]?.id;
+                        const ramos = bases[bases.length - 1]?.courses.length ?? 0;
                         const men = spec.plans.filter((p) => p.mentionOf === latestId).length;
                         return (
+                          `${ramos} ramos` +
                           (men > 0 ? ` · ${men} menciones` : '') +
                           (bases.length > 1 ? ` · ${bases.length} versiones` : '')
                         );
